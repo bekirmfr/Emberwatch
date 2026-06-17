@@ -17,6 +17,8 @@ Open `emberwatch.html` in a browser. That's the whole game.
 
 Three classes (Ranger, Mage, Knight), each with a passive and four abilities; a composable stat system; nine themed equipment sets with set bonuses; a day/night cycle with weather; and procedural fire, rain, and cricket ambience.
 
+> **Testing on iOS:** serve the file over http(s) and open it in Safari. Opening the `.html` file directly on iOS (from Files, Mail, or AirDrop) renders it in a Quick Look preview that displays the page but **does not execute JavaScript** — the title screen appears but no button responds. This only affects directly-opened files; the hosted game (itch.io, portals, any URL) is unaffected.
+
 ## Develop
 
 It is one file. Open it in any editor and reload the browser — there is no toolchain. The script is organized into labelled sections; search for a section title (e.g. `COMBAT CORE`, `UPDATE`, `RENDER`) to jump to it. A map of all sections sits at the top of the `<script>` block.
