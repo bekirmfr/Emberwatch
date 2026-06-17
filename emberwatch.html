@@ -600,22 +600,49 @@ function addEmbers(n){ embers=Math.max(0,embers+n); Store.set("ew.embers",embers
    ========================================================================= */
 
 /* --- Telemetry: portal-agnostic event beacon -----------------------------
-   Buffers events and POSTs them as a batch to TELEMETRY.endpoint. If no
-   endpoint is set (default), it is a pure no-op that still keeps local
-   session/run counters in Store so retention can be read off the device
-   even before a backend exists. No PII is ever collected. */
+   Buffers events and ships them as a batch. Two destinations, both optional:
+     • PostHog  — set cfg.posthog = { key:"phc_...", host:"https://us.i.posthog.com" }
+                  (or eu.i.posthog.com). Gives funnels/retention charts directly.
+     • Raw      — set cfg.endpoint = "https://your-endpoint" for plain JSON POST.
+   If neither is set (default), it is a pure no-op that still keeps local
+   session/run counters in Store so retention can be read off the device even
+   with no backend. No PII is collected — distinct_id is a random per-device id. */
 const Telemetry=(()=>{
-  const cfg={ endpoint:null, flushEvery:8, flushMs:15000 };   // set cfg.endpoint to start sending
-  let queue=[], sid=null, lastFlush=0, started=false;
+  const cfg={ endpoint:null, posthog:null, flushEvery:8, flushMs:15000 };
+  let queue=[], sid=null, lastFlush=0, started=false, did=null;
   const now=()=>{ try{ return Date.now(); }catch(e){ return 0; } };
   function newSid(){ return "s"+now().toString(36)+Math.random().toString(36).slice(2,7); }
-  function send(batch){
-    if(!cfg.endpoint || !batch.length) return;
+  function distinctId(){                                     // stable anonymous per-device id (for retention)
+    if(did) return did;
+    did = Store.get("ew.did", null);
+    if(!did){ did = "d"+now().toString(36)+Math.random().toString(36).slice(2,10); Store.set("ew.did", did); }
+    return did;
+  }
+  function post(url, body){
     try{
-      const body=JSON.stringify({ sid, v:1, events:batch });
-      if(navigator && navigator.sendBeacon){ navigator.sendBeacon(cfg.endpoint, body); return; }
-      fetch(cfg.endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body,keepalive:true}).catch(()=>{});
+      if(navigator && navigator.sendBeacon){ navigator.sendBeacon(url, body); return; }
+      fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body,keepalive:true}).catch(()=>{});
     }catch(e){}                                              // telemetry must never break the game
+  }
+  function send(batch){
+    if(!batch.length) return;
+    // PostHog batch ingestion
+    if(cfg.posthog && cfg.posthog.key){
+      try{
+        const host=(cfg.posthog.host||"https://us.i.posthog.com").replace(/\/+$/,"");
+        const ph=batch.map(ev=>({
+          event:"ew_"+ev.t,
+          properties:Object.assign({ $session_id:sid, distinct_id:distinctId() }, ev.p||{}),
+          timestamp:new Date(ev.ts||now()).toISOString(),
+          distinct_id:distinctId()
+        }));
+        post(host+"/batch/", JSON.stringify({ api_key:cfg.posthog.key, batch:ph }));
+      }catch(e){}
+    }
+    // raw endpoint (independent of PostHog; either, both, or neither)
+    if(cfg.endpoint){
+      try{ post(cfg.endpoint, JSON.stringify({ sid, did:distinctId(), v:1, events:batch })); }catch(e){}
+    }
   }
   function flush(){ if(!queue.length) return; const b=queue; queue=[]; lastFlush=now(); send(b); }
   function track(type, props){
@@ -632,7 +659,9 @@ const Telemetry=(()=>{
   function start(){ if(started) return; started=true; sid=newSid(); lastFlush=now();
     try{ window.addEventListener("beforeunload",()=>{ track("session_end",{runs:runsThisSession}); flush(); }); }catch(e){}
   }
-  return { cfg, track, flush, get runCount(){ return Store.get("ew.runs",0)||0; } };
+  return { cfg, track, flush,
+    get runCount(){ return Store.get("ew.runs",0)||0; },
+    get enabled(){ return !!(cfg.endpoint || (cfg.posthog && cfg.posthog.key)); } };
 })();
 let runsThisSession=0;
 function tele(type, props){ try{ Telemetry.track(type, props); }catch(e){} }   // safe wrapper used everywhere
@@ -3487,6 +3516,16 @@ function frame(now){
   render();
   requestAnimationFrame(frame);
 }
+/* === TELEMETRY CONFIG ===================================================
+   Paste your PostHog Project API key below to start sending playtest data.
+   Find it in PostHog → Settings → Project → "Project API Key" (starts phc_).
+   Pick the host that matches your PostHog region (US or EU cloud).
+   Leave the key empty to keep telemetry OFF (silent no-op). No PII is sent. */
+Telemetry.cfg.posthog = {
+  key:  "phc_yYmfTfxQJJpGYG5KiiBTd7RqzkU2TmPqwotDAsvjBveS",                              // e.g. "phc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  ← paste here
+  host: "https://us.i.posthog.com"       // or "https://eu.i.posthog.com" for EU cloud
+};
+/* ======================================================================== */
 try{
   renderHeroPick();
   updateEmberUI();   // show the saved ember balance on the main menu
