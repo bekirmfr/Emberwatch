@@ -17,7 +17,7 @@ Emberwatch is a top-down action roguelite / horde-survivor in the lineage of Vam
 The campfire at world origin (0,0) does **triple duty**:
 
 - **Progression anchor** — its level is your level; feeding it drives all advancement.
-- **Safety** — at night, straying beyond its light radius triggers the Exposed effect (mounting negative health regen that kills you if you stay in the dark too long).
+- **Safety** — at night, straying beyond its light radius triggers the Exposed effect: direct damage of 2% max health per second × an escalating exposure rate (the rate climbs +1 every 2 seconds, capped at 5 → up to 10%/s), which kills you if you stay in the dark too long.
 - **Bank** — you must carry remains from kills back to the fire to deposit and grow it.
 
 This triple role creates a constant spatial tension loop: the best kills and loot are at the edges of your light, but retrieving remains means running back through danger to fuel the fire. By day the cycle is generous; by night it becomes a survival puzzle. This is the game's primary commercial differentiator and its strongest design idea.
@@ -148,7 +148,7 @@ All stats scale by `diffMul = 1 + (wave-1)*0.11` on spawn. Boss schedule: `wave 
 - `G.ambient`: 0 = deep night, 1 = full day. Eases smoothly between states.
 - Hour 18-19: sun sets; hour 06-07: sun returns.
 - `G.lightR = min(460, 250 + (level-1)*8)`: firelight radius grows with fire level.
-- Exposed effect: applied when hero is beyond `lightR` at night. Negative healthRegen stack, exposed overlay, warning banner.
+- Exposed effect: applied when hero is beyond `lightR` at night during an active wave. Deals **direct damage** each second equal to `EXPOSE_DMG_PCT (0.02) × maxHealth × rate`. The **rate** starts at 1 on entering the dark and steps up by 1 every `EXPOSE_RATE_STEP` (2s), capped at `EXPOSE_RATE_MAX` (5) → max drain 10%/s. Damage routes through `onDamage` so the hurt SFX/flash/shake fire. The Exposed ActiveEffect also still applies −6% attack damage and −30% armor, scaling with the rate as stacks ("fight blind"); its old healthRegen drain was removed so nothing double-dips. `G.exposed` holds the current rate (0–5) and drives the overlay + warning banner. Replaced the earlier stack-based negative-regen model.
 - Enemy spawn at `max(lightR+70, 440)` from origin.
 - `ambient` affects: firefly visibility (inverse — night only), butterfly visibility (day AND not raining), storm gloom overlay (day × rain intensity), SFX levels.
 
@@ -425,6 +425,9 @@ The game is a strong prototype with unvalidated balance and light content. Marke
 | `diffMul` | `1 + (wave-1)*0.11` — global difficulty scaling per wave |
 | Boss schedule | `wave>=8 && (wave-8)%6===0` — first boss wave 8, every 6 after |
 | `lightR` | `min(460, 250+(level-1)*8)` — firelight radius grows with level |
+| `EXPOSE_DMG_PCT` | 0.02 — fraction of max health drained per second, per exposure-rate level |
+| `EXPOSE_RATE_STEP` | 2 — seconds in the dark between each +1 to the exposure rate |
+| `EXPOSE_RATE_MAX` | 5 — exposure-rate ceiling (→ max drain 10%/s of max health) |
 | `INTERMISSION` | 13 — seconds between waves |
 | Knight `attackRange` | 30 — base melee reach in px (+ enemy.r for effective reach) |
 | Hitstop duration | `0.055s` in `meleeSwing` — the core of melee feel |

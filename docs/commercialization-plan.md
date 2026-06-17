@@ -71,7 +71,7 @@ The MVP is the prototype plus exactly the four things above — no more.
 
 ### 1.4 MVP definition of done
 
-The build is launchable when: telemetry fires the full event set and degrades silently; the rewarded-ad hook calls a real SDK; the Supporter Pack completes a real purchase; a new player can complete run 1 understanding the loop; and a headless harness run plus a real-device playtest both pass clean.
+The build reaches **Phase-0 done** when: the telemetry event set fires and degrades silently; the rewarded-ad path runs through a real adapter seam (stub provider acceptable); the Supporter Pack completes its purchase *flow* (real processor deferred to Phase 1); a new player can complete run 1 understanding the loop; and a headless harness run plus a full real-device playtest both pass clean. The three portal-dependent connections — analytics endpoint, live ad SDK, real payment — are **Phase-1 wiring**, not Phase-0 blockers (see §4).
 
 ---
 
@@ -81,7 +81,7 @@ Each phase has a **gate** — a measurable signal that must be hit before spendi
 
 ### Phase 0 — Build the MVP *(now → ~6 weeks, ~$0)*
 Implement §1.1 must-haves (+ §1.2 if time). Validate every JS change with the headless harness; playtest on real device.
-**Exit gate:** MVP definition-of-done met. Build is instrumented, monetization is real (not stubbed), run 1 is legible.
+**Exit gate:** Phase-0 definition-of-done met (§1.4). Build is instrumented, the monetization *flows* are real (live providers wired in Phase 1), run 1 is legible, full device playtest passed.
 
 ### Phase 1 — Free web validation *(Month 1–2 of launch, ~$0)*
 - Publish immediately on **itch.io** (PWYW or $3–5) and **Newgrounds** — zero gatekeeping, first-dollar signal, community feedback.
@@ -121,13 +121,26 @@ Layer on additional revenue without abandoning the base: **Ko-fi / GitHub Sponso
 
 ---
 
-## 4. Immediate Next Actions (Phase 0, this week)
+## 4. Phase 0 Status & Remaining Work
 
-1. **Telemetry first** — it gates the value of everything else. Pick the endpoint, wire the event set, confirm silent-degrade.
-2. **Tutorial overlay** — net-new, biggest retention lever, unblocks Q3.
-3. **Real rewarded-ad hook** — swap the `setTimeout` for the chosen portal SDK callback.
-4. **Supporter Pack** — replace the `buyEmbers()` toast with a real minimal purchase.
-5. (If time) 2–3 new enemies + first-three-minutes hook tuning.
+Phase 0's build work splits into two kinds: systems that can be **finished now**, and systems that are correctly **built up to a seam** but cannot be completed until a portal is chosen in Phase 1 (the SDK, payment processor, and analytics endpoint all depend on that decision). Conflating the two is what an earlier draft of this section did; the honest split is below.
+
+**Done (build-complete):**
+1. **Telemetry event set** — wired into every real game moment (session, run start/end, first-bank, night survival, level-up choice, ad funnel, supporter funnel). Silent-degrade confirmed. *Endpoint not yet set* — see gated work.
+2. **Tutorial overlay** — net-new four-beat guided first run, skippable, fires on first run only. Complete (and verified tappable on device).
+3. **Ad adapter seam** — the `watchAd()` `setTimeout` stub is replaced by a real `Ads.show()` adapter with offer/complete telemetry. *Live SDK provider not yet plugged in* — see gated work.
+4. **Supporter Pack** — real modal, ownership, ad-removal, cosmetic, starting embers, persistence; `buyEmbers()` toast removed. *Real payment processor not yet behind the purchase* — see gated work.
+
+**Gated on Phase-1 portal choice (the three seams to wire):**
+- **Set `Telemetry.cfg.endpoint`** to the chosen analytics backend.
+- **Swap the `Ads` provider** for the chosen portal's rewarded-ad SDK (CrazyGames / Poki adapter).
+- **Wire `confirmSupporter()`** to the real purchase/verification callback (itch.io storefront or portal IAP).
+
+**Available now without a portal (optional should-have):**
+5. 2–3 new enemy types + first-three-minutes hook tuning — strengthens the retention signal before launch.
+
+**Also outstanding before declaring Phase 0 complete:**
+- Full **real-device playtest** against `emberwatch-playtest-checklist.md` (the definition-of-done gate — partial device testing has happened; a full pass has not).
 
 Each JS change validated with the headless harness; each milestone playtested on device before moving on.
 
