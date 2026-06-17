@@ -1,0 +1,26 @@
+# Dependencies (none required to run, but harness/tooling may pull these)
+node_modules/
+package-lock.json
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Build / scratch output
+dist/
+build/
+*.log
+.tmp/
+
+# Secrets — NEVER commit keys or credentials.
+# The game is a single HTML file served to browsers, so anything inside it is
+# public by definition. Real secrets (ad-network keys, IAP/purchase verification,
+# signing material) must live server-side, never in emberwatch.html or this repo.
+.env
+.env.*
+secrets.json
+*.pem
+*.key
