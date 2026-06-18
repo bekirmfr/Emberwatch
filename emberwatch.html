@@ -1884,10 +1884,12 @@ function update(dt){
   // enemy projectiles (spitters)
   for(const s of G.eshots){
     s.x+=s.vx*dt; s.y+=s.vy*dt; s.life-=dt;
-    if(Math.hypot(h.x-s.x,h.y-s.y)<h.r+5){
+    if(s.life>0 && Math.hypot(h.x-s.x,h.y-s.y)<h.r+5){
       resolveAttack(s.from&&!s.from.dead?s.from:h, h, basicInstance(s.from||h,ctx,["ranged"]), ctx);
-      s.life=0;
+      s.life=0; s.hit=true;
     }
+    if(s.life<=0){ const hit=s.hit;                              // impact splash (big on a hit, small fizzle on expiry)
+      spawnParticles(s.x,s.y, hit?"#ffd0b8":"#ff8a76", hit?14:5, {speed:hit?240:110,life:0.36,size:2.4,grav:30}); }
   }
   G.eshots=G.eshots.filter(s=>s.life>0);
 
@@ -2852,9 +2854,15 @@ function render(){
       g.lineTo(x+Math.cos(a+2.6)*4, y+Math.sin(a+2.6)*4);
       g.lineTo(x+Math.cos(a-2.6)*4, y+Math.sin(a-2.6)*4); g.closePath(); g.fill();
     } }
-  // enemy projectiles
-  g.strokeStyle="#ff7a6a"; g.lineWidth=3;
-  for(const s of G.eshots){ const x=sx(s.x),y=sy(s.y); g.beginPath(); g.arc(x,y,4,0,7); g.fillStyle="#ff7a6a"; g.fill(); }
+  // enemy projectiles — glowing bolts stretched along their flight (motion smear, like the dash)
+  for(const s of G.eshots){ const x=sx(s.x), y=sy(s.y), ang=Math.atan2(s.vy,s.vx);
+    g.save(); g.translate(x,y); g.rotate(ang); g.globalCompositeOperation="lighter";
+    g.fillStyle="rgba(255,122,106,0.30)"; g.beginPath(); g.ellipse(-9,0,15,2.2,0,0,7); g.fill();   // trailing streak
+    g.shadowBlur=10; g.shadowColor="#ff7a6a";
+    g.fillStyle="#ffd9c0"; g.beginPath(); g.ellipse(0,0,8,3.2,0,0,7); g.fill();                    // stretched glow
+    g.fillStyle="#ff7a6a"; g.beginPath(); g.ellipse(0,0,5,2.4,0,0,7); g.fill();                    // bright core
+    g.restore();
+  }
 
   // hero — firelight on them gutters out as exposure climbs
   const h=G.hero, hx=sx(h.x), hy=sy(h.y);
