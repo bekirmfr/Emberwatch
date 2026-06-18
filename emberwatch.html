@@ -1463,7 +1463,7 @@ function fireCastedAbility(h){
 function castDash(h, p){
   const ang=aimAngle(h), spd=p.speed||820;
   h.dashT=0.16; h.dashVX=Math.cos(ang)*spd; h.dashVY=Math.sin(ang)*spd;
-  h.dashPass=!!p.passthrough; h.dashKnock=p.knockback||0;
+  h.dashPass=!!p.passthrough; h.dashKnock=p.knockback||0; h.dashWall=false;
   h.invulnT=Math.max(h.invulnT||0, h.dashT+0.06);   // i-frames while rolling — dodge through enemies and attacks
   if(p.dmg){ const ad=resolveStat(h,"attackDamage",ctx); h.dashInst=abilityInstance(h,p.dmg.base+ad*p.dmg.ratio,["dash"]); h.dashHit=new Set(); }
   else h.dashInst=null;
@@ -1754,10 +1754,14 @@ function update(dt){
     for(const e of G.enemies){ if(e.dead) continue;
       if(Math.hypot(e.x-h.x,e.y-h.y) < h.r+e.r+8){
         if(h.dashInst && !h.dashHit.has(e)){ h.dashHit.add(e); resolveAttack(h,e,h.dashInst,ctx); if(h.dashKnock) knockback(e,h.x,h.y,h.dashKnock); }
-        if(!h.dashPass){ h.dashT=0; }              // base dash stops at the first enemy
+        if(!h.dashPass){
+          if(!h.dashWall){ h.dashWall=true;                  // slammed to a halt — impact pop (fires once)
+            spawnParticles(h.x,h.y,"#ffe1a6",10,{speed:240,life:0.35,size:2.5}); shake(7); hitstop(0.05); }
+          h.dashT=0;                                         // base dash stops at the first enemy
+        }
       } }
     if(Math.random()<0.6) G.fx.push({trail:true,x:h.x,y:h.y,life:0.2,max:0.2});
-    if(h.dashT<=0){ h.dashSettleT=0.34; h.dashSettleMax=0.34; h.dashSettleAng=Math.atan2(h.dashVY,h.dashVX); }   // landed → springy pingpong
+    if(h.dashT<=0){ h.dashSettleT=h.dashWall?0.42:0.36; h.dashSettleMax=h.dashSettleT; h.dashSettleAng=Math.atan2(h.dashVY,h.dashVX); }   // landed → springy settle (harder if it hit something)
   } else if(!casting && ml>DEAD){ h.x+=mx/ml*sp*moveScale*dt; h.y+=my/ml*sp*moveScale*dt; }
   if(h.lungeT>0){ h.lungeT-=dt; const lf=Math.max(0,h.lungeT/0.13); h.x+=h.lungeVX*lf*dt; h.y+=h.lungeVY*lf*dt; }  // eased forward commit on a swing
   if(h.invulnT>0) h.invulnT=Math.max(0,h.invulnT-dt);    // revive shield
@@ -2867,9 +2871,14 @@ function render(){
     const bump=Math.sin((1-h.dashT/0.16)*Math.PI), amt=0.6*bump;       // 0 → peak mid-dash → 0
     defS=1+amt; defP=1-amt*0.55;
   } else if(h.dashSettleT>0){ defAng=h.dashSettleAng||0;
-    const p=1-h.dashSettleT/(h.dashSettleMax||0.34);
-    const osc=Math.sin(p*Math.PI*4)*Math.exp(-p*5), amt=0.34*osc;      // damped oscillation, starts at 0 (continuous)
-    defS=1+amt; defP=1-amt;
+    const p=1-h.dashSettleT/(h.dashSettleMax||0.36);
+    if(h.dashWall){                                                    // hit-a-wall: slam flat, then a damped recoil bounce
+      const osc=-Math.cos(p*Math.PI*3)*Math.exp(-p*4.5), amt=0.5*osc;  // starts hard-compressed along travel
+      defS=1+amt; defP=1-amt*1.1;
+    } else {                                                           // landing pingpong — bigger & slower so it clearly reads
+      const osc=Math.sin(p*Math.PI*3.2)*Math.exp(-p*4), amt=0.48*osc;  // starts at 0 (continuous with dash end)
+      defS=1+amt; defP=1-amt;
+    }
   }
   if(defS!==1||defP!==1){ g.translate(hx,hy); g.rotate(defAng); g.scale(defS,defP);
     g.beginPath(); g.arc(0,0,h.r,0,7); g.fill(); }
