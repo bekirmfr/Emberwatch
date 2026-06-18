@@ -1463,7 +1463,8 @@ function fireCastedAbility(h){
 function castDash(h, p){
   const ang=aimAngle(h), spd=p.speed||820;
   h.dashT=0.16; h.dashVX=Math.cos(ang)*spd; h.dashVY=Math.sin(ang)*spd;
-  h.dashPass=!!p.passthrough; h.dashKnock=p.knockback||0; h.dashWall=false;
+  h.dashPass=!!p.passthrough; h.dashKnock=p.knockback||0; h.dashWall=false; h.dashBlink=!!p.blink;
+  if(h.dashBlink){ G.fx.push({blinkfx:true,out:true,x:h.x,y:h.y,life:0.26,max:0.26}); spawnParticles(h.x,h.y,"#cdb4ff",12,{speed:120,life:0.3,size:2}); }
   h.invulnT=Math.max(h.invulnT||0, h.dashT+0.06);   // i-frames while rolling — dodge through enemies and attacks
   if(p.dmg){ const ad=resolveStat(h,"attackDamage",ctx); h.dashInst=abilityInstance(h,p.dmg.base+ad*p.dmg.ratio,["dash"]); h.dashHit=new Set(); }
   else h.dashInst=null;
@@ -1558,7 +1559,7 @@ const MAGE_ABILITIES = [
       {nm:"Storm", ds:"arcs to 3 foes", apply:p=>p.jumps=3},
       {nm:"Conduction", ds:"much less falloff per jump", apply:p=>p.falloff=0.85} ] },
   { id:"blink", key:"e", label:"E", name:"Blink", cd:3, glyph:"✦", unlock:0, castTime:0,
-    base:{speed:980,passthrough:true}, cast(h,p){ castDash(h,p); }, upgrades:[
+    base:{speed:700,passthrough:true,blink:true}, cast(h,p){ castDash(h,p); }, upgrades:[
       {nm:"Far step", ds:"+range", apply:p=>p.speed+=300},
       {nm:"Arcane wake", ds:"damages foes you blink through", apply:p=>p.dmg={base:18,ratio:0.6}},
       {nm:"Detonate", ds:"+damage on the wake", apply:p=>p.dmg={base:p.dmg.base+20,ratio:p.dmg.ratio+0.6}} ] },
@@ -1760,8 +1761,10 @@ function update(dt){
           h.dashT=0;                                         // base dash stops at the first enemy
         }
       } }
-    if(Math.random()<0.6) G.fx.push({trail:true,x:h.x,y:h.y,life:0.2,max:0.2});
-    if(h.dashT<=0){ h.dashSettleT=h.dashWall?0.42:0.36; h.dashSettleMax=h.dashSettleT; h.dashSettleAng=Math.atan2(h.dashVY,h.dashVX); }   // landed → springy settle (harder if it hit something)
+    if(h.dashBlink){ if(Math.random()<0.5) G.fx.push({blinkfx:true,out:true,x:h.x,y:h.y,life:0.16,max:0.16}); }
+    else if(Math.random()<0.6) G.fx.push({trail:true,x:h.x,y:h.y,life:0.2,max:0.2});
+    if(h.dashT<=0){ h.dashSettleT=h.dashWall?0.42:0.36; h.dashSettleMax=h.dashSettleT; h.dashSettleAng=Math.atan2(h.dashVY,h.dashVX);   // landed → springy settle (harder if it hit something)
+      if(h.dashBlink){ G.fx.push({blinkfx:true,out:false,x:h.x,y:h.y,life:0.34,max:0.34}); spawnParticles(h.x,h.y,"#cdb4ff",14,{speed:210,life:0.4,size:2.2}); } }
   } else if(!casting && ml>DEAD){ h.x+=mx/ml*sp*moveScale*dt; h.y+=my/ml*sp*moveScale*dt; }
   if(h.lungeT>0){ h.lungeT-=dt; const lf=Math.max(0,h.lungeT/0.13); h.x+=h.lungeVX*lf*dt; h.y+=h.lungeVY*lf*dt; }  // eased forward commit on a swing
   if(h.invulnT>0) h.invulnT=Math.max(0,h.invulnT-dt);    // revive shield
@@ -2862,6 +2865,15 @@ function render(){
     g.beginPath(); g.ellipse(hx,hy+h.r*0.45, h.r*(1.1+dp*2.0), h.r*(0.5+dp*1.0),0,0,7); g.fill(); g.restore();
     g.save(); g.globalAlpha=Math.max(0,1-dp*0.85); g.fillStyle="#c4a890";      // hero greys, shrinks, slumps
     g.beginPath(); g.arc(hx,hy+dp*4, h.r*(1-dp*0.4),0,7); g.fill(); g.restore();
+  } else if(h.dashBlink && (h.dashT>0 || h.dashSettleT>0)){
+    // arcane phase — no physical smear: the body fades/shrinks out, then re-materializes with a small overshoot
+    let sc, al;
+    if(h.dashT>0){ sc=0.82; al=0.4; }
+    else { const p=1-h.dashSettleT/(h.dashSettleMax||0.36);
+      sc=0.5+0.5*p + Math.sin(Math.min(1,p)*Math.PI)*0.12; al=0.35+0.65*p; }
+    g.save(); g.globalAlpha=al; g.shadowBlur=20; g.shadowColor="rgba(180,140,255,.9)";
+    g.fillStyle = h.flash>0 ? "#fff" : "#e7dcff";
+    g.beginPath(); g.arc(hx,hy,h.r*sc,0,7); g.fill(); g.restore();
   } else {
   g.save(); g.shadowBlur=18*(1-0.7*expFrac); g.shadowColor="rgba(255,180,90,.8)";
   g.fillStyle = h.flash>0 ? "#fff" : (exp>0 ? `rgb(${255-60*expFrac|0},${233-90*expFrac|0},${194-120*expFrac|0})` : "#ffe9c2");
@@ -2976,6 +2988,15 @@ function render(){
       g.globalAlpha=k*0.3; g.lineWidth=1.5; g.strokeStyle=`rgb(${col})`; g.beginPath(); g.arc(x,y,f.r,0,7); g.stroke();   // faint reach ring
       g.restore(); g.globalAlpha=1; continue; }
     if(f.strike) continue;                                  // lightning strike is drawn in a late pass (on top of the flash/dark overlays)
+    if(f.blinkfx){ const k=Math.max(0,f.life/f.max), prog=1-k;   // arcane teleport rings
+      g.save(); g.globalCompositeOperation="lighter";
+      if(f.out){ const R=46*(1-prog);                       // collapse inward at the departure point
+        g.globalAlpha=k*0.9; g.lineWidth=2.5; g.strokeStyle="rgba(190,150,255,1)"; g.beginPath(); g.arc(x,y,R,0,7); g.stroke();
+        g.fillStyle=`rgba(150,110,255,${0.22*k})`; g.beginPath(); g.arc(x,y,R*0.7,0,7); g.fill();
+      } else { const R=10+54*prog;                          // burst outward at the arrival point
+        g.fillStyle=`rgba(225,205,255,${0.55*k})`; g.beginPath(); g.arc(x,y,16*k,0,7); g.fill();
+        g.lineWidth=3; g.strokeStyle=`rgba(190,150,255,${k})`; g.beginPath(); g.arc(x,y,R,0,7); g.stroke(); }
+      g.restore(); g.globalAlpha=1; continue; }
     if(f.callout){ const k=Math.max(0,f.life/f.max), pop=f.t!=null?1+Math.max(0,(0.18-f.t)/0.18)*1.4:1;
       g.save(); g.globalAlpha=k; g.textAlign="center"; const fsz=34*pop;
       g.font="900 "+fsz.toFixed(1)+"px ui-sans-serif,system-ui";
