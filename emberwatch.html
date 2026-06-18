@@ -125,6 +125,8 @@
   .startpane{display:none;margin-top:18px}
   .startpane.on{display:block;animation:cardIn .26s ease-out}
   .paneback{text-align:center;margin-top:14px}
+  .paneback .btn{border-color:transparent}
+  .paneback .btn:hover{border-color:transparent}
   /* game-over screen */
   .ovstats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 6px}
   .ovs{display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 6px;
@@ -363,7 +365,7 @@
   .big{cursor:pointer;font:inherit;font-size:15px;letter-spacing:.1em;text-transform:uppercase;
     font-weight:600;color:#1a1206;background:linear-gradient(180deg,var(--ember-hi),var(--ember));
     border:none;border-radius:11px;padding:13px 34px}
-  .choose{font-size:clamp(16px,4.5vw,22px);font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ember);margin:18px 0 16px}
+  .choose{font-size:clamp(16px,4.5vw,22px);font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ember);margin:18px 0 30px}
   #start.picking .titlebox,#start.picking .tag,#start.picking .menuembers{display:none}
   .classpick{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;text-align:left}
   .classcard{cursor:pointer;background:rgba(255,255,255,.02);border:1px solid var(--line);
@@ -379,7 +381,7 @@
     display:flex;align-items:center;justify-content:center;transition:transform .12s,border-color .12s,background .12s,color .12s}
   .navarrow:hover{border-color:var(--ember);background:rgba(255,170,80,.09);color:var(--ember-hi);transform:translateY(-2px)}
   .navarrow:active{transform:scale(.93)}
-  .herocard{--cc:#888;flex:1;max-width:300px;aspect-ratio:5/7;
+  .herocard{--cc:#888;flex:1;max-width:300px;min-height:230px;
     display:flex;flex-direction:column;justify-content:center;
     border-radius:16px;padding:24px 20px;text-align:center;
     border:1px solid var(--cc);
@@ -394,10 +396,10 @@
   .herocard .hstat{font-size:10.5px;color:var(--muted);background:rgba(255,255,255,.045);border:1px solid var(--line);
     border-radius:999px;padding:4px 11px}
   .herocard .hstat b{color:var(--cream);font-weight:700}
-  .pickdots{display:flex;gap:7px;justify-content:center;margin:14px 0 4px}
+  .pickdots{display:flex;gap:7px;justify-content:center;margin:26px 0 4px}
   .pickdots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.2);transition:background .15s,transform .15s}
   .pickdots i.on{background:var(--ember);transform:scale(1.3)}
-  #pickbegin{min-width:210px;margin-top:8px}
+  #pickbegin{min-width:210px;margin-top:20px}
   #over .title{font-size:30px;font-weight:700;letter-spacing:.08em;color:#ff7a4d}
   #over .stats{color:var(--muted);font-size:14px;line-height:2;margin:16px 0 22px}
   #over .stats b{color:var(--cream)}
@@ -1959,10 +1961,13 @@ function update(dt){
       G.carry-=dep; G.xp+=dep;
       SFX.feed(G.bankStep++);                                                    // chime climbs as the stream runs
       G.fireFeed=Math.min(1.5,(G.fireFeed||0)+0.5);                              // fire flares up
-      spawnParticles(0,0,"#ffd98a",4,{speed:130,life:0.5,size:2.6,dir:-Math.PI/2,spread:0.95,grav:-80});  // embers gush up
+      spawnParticles(0,0,"#ffd98a",7,{speed:130,life:0.5,size:2.6,dir:-Math.PI/2,spread:0.95,grav:-80});  // embers gush up
+      spawnParticles(0,-6,"#fff0c0",6,{speed:215,life:0.3,size:1.7,dir:-Math.PI/2,spread:2.7,grav:70});   // crackling sparks snap outward
       G.fx.push({x:ri(-13,13), y:-18, vy:-48, life:0.7, t:0, txt:"+"+dep, col:"#ffce6a"});                 // rising tally at the flames
       if(G.carry<1){ G.carry=0; G.fireFeed=1.6; SFX.fire(); shake(2.2);          // the last of it goes in — a warm whoomp
-        G.rings.push({from:24,to:96,life:0.5,max:0.5}); }
+        G.rings.push({from:24,to:96,life:0.5,max:0.5});
+        spawnParticles(0,-6,"#fff0c0",18,{speed:280,life:0.5,size:2.2,grav:60});                          // crackle burst on the final whoomp
+        spawnParticles(0,-10,"#ffce6a",12,{speed:150,life:0.7,size:2.8,dir:-Math.PI/2,spread:1.4,grav:-90}); }   // tall ember plume
     }
   } else { G.bankStep=0; G.bankTimer=0; }
   if(G.fireFeed>0) G.fireFeed=Math.max(0, G.fireFeed - dt*2.4);                   // flare settles back down
@@ -2660,7 +2665,7 @@ function render(){
   // at night it's the only safe light. Intensity scales with darkness.
   g.save(); g.globalCompositeOperation="lighter";
   const pool=g.createRadialGradient(fsx,fsy,20,fsx,fsy,lr);
-  const pi=0.12+0.7*night + (G.fireFeed||0)*0.16;          // pool strength (flares up while feeding the fire)
+  const pi=0.12+0.7*night + (G.fireFeed||0)*0.22;          // pool strength (flares up while feeding the fire)
   pool.addColorStop(0, `rgba(120,72,30,${pi})`);
   pool.addColorStop(0.6,`rgba(80,46,20,${pi*0.6})`);
   pool.addColorStop(1, "rgba(0,0,0,0)");
@@ -2891,6 +2896,18 @@ function render(){
       g.globalAlpha=k*0.7; g.lineWidth=2.5; g.strokeStyle="#ffd9a0"; g.beginPath(); g.arc(X,Y, 6+prog*22, 0,7); g.stroke();   // shock ring
       g.restore(); g.globalAlpha=1; continue;
     }
+    if(f.nova){                                     // revive clearing shockwave — bright wave expanding to the blast radius
+      const k=Math.max(0,f.life/f.max), prog=1-k, rr=f.r*prog, edge=Math.max(0,1-prog*0.8);
+      g.save(); g.globalCompositeOperation="lighter";
+      const gr=g.createRadialGradient(x,y,Math.max(1,rr*0.45),x,y,Math.max(2,rr));   // filling bloom inside the wave
+      gr.addColorStop(0,`rgba(255,205,135,${0.30*k})`); gr.addColorStop(1,"rgba(255,140,50,0)");
+      g.fillStyle=gr; g.beginPath(); g.arc(x,y,Math.max(2,rr),0,7); g.fill();
+      g.globalAlpha=edge; g.lineWidth=2+6*k; g.strokeStyle="#ffe7b4"; g.shadowBlur=20; g.shadowColor="#ff9a3c";
+      g.beginPath(); g.arc(x,y,rr,0,7); g.stroke();                                  // bright leading edge
+      g.globalAlpha=edge*0.55; g.lineWidth=2; g.strokeStyle="#fff6e2"; g.shadowBlur=0;
+      g.beginPath(); g.arc(x,y,rr*0.8,0,7); g.stroke();                              // trailing inner ring
+      g.restore(); g.globalAlpha=1; continue;
+    }
     if(f.swing){ const k=f.life/f.max; g.globalAlpha=Math.max(0,k)*0.8; g.strokeStyle="#ffe1b0"; g.lineWidth=3;
       g.beginPath(); g.arc(x,y,f.r*(1.05-0.25*k), f.a-1.15, f.a+1.15); g.stroke(); g.globalAlpha=1; continue; }
     if(f.trail){ g.globalAlpha=Math.max(0,f.life/f.max)*0.5; g.fillStyle="#ffe9c2";
@@ -3090,19 +3107,43 @@ function drawFire(x,y){
   const t=performance.now()/1000;
   const lv=G.fireLevel;
   const baseR=11+lv*2.0;
+  const feed=Math.min(1,(G.fireFeed||0)/1.6);          // 0..1 feeding flare — drives extra glow + taller flames
   // glow
   g.save(); g.globalCompositeOperation="lighter";
-  for(let i=0;i<3;i++){ const r=baseR*(2.4-i*0.6)+Math.sin(t*6+i)*3;
-    g.fillStyle=`rgba(255,${120+i*30},${30+i*20},${0.10+i*0.04})`; g.beginPath(); g.arc(x,y,r,0,7); g.fill(); }
+  for(let i=0;i<3;i++){ const r=baseR*(2.4-i*0.6)+Math.sin(t*6+i)*3 + feed*baseR*0.9;
+    g.fillStyle=`rgba(255,${120+i*30},${30+i*20},${0.10+i*0.04+feed*0.10})`; g.beginPath(); g.arc(x,y,r,0,7); g.fill(); }
+  if(feed>0.01){                                        // bright bloom at the heart of the fire as it's fed
+    g.fillStyle=`rgba(255,225,150,${0.20*feed})`; g.beginPath(); g.arc(x,y,baseR*(1.4+feed*1.3),0,7); g.fill(); }
   if(typeof isSupporter==="function" && isSupporter()){     // Supporter cosmetic: a warmer, brighter halo
     const sp=0.5+0.5*Math.sin(t*2.2);
     g.fillStyle=`rgba(255,205,120,${0.06+0.05*sp})`; g.beginPath(); g.arc(x,y,baseR*3.1+sp*5,0,7); g.fill(); }
-  // flames
-  for(let i=0;i<5;i++){ const a=t*5+i; const fr=baseR*(0.7+0.3*Math.sin(a)); const fy=y-baseR*0.5-Math.abs(Math.sin(a))*baseR;
-    g.fillStyle=i%2?"#ffb347":"#ff7b29"; g.beginPath(); g.ellipse(x+Math.sin(a*1.3)*baseR*0.4, fy, fr*0.5, fr, 0,0,7); g.fill(); }
   g.restore();
-  // logs
-  g.fillStyle="#3a2415"; g.fillRect(x-baseR,y+baseR*0.4,baseR*2,baseR*0.5);
+  // crossed logs base — two billets forming an X, drawn beneath (behind) the flames
+  { const ly=y+baseR*0.55, lw=baseR*2.3, lh=Math.max(7,baseR*0.56);
+    const grain=(ex)=>{ g.fillStyle="rgba(86,52,28,.95)"; g.beginPath(); g.arc(ex,0,lh*0.4,0,7); g.fill();
+      g.fillStyle="rgba(150,96,52,.85)"; g.beginPath(); g.arc(ex,0,lh*0.2,0,7); g.fill(); };
+    const log=(ang,body)=>{ g.save(); g.translate(x,ly); g.rotate(ang);
+      g.fillStyle=body; g.fillRect(-lw/2,-lh/2,lw,lh);
+      g.beginPath(); g.arc(-lw/2,0,lh/2,0,7); g.arc(lw/2,0,lh/2,0,7); g.fill();   // rounded ends
+      grain(-lw/2); grain(lw/2); g.restore(); };                                  // lit cut ends
+    log(0.42,"#241710"); log(-0.42,"#160d07"); }
+  // flames — drawn on top of the logs, so the fire sits in front of the fuel
+  g.save(); g.globalCompositeOperation="lighter";
+  // white-hot heart at the base — the bright glowing core the flames rise from
+  const coreY=y-baseR*0.05, coreR=baseR*(1.5+feed*0.9);
+  const core=g.createRadialGradient(x,coreY,1,x,coreY,coreR);
+  core.addColorStop(0,"rgba(255,252,232,0.95)");
+  core.addColorStop(0.35,"rgba(255,214,140,0.85)");
+  core.addColorStop(0.7,"rgba(255,150,60,0.45)");
+  core.addColorStop(1,"rgba(255,120,40,0)");
+  g.fillStyle=core; g.beginPath(); g.arc(x,coreY,coreR,0,7); g.fill();
+  // rising flame tongues
+  for(let i=0;i<5;i++){ const a=t*5+i; const fr=baseR*(0.7+0.3*Math.sin(a))*(1+feed*0.6); const fy=y-baseR*0.3-Math.abs(Math.sin(a))*baseR*(1+feed*0.9);
+    g.fillStyle=i%2?"#ffb347":"#ff7b29"; g.beginPath(); g.ellipse(x+Math.sin(a*1.3)*baseR*0.4, fy, fr*0.5, fr, 0,0,7); g.fill(); }
+  // white-hot inner licks lifting off the heart
+  for(let i=0;i<2;i++){ const a=t*6+i*3.1; const fr=baseR*(0.45+0.2*Math.sin(a))*(1+feed*0.5); const fy=y-baseR*0.15-Math.abs(Math.sin(a))*baseR*0.7*(1+feed*0.8);
+    g.fillStyle="rgba(255,246,214,0.9)"; g.beginPath(); g.ellipse(x+Math.sin(a*1.5)*baseR*0.22, fy, fr*0.4, fr, 0,0,7); g.fill(); }
+  g.restore();
   // rising embers / sparks
   if(G.embers&&G.embers.length){ g.save(); g.globalCompositeOperation="lighter";
     for(const e of G.embers){ const k=Math.max(0,e.life/e.max), fl=0.6+0.4*Math.sin(e.sway*2.3);
@@ -3321,7 +3362,7 @@ function renderHeroPick(){
     `<div class="hr">${c.role}</div><div class="hb">${c.blurb}</div>`+
     `<div class="hstats">`+chips.map(([k,v])=>`<span class="hstat">${k} <b>${v}</b></span>`).join("")+`</div>`;
   card.classList.remove("swap"); void card.offsetWidth; card.classList.add("swap");   // re-trigger swap anim
-  const begin=document.getElementById("pickbegin"); if(begin) begin.textContent="Begin as "+c.name;
+  const begin=document.getElementById("pickbegin"); if(begin) begin.textContent="Begin";
   const dots=document.getElementById("pickdots"); if(dots) dots.innerHTML=PICK_ORDER.map((_,i)=>`<i class="${i===pickIdx?"on":""}"></i>`).join("");
 }
 function cyclePick(dir){ pickIdx=(pickIdx+dir+PICK_ORDER.length)%PICK_ORDER.length; renderHeroPick(); SFX.cast&&SFX.cast(); }
@@ -3472,12 +3513,15 @@ function revive(){
   h.activeEffects=[];                                            // clear burns / poison / exposed
   h.currentHealth=resolveStat(h,"maxHealth",ctx)*0.6;
   h.invulnT=2.6;                                                 // breathing room
+  const novaDmg = 25 + (G.level||1)*20;                          // revive nova damage scales with level (tunable)
   for(const e of G.enemies){ if(e.dead) continue; const dx=e.x-h.x, dy=e.y-h.y, d=Math.hypot(dx,dy)||1;
-    if(d<300){ e.x+=dx/d*(300-d)*0.9; e.y+=dy/d*(300-d)*0.9; e.currentHealth-=resolveStat(h,"maxHealth",ctx)*0.25; } }
+    if(d<200){ e.x+=dx/d*(200-d)*0.9; e.y+=dy/d*(200-d)*0.9; e.currentHealth-=novaDmg; } }
   G.enemies=G.enemies.filter(e=>e.currentHealth>0 || e.boss);
-  // rebirth flourish
-  for(let i=0;i<3;i++) G.fx.push({cleave:true, x:h.x, y:h.y, r:120+i*80, life:0.5+i*0.12, max:0.5+i*0.12});
-  spawnParticles(h.x,h.y,"#ffd27a",36,{speed:260,life:0.9,size:3}); spawnParticles(h.x,h.y,"#ff8a2c",20,{speed:160,life:0.7,size:2.5});
+  // rebirth flourish — a clearing nova shockwave that maps to the 200px blast radius
+  G.fx.push({nova:true, x:h.x, y:h.y, r:200, life:0.6, max:0.6});
+  G.fx.push({impact:true, x:h.x, y:h.y, life:0.22, max:0.22});                     // bright central pop
+  spawnParticles(h.x,h.y,"#ffe6b0",30,{speed:340,life:0.55,size:2.2});             // fast sparks riding the wave outward
+  spawnParticles(h.x,h.y,"#ffd27a",36,{speed:240,life:0.9,size:3}); spawnParticles(h.x,h.y,"#ff8a2c",20,{speed:160,life:0.7,size:2.5});
   shake(10); screenFlash("255,170,80",0.5); SFX.levelUp(); vibrate(40);
   hide("over"); running=true; G.paused=false; last=performance.now(); acc=0;
   buildHotbar();
