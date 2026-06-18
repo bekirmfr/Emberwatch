@@ -926,7 +926,7 @@ const PERKS = [
   {nm:"Ironhide", flat:true, tiers:[3,5,10], ds:v=>`+${v} armor.`, build:v=>({modifiers:[{stat:"armor",op:"flat",value:v,source:"Ironhide"}],triggers:[]})},
   {nm:"Sunder", flat:true, tiers:[5,8,15], ds:v=>`+${v} armor penetration.`, build:v=>({modifiers:[{stat:"armorPen",op:"flat",value:v,source:"Sunder"}],triggers:[]})},
   {nm:"Battle Rhythm", flat:true, tiers:[.03,.05,.10], ds:v=>`-${pct(v)} ability cooldowns.`, build:v=>({modifiers:[{stat:"cdr",op:"flat",value:v,source:"Battle Rhythm"}],triggers:[]})},
-  {nm:"Cleaving Blows", flat:true, tiers:[10,20,50], ds:v=>`Attacks splash 50% to nearby foes (+${v} radius).`, build:v=>({modifiers:[{stat:"cleave",op:"flat",value:v,source:"Cleaving Blows"}],triggers:[]})},
+  {nm:"Cleaving Blows", flat:true, tiers:[30,45,100], ds:v=>`Attacks splash up to 50% to nearby foes — strongest at the hit, less toward the edge (+${v} radius).`, build:v=>({modifiers:[{stat:"cleave",op:"flat",value:v,source:"Cleaving Blows"}],triggers:[]})},
   {nm:"Thornmail", flat:true, tiers:[3,5,8], ds:v=>`+${v} armor; reflect 12% of damage taken.`, build:v=>({modifiers:[{stat:"armor",op:"flat",value:v,source:"Thornmail"}],triggers:[{on:"onHitTaken",source:"Thornmail",effect:{kind:"spawnPayload",of:{mode:"reflect",pct:.12}}}]})},
   {nm:"Frostbite", tiers:[.25,.35,.50], ds:v=>`Attacks chill foes — ${pct(v)} slower for ${(1.25+v*2.5).toFixed(1)}s.`, build:v=>({modifiers:[],triggers:[{on:"onHitDealt",source:"Frostbite",effect:{kind:"applyEffect",to:"other",template:chillTpl(v)}}]})},
   {nm:"Ember Touch", tiers:[1.5,3,7], ds:v=>`Attacks set foes alight — burns ${v}/sec (stacks).`, build:v=>({modifiers:[],triggers:[{on:"onHitDealt",source:"Ember Touch",effect:{kind:"applyEffect",to:"other",template:burnTpl(v)}}]})},
@@ -1319,9 +1319,11 @@ function stickArrow(e, s){
 function cleaveSplash(from, hit){
   const cleaveR=resolveStat(from,"cleave",ctx); if(cleaveR<=0) return;
   for(const e of G.enemies){ if(e===hit||e.dead) continue;
-    if(Math.hypot(e.x-hit.x,e.y-hit.y)<=cleaveR){
+    const d=Math.hypot(e.x-hit.x,e.y-hit.y);
+    if(d<=cleaveR){
+      const fall=1 - (d/cleaveR)*0.8;            // damage scales from full at the impact to 20% at the edge
       const s2=snapshot(from,ctx);
-      resolveAttack(from, e, Object.assign(s2,{damage:s2.damage*CLEAVE_PCT,kind:"area",damageType:"physical",canCrit:false,appliesOnHit:false,lifestealMult:0.33,tags:["cleave"]}), ctx);
+      resolveAttack(from, e, Object.assign(s2,{damage:s2.damage*CLEAVE_PCT*fall,kind:"area",damageType:"physical",canCrit:false,appliesOnHit:false,lifestealMult:0.33,tags:["cleave"]}), ctx);
     }}
   G.fx.push({cleave:true,x:hit.x,y:hit.y,r:cleaveR,life:0.22,max:0.22});
 }
@@ -1572,7 +1574,7 @@ const KNIGHT_ABILITIES = [
       {nm:"Wide arc", ds:"+radius", apply:p=>p.radius+=40},
       {nm:"Brutal", ds:"+damage", apply:p=>{p.base+=14;p.ratio+=0.5;}},
       {nm:"Sweeping", ds:"knocks foes back", apply:p=>p.knockback=40} ] },
-  { id:"cleave", key:"w", label:"W", name:"Cleaving Blow", cd:4, glyph:"⚔", unlock:10, castTime:0.28,
+  { id:"cleave", key:"w", label:"W", name:"Crescent Slash", cd:4, glyph:"⚔", unlock:10, castTime:0.28,
     base:{base:22,ratio:1.2,reach:150,half:1.1}, cast(h,p){ castCone(h,p); }, upgrades:[
       {nm:"Reach", ds:"+range", apply:p=>p.reach+=55},
       {nm:"Crushing", ds:"+damage", apply:p=>{p.base+=16;p.ratio+=0.5;}},
@@ -1695,9 +1697,13 @@ function update(dt){
   // ---- weather: storms roll in and out, with lightning + thunder ----
   const st=G.storm;
   st.t-=dt;
-  if(st.t<=0){ st.on=!st.on; st.t = st.on ? ri(16,30) : ri(30,60); if(st.on) st.strikeIn = 1+Math.random()*2.5; }
+  if(st.t<=0){ st.on=!st.on; st.t = st.on ? ri(16,30) : ri(30,60); if(st.on){ st.strikeIn = 1+Math.random()*2.5; st.boltIn = 4+Math.random()*6; } }
   st.intensity += ((st.on?1:0)-st.intensity)*Math.min(1,dt*0.6);
   if(st.on && st.intensity>0.35){ st.strikeIn-=dt; if(st.strikeIn<=0){ triggerLightning(); st.strikeIn = 3.5+Math.random()*5; } }
+  if(st.on && st.intensity>0.4 && running && !G.dying && !G.hero.dead){   // occasional damaging ground strike near the fire
+    if(st.boltIn==null) st.boltIn = 4+Math.random()*6;
+    st.boltIn-=dt; if(st.boltIn<=0){ scheduleGroundStrike(); st.boltIn = 7+Math.random()*8; }
+  }
   if(st.intensity>0.01){                                    // drive the rain field (screen-space streaks)
     if(G.rain.length<280){ for(let i=G.rain.length;i<280;i++) G.rain.push({x:Math.random()*(W+120)-60,y:Math.random()*H,len:12+Math.random()*12,spd:760+Math.random()*420}); }
     const n=Math.floor(st.intensity*280);
@@ -1751,9 +1757,11 @@ function update(dt){
         if(!h.dashPass){ h.dashT=0; }              // base dash stops at the first enemy
       } }
     if(Math.random()<0.6) G.fx.push({trail:true,x:h.x,y:h.y,life:0.2,max:0.2});
+    if(h.dashT<=0){ h.dashSettleT=0.34; h.dashSettleMax=0.34; h.dashSettleAng=Math.atan2(h.dashVY,h.dashVX); }   // landed → springy pingpong
   } else if(!casting && ml>DEAD){ h.x+=mx/ml*sp*moveScale*dt; h.y+=my/ml*sp*moveScale*dt; }
   if(h.lungeT>0){ h.lungeT-=dt; const lf=Math.max(0,h.lungeT/0.13); h.x+=h.lungeVX*lf*dt; h.y+=h.lungeVY*lf*dt; }  // eased forward commit on a swing
   if(h.invulnT>0) h.invulnT=Math.max(0,h.invulnT-dt);    // revive shield
+  if(h.dashSettleT>0) h.dashSettleT=Math.max(0,h.dashSettleT-dt);   // dash-landing pingpong decay
   // hero facing — toward movement while walking, toward the nearest foe while idle (mobile auto-aim)
   if(hasMoveInput && ml>DEAD) h.faceAng=Math.atan2(my,mx);
   else if(MOBILE){ const ne=nearest(h.x,h.y,G.enemies,99999); if(ne) h.faceAng=Math.atan2(ne.y-h.y,ne.x-h.x); }
@@ -1845,6 +1853,17 @@ function update(dt){
         G.fx.push({cleave:true,x:tg.x,y:tg.y,r:tg.r,life:0.3,max:0.3});
         spawnParticles(tg.x,tg.y, tg.burn?"#ff9b3c":"#ffcf8a", Math.min(34,12+(tg.r/7)|0), {speed:tg.r*2,life:0.5,size:3.2,grav:30});
         shake(Math.min(14, 5+tg.r/16));
+      } else if(tg.faction==="hazard"){                       // lightning ground strike — strikes friend and foe alike
+        const inst=tg.dmgFn();
+        for(const e of G.enemies){ if(e.dead) continue;
+          if(Math.hypot(e.x-tg.x,e.y-tg.y)<=tg.r+e.r){ e.currentHealth-=inst.damage; onDamage(e,inst.damage,false,inst); } }
+        if(!h.dead && (h.invulnT||0)<=0 && Math.hypot(h.x-tg.x,h.y-tg.y)<=tg.r+h.r){ h.currentHealth-=inst.damage; onDamage(h,inst.damage,false,inst); }
+        const bp=[]; let by=-560, bx=ri(-10,10);             // jagged bolt path (screen-offset, lands on the point)
+        for(; by<0; by+=ri(26,46)){ bx+=ri(-22,22); bp.push([bx,by]); } bp.push([0,0]);
+        G.fx.push({strike:true, x:tg.x, y:tg.y, r:tg.r, bolt:bp, life:0.55, max:0.55});
+        spawnParticles(tg.x,tg.y, "#cfe0ff", 22, {speed:tg.r*3, life:0.5, size:3, grav:40});
+        G.lightningFlash=1.0; screenFlash("210,235,255",0.5); SFX.thunder(true);   // bright blaze (kept lighter so the bolt reads)
+        shake(20); hitstop(0.06); vibrate([0,60,40,80]);
       } else if(!tg.from || !tg.from.dead){
         if(Math.hypot(h.x-tg.x,h.y-tg.y)<=tg.r+h.r) resolveAttack(tg.from||h, h, tg.dmgFn(), ctx);
         G.fx.push({cleave:true,enemy:true,x:tg.x,y:tg.y,r:tg.r,life:0.3,max:0.3});
@@ -2102,7 +2121,7 @@ function manageExposure(h, dt){
   // direct drain: 2% of max health per second, per rate level
   const mx = resolveStat(h, "maxHealth", ctx);
   const dmg = EXPOSE_DMG_PCT * mx * ex.stacks * dt;
-  if(dmg > 0){
+  if(dmg > 0 && (h.invulnT||0)<=0){    // the revive shield / dash i-frames hold the dark off too, giving time to reach the firelight
     h.currentHealth -= dmg;
     onDamage(h, dmg, false, null);   // hurt SFX/flash/shake so the dark is felt
   }
@@ -2174,7 +2193,15 @@ function triggerLightning(){            // a jagged bolt across the sky: flash, 
   vibrate(close?[0,55,40,70]:[0,25]);
   SFX.thunder(close);
 }
-/* procedural sound — synthesized on the fly, no asset files */
+/* schedule a telegraphed lightning ground strike at a random point around the campfire */
+function scheduleGroundStrike(){
+  if(!G) return;
+  const ang=Math.random()*Math.PI*2, near=70, far=Math.max(140, G.lightR*0.85);
+  const dist=near+Math.random()*(far-near), tx=Math.cos(ang)*dist, ty=Math.sin(ang)*dist;
+  const dmg=Math.round(38*diffMul());                       // lightning damage scales with wave difficulty (tunable)
+  G.telegraphs.push({ x:tx, y:ty, r:64, t:1.0, maxT:1.0, faction:"hazard",
+    dmgFn:()=>({damage:dmg, damageType:"true", canCrit:false, appliesOnHit:false, lifestealMult:0, tags:["hazard"], kind:"area"}) });
+}
 const SFX = (function(){
   let actx=null, master=null, muted=false, pkLast=0, pkStep=0, hitLast=0, rainSrc=null, rainGain=null, crickSrc=null, crickGain=null, crickGate=null, crickTimer=0, fireSrc=null, fireGain=null, fireStr=0, crackTimer=0;
   function ensure(){ if(actx!==null) return; try{ const AC=window.AudioContext||window.webkitAudioContext; actx=new AC(); master=actx.createGain(); master.gain.value=0.30; master.connect(actx.destination); }catch(e){ actx=false; } }
@@ -2317,7 +2344,8 @@ function onDamage(tgt, dealt, crit, p){
   const isBolt = p && p.tags && p.tags.includes("bolt");
   const isMelee = p && p.tags && p.tags.includes("melee");
   if(!splash && !isBolt && !(isMelee && !crit)){ crit ? SFX.crit() : SFX.hit(); }   // melee non-crit handled by the swing thunk
-  G.fx.push({x:tgt.x+ri(-6,6),y:tgt.y-tgt.r,vy:-34,life:splash?0.5:0.7,txt:Math.round(dealt),crit,splash,t:0});
+  if(splash) G.fx.push({x:tgt.x+ri(-6,6), y:tgt.y-tgt.r, vy:-30, life:0.8, t:0, txt:"-"+Math.round(dealt), col:"#ffcf8a"});  // cleave damage — shown like burn/poison ticks
+  else G.fx.push({x:tgt.x+ri(-6,6),y:tgt.y-tgt.r,vy:-34,life:0.7,txt:Math.round(dealt),crit,t:0});
   // spark in the hit direction; crits spark harder + shake + brief freeze
   spawnParticles(tgt.x,tgt.y, crit?"#ffd24a":(splash?"#ffcaa0":"#ffd9a0"), crit?9:(splash?2:4), {speed:crit?230:150,life:crit?0.4:0.28,size:crit?3:2});
   // blood — sprays away from the attacker, more on bigger hits
@@ -2732,9 +2760,15 @@ function render(){
   // telegraphs — filling warning circles (amber = yours, red = incoming)
   for(const tg of G.telegraphs){ if(tg.done) continue;
     const x=sx(tg.x), y=sy(tg.y), fill=1-Math.max(0,tg.t)/tg.maxT;
-    const col = tg.faction==="enemy" ? "230,70,70" : "255,170,80";
+    const col = tg.faction==="enemy" ? "230,70,70" : tg.faction==="hazard" ? "150,200,255" : "255,170,80";
     g.strokeStyle=`rgba(${col},.8)`; g.lineWidth=2; g.beginPath(); g.arc(x,y,tg.r,0,7); g.stroke();
-    g.fillStyle=`rgba(${col},.22)`; g.beginPath(); g.arc(x,y,tg.r*fill,0,7); g.fill();
+    if(tg.faction==="hazard"){
+      const shrink=Math.max(0,tg.t)/tg.maxT;                 // ring contracts from the rim down to the point
+      g.lineWidth=3; g.strokeStyle=`rgba(${col},.95)`; g.beginPath(); g.arc(x,y,tg.r*shrink,0,7); g.stroke();
+      g.fillStyle=`rgba(${col},${0.25+0.4*fill})`; g.beginPath(); g.arc(x,y,3,0,7); g.fill();   // pulsing target dot
+    } else {
+      g.fillStyle=`rgba(${col},.22)`; g.beginPath(); g.arc(x,y,tg.r*fill,0,7); g.fill();
+    }
   }
 
   // enemies
@@ -2827,7 +2861,20 @@ function render(){
   } else {
   g.save(); g.shadowBlur=18*(1-0.7*expFrac); g.shadowColor="rgba(255,180,90,.8)";
   g.fillStyle = h.flash>0 ? "#fff" : (exp>0 ? `rgb(${255-60*expFrac|0},${233-90*expFrac|0},${194-120*expFrac|0})` : "#ffe9c2");
-  g.beginPath(); g.arc(hx,hy,h.r,0,7); g.fill(); g.restore();
+  // squash & stretch: elongate along the dash, pinch the sides; springy pingpong on landing
+  let defS=1, defP=1, defAng=0;
+  if(h.dashT>0){ defAng=Math.atan2(h.dashVY,h.dashVX);
+    const bump=Math.sin((1-h.dashT/0.16)*Math.PI), amt=0.6*bump;       // 0 → peak mid-dash → 0
+    defS=1+amt; defP=1-amt*0.55;
+  } else if(h.dashSettleT>0){ defAng=h.dashSettleAng||0;
+    const p=1-h.dashSettleT/(h.dashSettleMax||0.34);
+    const osc=Math.sin(p*Math.PI*4)*Math.exp(-p*5), amt=0.34*osc;      // damped oscillation, starts at 0 (continuous)
+    defS=1+amt; defP=1-amt;
+  }
+  if(defS!==1||defP!==1){ g.translate(hx,hy); g.rotate(defAng); g.scale(defS,defP);
+    g.beginPath(); g.arc(0,0,h.r,0,7); g.fill(); }
+  else { g.beginPath(); g.arc(hx,hy,h.r,0,7); g.fill(); }
+  g.restore();
   // aim indicator — thickens/charges during wind-up
   const winding = h.atkState==="windup";
   const wfrac = winding && h.atkWind ? 1-Math.max(0,h.atkT)/h.atkWind : 0;
@@ -2912,8 +2959,14 @@ function render(){
       g.beginPath(); g.arc(x,y,f.r*(1.05-0.25*k), f.a-1.15, f.a+1.15); g.stroke(); g.globalAlpha=1; continue; }
     if(f.trail){ g.globalAlpha=Math.max(0,f.life/f.max)*0.5; g.fillStyle="#ffe9c2";
       g.beginPath(); g.arc(x,y,G.hero.r*0.7,0,7); g.fill(); g.globalAlpha=1; continue; }
-    if(f.cleave){ g.globalAlpha=Math.max(0,f.life/f.max)*0.5; g.strokeStyle=f.enemy?"#ff6a4a":"#ffb15a"; g.lineWidth=2;
-      g.beginPath(); g.arc(x,y,f.r*(1-f.life/f.max),0,7); g.stroke(); g.globalAlpha=1; continue; }
+    if(f.cleave){ const k=Math.max(0,f.life/f.max), col=f.enemy?"255,106,74":"255,177,90";
+      g.save(); g.globalCompositeOperation="lighter";
+      const gr=g.createRadialGradient(x,y,1,x,y,Math.max(2,f.r));       // bright at the impact, fading to the edge — mirrors the damage falloff
+      gr.addColorStop(0,`rgba(${col},${0.42*k})`); gr.addColorStop(0.55,`rgba(${col},${0.15*k})`); gr.addColorStop(1,`rgba(${col},0)`);
+      g.fillStyle=gr; g.beginPath(); g.arc(x,y,f.r,0,7); g.fill();
+      g.globalAlpha=k*0.3; g.lineWidth=1.5; g.strokeStyle=`rgb(${col})`; g.beginPath(); g.arc(x,y,f.r,0,7); g.stroke();   // faint reach ring
+      g.restore(); g.globalAlpha=1; continue; }
+    if(f.strike) continue;                                  // lightning strike is drawn in a late pass (on top of the flash/dark overlays)
     if(f.callout){ const k=Math.max(0,f.life/f.max), pop=f.t!=null?1+Math.max(0,(0.18-f.t)/0.18)*1.4:1;
       g.save(); g.globalAlpha=k; g.textAlign="center"; const fsz=34*pop;
       g.font="900 "+fsz.toFixed(1)+"px ui-sans-serif,system-ui";
@@ -2926,11 +2979,13 @@ function render(){
       g.lineWidth=3.5; g.strokeStyle="rgba(90,0,0,.95)"; g.strokeText("CRITICAL!",x,y);
       g.fillStyle="#ff4438"; g.fillText("CRITICAL!",x,y); g.globalAlpha=1; continue; }
     g.globalAlpha=Math.max(0,f.life/0.7);
-    g.fillStyle=f.col?f.col:(f.heal?"#9fe6a0":f.crit?"#ffd24a":(f.splash?"#ffcaa0":"#fff"));
+    const dcol=f.col?f.col:(f.heal?"#9fe6a0":f.crit?"#ff5a4a":(f.splash?"#ffcaa0":"#ffba50"));   // regular = bright orange, crit = bright red
     const pop = f.t!=null ? 1+Math.max(0,(0.12-f.t)/0.12)*(f.crit?0.9:0.5) : 1;   // scale-in pop
     const fsz=(f.crit?17:f.splash?11:13)*pop;
     g.font=(f.crit?"700 ":"600 ")+fsz.toFixed(1)+"px ui-sans-serif,system-ui";
-    g.textAlign="center"; g.fillText(f.txt,x,y); g.globalAlpha=1; }
+    g.textAlign="center";
+    g.lineWidth=f.crit?3.5:2.5; g.strokeStyle="rgba(0,0,0,.7)"; g.strokeText(f.txt,x,y);   // dark outline keeps the colour readable on any ground
+    g.fillStyle=dcol; g.fillText(f.txt,x,y); g.globalAlpha=1; }
 
   // limited vision at night — beyond the firelight (and a small bubble around you), the world sinks into the dark
   if(a<0.96){
@@ -3096,6 +3151,23 @@ function render(){
     g.restore();
   }
   if(G.flash>0){ g.fillStyle=`rgba(${G.flashCol},${Math.min(0.6,G.flash)})`; g.fillRect(0,0,W,H); }
+  // lightning ground strikes — drawn on top of the flash/dark overlays so the bolt always reads
+  for(const f of G.fx){ if(!f.strike) continue;
+    const k=Math.max(0,f.life/f.max), prog=1-k, X=sx(f.x), Y=sy(f.y);
+    g.save();
+    g.globalCompositeOperation="lighter";                              // electric impact bloom + shock ring
+    g.fillStyle=`rgba(200,225,255,${0.5*k})`; g.beginPath(); g.arc(X,Y,f.r*(0.5+prog*0.9),0,7); g.fill();
+    g.globalAlpha=k*0.85; g.lineWidth=3; g.strokeStyle="#b6d2ff"; g.beginPath(); g.arc(X,Y,f.r*(0.6+prog*1.2),0,7); g.stroke();
+    if(k>0.35 && f.bolt){                                              // the forked bolt
+      const drawBolt=(w,c)=>{ g.lineWidth=w; g.strokeStyle=c; g.beginPath();
+        g.moveTo(X+f.bolt[0][0],Y+f.bolt[0][1]); for(const p of f.bolt) g.lineTo(X+p[0],Y+p[1]); g.stroke(); };
+      g.globalAlpha=1; g.shadowBlur=22; g.shadowColor="#7fb0ff";
+      drawBolt(9,"rgba(120,180,255,0.95)");                            // wide blue glow (additive)
+      g.globalCompositeOperation="source-over"; g.shadowBlur=10;
+      drawBolt(3.5,"#ffffff");                                         // solid white core, opaque on top of everything
+    }
+    g.restore(); g.globalAlpha=1;
+  }
   if(G.dying){ const dp=1-Math.max(0,G.deathT/G.deathMax);          // world drains to dark red as you fall
     g.fillStyle=`rgba(18,0,0,${0.5*dp})`; g.fillRect(0,0,W,H);
     const vg=g.createRadialGradient(W/2,H/2,Math.max(0,(1-dp)*H*0.55),W/2,H/2,H*0.85);
@@ -3523,6 +3595,7 @@ function revive(){
   spawnParticles(h.x,h.y,"#ffe6b0",30,{speed:340,life:0.55,size:2.2});             // fast sparks riding the wave outward
   spawnParticles(h.x,h.y,"#ffd27a",36,{speed:240,life:0.9,size:3}); spawnParticles(h.x,h.y,"#ff8a2c",20,{speed:160,life:0.7,size:2.5});
   shake(10); screenFlash("255,170,80",0.5); SFX.levelUp(); vibrate(40);
+  hitstop(0.16); G.reviveRampMax=1.2; G.reviveRampT=1.2;     // world halts, then time surges back from a near-stop to full speed
   hide("over"); running=true; G.paused=false; last=performance.now(); acc=0;
   buildHotbar();
 }
@@ -3578,8 +3651,11 @@ function frame(now){
   const dt=(now-last)/1000; last=now;
   if(running && G && !G.paused){
     if(G.slowmoT>0) G.slowmoT-=dt;                          // wall-clock countdown
+    if(G.reviveRampT>0) G.reviveRampT-=dt;                  // wall-clock: time surges back to full speed after a revive
     if(G.hitStop>0){ G.hitStop-=dt; }          // freeze the sim for impact, keep rendering
-    else { const scale=(G.slowmoT>0?0.32:1); acc+=Math.min(dt,0.1)*scale; while(acc>=STEP){ update(STEP); acc-=STEP; } }
+    else { let scale=(G.slowmoT>0?0.32:1);
+      if(G.reviveRampT>0){ const p=1-Math.max(0,G.reviveRampT)/G.reviveRampMax; scale=Math.max(0.05,p*p); }   // reverse boss-death: from a near stop up to actual play speed
+      acc+=Math.min(dt,0.1)*scale; while(acc>=STEP){ update(STEP); acc-=STEP; } }
   }
   render();
   requestAnimationFrame(frame);
