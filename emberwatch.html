@@ -101,7 +101,14 @@
   body.mobile #buttons{position:absolute;left:auto;top:auto;right:22px;bottom:168px}   /* the pack sits just above the ability cluster */
   body.mobile #topleft{width:38vw;max-width:165px}            /* keep the bars clear of the centred clock */
   body.mobile #clock .phase{letter-spacing:.28em}             /* tighter so NIGHT can't reach the health bar */
-  body.mobile #topright{top:14px;line-height:1.55}            /* stats back up top now the pack moved to the bottom */
+  body.mobile #topright{top:60px;line-height:1.55}            /* stats sit below the pause button on mobile */
+  #pausebtn{position:absolute;top:10px;right:12px;width:40px;height:40px;display:none;z-index:6;pointer-events:auto;
+    align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.16);border-radius:10px;
+    background:rgba(10,14,24,.6);color:var(--cream);font-size:13px;letter-spacing:1px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  #pausebtn:hover{border-color:rgba(255,255,255,.34)} #pausebtn:active{background:rgba(10,14,24,.85)}
+  body.mobile #pausebtn{display:flex}
+  html[dir="rtl"] #pausebtn{right:auto;left:12px}
+  .pausemodal{max-width:280px;text-align:center}
   body.mobile #intermission{bottom:auto;top:96px}
   .hbslot.deny{animation:denyShake .26s ease-in-out}
   @keyframes unlockGlow{0%{box-shadow:0 0 0 0 rgba(255,178,90,.9);transform:scale(1)}
@@ -128,6 +135,20 @@
   .btn.primary:hover{filter:brightness(1.08)}
   .startbtns{display:flex;flex-direction:column;gap:11px;align-items:center;margin-top:8px}
   .startbtns .btn{min-width:200px;text-align:center}
+  .langrow{display:flex;justify-content:center;margin-top:18px}
+  .langtoggle{font:inherit;font-size:12px;letter-spacing:.04em;color:var(--muted);background:transparent;
+    border:1px solid rgba(255,255,255,.14);padding:6px 16px;border-radius:999px;cursor:pointer;transition:.15s}
+  .langtoggle:hover{color:#fff;border-color:rgba(255,255,255,.32)}
+  .langmodal{max-width:300px}
+  .langgrid{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+  .langitem{font:inherit;font-size:14px;color:var(--cream);background:rgba(255,255,255,.04);
+    border:1px solid var(--line);padding:10px 14px;border-radius:10px;cursor:pointer;transition:.15s}
+  .langitem:hover{background:rgba(255,255,255,.09)}
+  .langitem.on{color:var(--ember-hi);border-color:var(--ember-hi)}
+  html[dir="rtl"] .modal,html[dir="rtl"] .keys{text-align:right}
+  html[dir="rtl"] #topleft{left:auto;right:14px;text-align:right}
+  html[dir="rtl"] #topright{right:auto;left:14px;text-align:left}
+  html[dir="rtl"] body.mobile #buttons{right:auto;left:22px}
   .menuembers{text-align:center;margin-top:20px;font-size:13px;letter-spacing:.04em;color:var(--muted)}
   .menuembers b{color:var(--ember-hi);font-size:15px}
   .startpane{display:none;margin-top:18px}
@@ -377,7 +398,7 @@
     font-weight:600;color:#1a1206;background:linear-gradient(180deg,var(--ember-hi),var(--ember));
     border:none;border-radius:11px;padding:13px 34px}
   .choose{font-size:clamp(16px,4.5vw,22px);font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ember);margin:18px 0 30px}
-  #start.picking .titlebox,#start.picking .tag,#start.picking .menuembers{display:none}
+  #start.picking .titlebox,#start.picking .tag,#start.picking .menuembers,#start.picking .langrow{display:none}
   .classpick{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;text-align:left}
   .classcard{cursor:pointer;background:rgba(255,255,255,.02);border:1px solid var(--line);
     border-radius:12px;padding:14px;transition:transform .12s,border-color .12s,background .12s}
@@ -427,35 +448,37 @@
   <div class="hud" id="topleft">
     <div class="bar hp"><i id="hpghost"></i><i id="hpfill"></i><span id="hptext"></span></div>
     <div class="bar xp"><i id="xpfill"></i><span id="xptext"></span></div>
-    <div class="row"><div class="lvl">Level <span id="lvl">1</span></div></div>
+    <div class="row"><div class="lvl"><span data-i18n="level">Level</span> <span id="lvl">1</span></div></div>
   </div>
 
   <div class="hud" id="clock">
     <div class="phase" id="phase">Day</div>
     <div class="t" id="ctime">06:00</div>
-    <div class="day">Wave <span id="waven">1</span> · Day <span id="dayn">1</span></div>
+    <div class="day"><span data-i18n="waveLabel">Wave</span> <span id="waven">1</span> · <span data-i18n="dayLabel">Day</span> <span id="dayn">1</span></div>
   </div>
 
   <div class="hud" id="topright">
-    Foes <b id="foes">0</b><br>
-    Survived <b id="elapsed">0:00</b><br>
-    Slain <b id="kills">0</b>
+    <span data-i18n="foes">Foes</span> <b id="foes">0</b><br>
+    <span data-i18n="survived">Survived</span> <b id="elapsed">0:00</b><br>
+    <span data-i18n="slain">Slain</span> <b id="kills">0</b>
   </div>
 
-  <div class="hud" id="expwarn"><span id="expdots"></span> Exposed <b id="expn"></b> — return to the firelight</div>
+  <button id="pausebtn" aria-label="Pause" data-i18n-aria="paused" onclick="togglePause()">❚❚</button>
+
+  <div class="hud" id="expwarn"><span id="expdots"></span> <span data-i18n="exposedPre">Exposed</span> <b id="expn"></b> <span data-i18n="exposedPost">— return to the firelight</span></div>
 
   <div class="hud" id="loottoast"></div>
 
   <div class="hud" id="intermission">
     <div class="ititle" id="ititle"></div>
     <div class="isub" id="isub"></div>
-    <button class="big" id="beginwave" onclick="startWave()">Begin wave</button>
+    <button class="big" id="beginwave" onclick="startWave()" data-i18n="beginWave">Begin wave</button>
   </div>
 
   <div id="bottombar">
     <div class="hud" id="hotbar"></div>
     <div id="buttons">
-      <button class="btn" id="invbtn">Watcher's Pack<span class="k">I</span><span class="badge" id="invbadge">!</span></button>
+      <button class="btn" id="invbtn"><span data-i18n="pack">Watcher's Pack</span><span class="k">I</span><span class="badge" id="invbadge">!</span></button>
     </div>
   </div>
 
@@ -466,8 +489,8 @@
       <div class="tutrow">
         <span class="tutprog" id="tut-prog"></span>
         <span class="tutbtns">
-          <button class="btn tiny" id="tut-skip" onclick="skipTutorial()">Skip</button>
-          <button class="btn tiny primary" id="tut-next" onclick="nextTutorial()">Got it</button>
+          <button class="btn tiny" id="tut-skip" onclick="skipTutorial()" data-i18n="skip">Skip</button>
+          <button class="btn tiny primary" id="tut-next" onclick="nextTutorial()" data-i18n="gotIt">Got it</button>
         </span>
       </div>
     </div>
@@ -475,32 +498,32 @@
 
   <div class="overlay" id="levelup">
     <div class="luwrap">
-      <h2 class="lutitle">Level Up!</h2>
-      <div class="sub">Choose one boon. It lasts the rest of the run.</div>
+      <h2 class="lutitle" data-i18n="levelUp">Level Up!</h2>
+      <div class="sub" data-i18n="chooseBoon">Choose one boon. It lasts the rest of the run.</div>
       <div class="cards" id="perkcards"></div>
     </div>
   </div>
 
   <div class="overlay" id="inventory"><div class="modal lh">
-    <div class="lh-head"><h2>Watcher's Pack</h2><span class="lh-lvl" id="invlvl"></span></div>
-    <div class="lh-sec">Equipment</div>
+    <div class="lh-head"><h2 data-i18n="pack">Watcher's Pack</h2><span class="lh-lvl" id="invlvl"></span></div>
+    <div class="lh-sec" data-i18n="equipment">Equipment</div>
     <div class="eqgrid" id="eqgrid"></div>
-    <div class="lh-sec">Satchel</div>
+    <div class="lh-sec" data-i18n="satchel">Satchel</div>
     <div class="lootgrid" id="lootgrid"></div>
-    <div class="itemdetail empty-d" id="itemdetail">Select a piece of gear to inspect it.</div>
-    <div class="lh-sec">Stats</div>
+    <div class="itemdetail empty-d" id="itemdetail" data-i18n="selectGear">Select a piece of gear to inspect it.</div>
+    <div class="lh-sec" data-i18n="stats">Stats</div>
     <div class="statsbox" id="statsbox"></div>
-    <div class="lh-sec lh-toggle collapsed" id="boonshead" onclick="toggleBoons()">Boons &amp; Effects <span class="caret">▸</span></div>
+    <div class="lh-sec lh-toggle collapsed" id="boonshead" onclick="toggleBoons()"><span data-i18n="boons">Boons &amp; Effects</span> <span class="caret">▸</span></div>
     <div class="boonsbox collapsed" id="boonsbox"></div>
-    <div style="text-align:right;margin-top:16px"><button class="btn" onclick="closePanels()">Close<span class="k">I / Esc</span></button></div>
+    <div style="text-align:right;margin-top:16px"><button class="btn" onclick="closePanels()"><span data-i18n="close">Close</span><span class="k">I / Esc</span></button></div>
   </div></div>
 
   <div class="overlay" id="firepanel"><div class="modal">
-    <h2>The Campfire</h2><div class="sub" id="firesub"></div>
+    <h2 data-i18n="campfire">The Campfire</h2><div class="sub" id="firesub"></div>
     <div id="fireinfo"></div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
       <button class="big" id="upgradebtn"></button>
-      <button class="btn" onclick="closePanels()">Close</button>
+      <button class="btn" onclick="closePanels()" data-i18n="close">Close</button>
     </div>
   </div></div>
 
@@ -509,75 +532,90 @@
       <span class="titleshadow" aria-hidden="true">EMBERWATCH</span>
       <span class="title">EMBERWATCH</span>
     </div>
-    <div class="tag">Feed the fire · hold the dark</div>
+    <div class="tag" data-i18n="tagline">Feed the fire · hold the dark</div>
 
     <div class="menuembers">⬥ <b id="menu-embers">0</b> embers</div>
     <div class="startbtns" id="startmenu">
-      <button class="btn" onclick="showStartPane('howto')">How to Play</button>
-      <button class="btn primary" onclick="showStartPane('choose')">Play</button>
+      <button class="btn" onclick="showStartPane('howto')" data-i18n="howToPlay">How to Play</button>
+      <button class="btn primary" onclick="showStartPane('choose')" data-i18n="play">Play</button>
     </div>
+    <div class="langrow" id="langrow"><button class="langtoggle" id="langtoggle" onclick="openLang()">🌐 <span id="langcur">English</span></button></div>
 
     <div class="startpane" id="howtopane">
-      <div class="keys">
+      <div class="keys" data-i18n-html="howtoBody">
         <b>Desktop</b> — hold the mouse to move; release to attack the nearest foe. <b>Q W E R</b> cast toward the cursor (or click a slot).<br>
         <b>Mobile</b> — left-side joystick to move. Tap an ability to cast where you face; or drag to aim and release (release back on the button to cancel).<br>
         Slain foes drop <b>remains</b> — they stream into the fire and feed it; each fire level grows the blaze and grants a boon. <b>I</b> opens your satchel · <b>M</b> mutes sound.<br>
         Foes attack in waves; between them, time stops and the fire mends you. By night, stray from the firelight and the dark takes hold.
       </div>
-      <div class="paneback"><button class="btn" onclick="showStartPane('menu')">← Back</button></div>
+      <div class="paneback"><button class="btn" onclick="showStartPane('menu')" data-i18n="back">← Back</button></div>
     </div>
 
     <div class="startpane" id="choosepane">
-      <div class="choose">Choose your watcher</div>
+      <div class="choose" data-i18n="chooseWatcher">Choose your watcher</div>
       <div class="herocarousel">
-        <button class="navarrow" onclick="cyclePick(-1)" aria-label="Previous hero">‹</button>
+        <button class="navarrow" onclick="cyclePick(-1)" data-i18n-aria="prevHero" aria-label="Previous hero">‹</button>
         <div class="herocard" id="herocard"></div>
-        <button class="navarrow" onclick="cyclePick(1)" aria-label="Next hero">›</button>
+        <button class="navarrow" onclick="cyclePick(1)" data-i18n-aria="nextHero" aria-label="Next hero">›</button>
       </div>
       <div class="pickdots" id="pickdots"></div>
-      <button class="btn primary" id="pickbegin" onclick="beginPick()">Begin</button>
-      <div class="paneback"><button class="btn" onclick="showStartPane('menu')">← Back</button></div>
+      <button class="btn primary" id="pickbegin" onclick="beginPick()" data-i18n="begin">Begin</button>
+      <div class="paneback"><button class="btn" onclick="showStartPane('menu')" data-i18n="back">← Back</button></div>
     </div>
   </div></div>
 
   <div class="overlay" id="over"><div class="modal">
-    <div class="title">The fire went out</div>
+    <div class="title" data-i18n="gameOver">The fire went out</div>
     <div class="ovstats">
-      <div class="ovs"><span class="ovv" id="ov-waves">0</span><span class="ovk">Waves</span></div>
-      <div class="ovs"><span class="ovv" id="ov-level">0</span><span class="ovk">Level</span></div>
-      <div class="ovs"><span class="ovv" id="ov-kills">0</span><span class="ovk">Kills</span></div>
-      <div class="ovs"><span class="ovv" id="ov-days">0</span><span class="ovk">Days</span></div>
+      <div class="ovs"><span class="ovv" id="ov-waves">0</span><span class="ovk" data-i18n="waves">Waves</span></div>
+      <div class="ovs"><span class="ovv" id="ov-level">0</span><span class="ovk" data-i18n="level">Level</span></div>
+      <div class="ovs"><span class="ovv" id="ov-kills">0</span><span class="ovk" data-i18n="kills">Kills</span></div>
+      <div class="ovs"><span class="ovv" id="ov-days">0</span><span class="ovk" data-i18n="days">Days</span></div>
     </div>
     <div class="ovscore"><div class="ovsc-n" id="ov-score">0</div>
-      <div class="ovsc-b"><span id="ov-best">Best 0</span> · <span class="ovsc-g">earned <b id="ov-gain">0</b> ⬥</span></div></div>
-    <div class="ovembers">Embers: <b id="ov-embers">0</b> ⬥
-      <button class="btn tiny" id="ov-ad" onclick="watchAd()">Watch ad +30</button>
-      <button class="btn tiny" id="ov-buy" onclick="buyEmbers()">✦ Supporter Pack</button></div>
+      <div class="ovsc-b"><span id="ov-best">Best 0</span> · <span class="ovsc-g"><span data-i18n="earned">earned</span> <b id="ov-gain">0</b> ⬥</span></div></div>
+    <div class="ovembers"><span data-i18n="embersLabel">Embers:</span> <b id="ov-embers">0</b> ⬥
+      <button class="btn tiny" id="ov-ad" onclick="watchAd()" data-i18n="watchAd">Watch ad +30</button>
+      <button class="btn tiny" id="ov-buy" onclick="buyEmbers()" data-i18n="supporterPack">✦ Supporter Pack</button></div>
     <div class="ovactions">
-      <button class="btn revive" id="ov-revive" onclick="revive()">Revive <span class="rc">⬥ 25</span></button>
-      <button class="btn primary" onclick="toStart('choose')">Restart</button>
-      <button class="btn" onclick="toStart('menu')">Home</button>
+      <button class="btn revive" id="ov-revive" onclick="revive()"><span data-i18n="revive">Revive</span> <span class="rc">⬥ 25</span></button>
+      <button class="btn primary" onclick="toStart('choose')" data-i18n="restart">Restart</button>
+      <button class="btn" onclick="toStart('menu')" data-i18n="home">Home</button>
     </div>
   </div></div>
 </div>
 
 <div class="overlay" id="supporter"><div class="modal supmodal">
-  <div class="title">✦ Supporter Pack</div>
-  <div class="supsub">Back a solo-built game and keep the fire burning.</div>
+  <div class="title" data-i18n="supporterPack">✦ Supporter Pack</div>
+  <div class="supsub" data-i18n="supSub">Back a solo-built game and keep the fire burning.</div>
   <div class="supperks">
-    <div class="supperk"><span class="supi">🔥</span><div><b>Ember-glow fire</b><span>A warmer, brighter cosmetic blaze at your camp.</span></div></div>
-    <div class="supperk"><span class="supi">🚫</span><div><b>No ads, ever</b><span>Rewards still granted — you just skip the watching.</span></div></div>
-    <div class="supperk"><span class="supi">⬥</span><div><b>300 starting embers</b><span>A head start on revives and unlocks.</span></div></div>
+    <div class="supperk"><span class="supi">🔥</span><div><b data-i18n="emberGlow">Ember-glow fire</b><span data-i18n="emberGlowD">A warmer, brighter cosmetic blaze at your camp.</span></div></div>
+    <div class="supperk"><span class="supi">🚫</span><div><b data-i18n="noAdsPerk">No ads, ever</b><span data-i18n="noAdsPerkD">Rewards still granted — you just skip the watching.</span></div></div>
+    <div class="supperk"><span class="supi">⬥</span><div><b data-i18n="startEmbers">300 starting embers</b><span data-i18n="startEmbersD">A head start on revives and unlocks.</span></div></div>
   </div>
-  <div class="supprice">$4.99 · one-time</div>
-  <div class="supowned" id="sup-owned">You own the Supporter Pack. Thank you for keeping the watch. ✦</div>
+  <div class="supprice" data-i18n="supPrice">$4.99 · one-time</div>
+  <div class="supowned" id="sup-owned" data-i18n="supOwnedNote">You own the Supporter Pack. Thank you for keeping the watch. ✦</div>
   <div class="ovactions">
-    <button class="btn primary" id="sup-buy" onclick="confirmSupporter()">Support — unlock pack</button>
-    <button class="btn" onclick="closeSupporter()">Maybe later</button>
+    <button class="btn primary" id="sup-buy" onclick="confirmSupporter()" data-i18n="supBuy">Support — unlock pack</button>
+    <button class="btn" onclick="closeSupporter()" data-i18n="maybeLater">Maybe later</button>
   </div>
-  <div class="supfine">On the web build this completes through the page's store. Not financial advice; prices vary by region.</div>
+  <div class="supfine" data-i18n="supFine">On the web build this completes through the page's store. Not financial advice; prices vary by region.</div>
 </div></div>
 
+
+<div class="overlay" id="pause"><div class="modal pausemodal">
+  <h2 data-i18n="paused">Paused</h2>
+  <div class="startbtns" style="flex-direction:column;align-items:center;gap:8px;margin-top:14px">
+    <button class="btn primary" onclick="resumeGame()" data-i18n="resume">Resume</button>
+    <button class="btn" onclick="pauseHome()" data-i18n="home">Home</button>
+  </div>
+</div></div>
+
+<div class="overlay" id="langoverlay"><div class="modal langmodal">
+  <h2 data-i18n="languageTitle">Language</h2>
+  <div class="langgrid" id="langgrid"></div>
+  <div style="text-align:center;margin-top:14px"><button class="btn" onclick="closeLang()" data-i18n="close">Close</button></div>
+</div></div>
 
 <script>
 /* =========================================================================
@@ -611,6 +649,631 @@ const Store=(()=>{ let mem={}, ls=null;
            set(k,v){ try{ if(ls){ ls.setItem(k,JSON.stringify(v)); return; } }catch(e){} mem[k]=v; } }; })();
 let embers   = Store.get("ew.embers", 0);     // ⬥ meta currency: earned by playing, ads, or purchase
 let bestScore= Store.get("ew.best", 0);
+
+/* === INTERNATIONALIZATION (i18n) =========================================
+   Single source of truth for user-facing copy. Add a language by adding a
+   key→string map under STRINGS (e.g. `zh:{...}`). t() falls back English → raw
+   key, so a missing translation never blanks the UI. Static markup carries
+   data-i18n="key" (text) or data-i18n-aria="key" (aria-label); applyI18n()
+   fills them on boot and on every language change. JS-built copy calls t("key").
+   `{name}`-style placeholders interpolate from the vars arg. =============== */
+const STRINGS = {
+  en: {
+    // HUD + chrome
+    languageTitle:"Language", level:"Level", waveLabel:"Wave", dayLabel:"Day", phaseDay:"Day", phaseNight:"Night",
+    exposedPre:"Exposed", exposedPost:"— return to the firelight",
+    beginWave:"Begin wave", pack:"Watcher's Pack", skip:"Skip", gotIt:"Got it",
+    equipment:"Equipment", satchel:"Satchel", stats:"Stats", close:"Close", back:"\u2190 Back",
+    // start menu + flow
+    campfire:"The Campfire", howToPlay:"How to Play", play:"Play",
+    chooseWatcher:"Choose your watcher", begin:"Begin",
+    prevHero:"Previous hero", nextHero:"Next hero",
+    // game over
+    gameOver:"The fire went out", waves:"Waves",
+    // inventory / level-up / menu copy
+    selectGear:"Select a piece of gear to inspect it.", boons:"Boons & Effects",
+    levelUp:"Level Up!", chooseBoon:"Choose one boon. It lasts the rest of the run.", newAbility:"✦ New ability —", paused:"Paused", resume:"Resume",
+    tagline:"Feed the fire \u00b7 hold the dark",
+    // canvas chrome
+    critical:"CRITICAL!", wardenOfDark:"WARDEN OF THE DARK", combo:"COMBO",
+    // runtime HUD
+    foes:"Foes", survived:"Survived", slain:"Slain", remains:"Remains",
+    watchBegins:"The watch begins", waveCleared:"Wave {n} cleared",
+    nextWaveIn:"Next wave in {s}s — or begin now", beginWaveN:"Begin wave {n}", levelWord:"Level",
+    // hero pick + class data
+    chipHP:"HP", chipPower:"Power", chipRange:"Range",
+    cls_ranger:"Ranger", cls_mage:"Mage", cls_knight:"Knight",
+    role_ranger:"Ranged · Physical", role_mage:"Ranged · Arcane", role_knight:"Melee · Physical",
+    blurb_ranger:"A kiter — long bow range and fast shots that reward spacing and crit.",
+    blurb_mage:"Glass cannon — close-range arcane strikes that splash, devastating spells, very frail.",
+    blurb_knight:"Tanky bruiser — cleaving melee swings and gap-closers; sustains in the fray.",
+    // stat labels (keyed by stat id)
+    stat_attackDamage:"Damage", stat_attackSpeed:"Attack Speed", stat_critChance:"Crit", stat_armor:"Armor",
+    stat_maxHealth:"Health", stat_healthRegen:"Regen", stat_moveSpeed:"Move Speed", stat_attackRange:"Range",
+    stat_lifesteal:"Lifesteal", stat_counter:"Counter", stat_goldFind:"Harvest", stat_cdr:"Cooldown",
+    stat_armorPen:"Armor Pen", stat_cleave:"Cleave", stat_chain:"Extra Bolts",
+    // game over
+    kills:"Kills", days:"Days", best:"Best {n}", newBest:"★ New best!", earned:"earned",
+    embersLabel:"Embers:", watchAd:"Watch ad +30", supporterPack:"✦ Supporter Pack",
+    revive:"Revive", restart:"Restart", home:"Home",
+    // toasts
+    pickedUp:"Picked up", lvShort:"Lv",
+    supporterUnlocked:"Supporter Pack unlocked — thank you ✦",
+    supporterAdReward:"Supporters skip ads — here's the reward ✦",
+    noAd:"No ad available right now", embersGain:"+30 ⬥ embers",
+    adNotDone:"Ad not completed", alreadySupporter:"You already have the Supporter Pack ✦",
+    supporterUnavailable:"Supporter Pack unavailable in this build",
+    soundOff:"Sound off", soundOn:"Sound on",
+    // supporter modal
+    supSub:"Back a solo-built game and keep the fire burning.",
+    emberGlow:"Ember-glow fire", emberGlowD:"A warmer, brighter cosmetic blaze at your camp.",
+    noAdsPerk:"No ads, ever", noAdsPerkD:"Rewards still granted — you just skip the watching.",
+    startEmbers:"300 starting embers", startEmbersD:"A head start on revives and unlocks.",
+    supPrice:"$4.99 · one-time", supOwnedNote:"You own the Supporter Pack. Thank you for keeping the watch. ✦",
+    supBuy:"Support — unlock pack", supOwned:"Owned ✦", maybeLater:"Maybe later",
+    supFine:"On the web build this completes through the page's store. Not financial advice; prices vary by region.",
+    // equipment slots + item types
+    slot_weapon:"Weapon", slot_helm:"Helm", slot_armor:"Armor", slot_boots:"Boots", slot_amulet:"Amulet",
+    slot_shield:"Shield", slot_ring1:"Ring I", slot_ring2:"Ring II",
+    type_weapon:"Weapon", type_helm:"Helm", type_armor:"Armor", type_boots:"Boots", type_amulet:"Amulet", type_ring:"Ring", type_shield:"Shield",
+    setOf:"set", noBoons:"No boons yet — clear waves to level up and choose one.",
+    equip:"Equip", salvage:"Salvage", unequip:"Unequip", noSlot:"No {type} slot for your class — salvage only", setWorn:"{n}/4 worn",
+    stat_critMultiplier:"Crit Damage", stat_evasion:"Evasion",
+    // perk / passive / rarity display names
+    nm_common:"Common", nm_rare:"Rare", nm_epic:"Epic", nm_campfire:"Campfire",
+    nm_sharpened_edge:"Sharpened Edge", nm_rapid_loosing:"Rapid Loosing", nm_deadeye:"Deadeye", nm_executioner:"Executioner",
+    nm_frenzy:"Frenzy", nm_vitality:"Vitality", nm_quickstep:"Quickstep", nm_hunter_s_reach:"Hunter's Reach",
+    nm_leeching_shots:"Leeching Shots", nm_avarice:"Avarice", nm_ironhide:"Ironhide", nm_sunder:"Sunder",
+    nm_battle_rhythm:"Battle Rhythm", nm_cleaving_blows:"Cleaving Blows", nm_thornmail:"Thornmail", nm_frostbite:"Frostbite",
+    nm_ember_touch:"Ember Touch", nm_venom_coating:"Venom Coating", nm_hurricane:"Hurricane",
+    nm_piercing_shots:"Piercing Shots", nm_arcane_cascade:"Arcane Cascade", nm_concussive_blows:"Concussive Blows",
+    nm_hunter_s_focus:"Hunter's Focus", nm_emberheart:"Emberheart", nm_bulwark:"Bulwark",
+    // how-to body (rich text)
+    howtoBody:"<b>Desktop</b> — hold the mouse to move; release to attack the nearest foe. <b>Q W E R</b> cast toward the cursor (or click a slot).<br><b>Mobile</b> — left-side joystick to move. Tap an ability to cast where you face; or drag to aim and release (release back on the button to cancel).<br>Slain foes drop <b>remains</b> — they stream into the fire and feed it; each fire level grows the blaze and grants a boon. <b>I</b> opens your satchel · <b>M</b> mutes sound.<br>Foes attack in waves; between them, time stops and the fire mends you. By night, stray from the firelight and the dark takes hold."
+  },
+  // Simplified Chinese — first-pass UI chrome (recommend a native review before release).
+  // Untranslated keys (perk/item/ability copy, tutorial body) fall back to English automatically.
+  zh: {
+    languageTitle:"语言", level:"等级", waveLabel:"波", dayLabel:"天", phaseDay:"白天", phaseNight:"夜晚",
+    exposedPre:"暴露", exposedPost:"— 返回火光处",
+    beginWave:"开始波次", pack:"守望者背包", skip:"跳过", gotIt:"知道了",
+    equipment:"装备", satchel:"行囊", stats:"属性", close:"关闭", back:"\u2190 返回",
+    campfire:"篝火", howToPlay:"玩法", play:"开始游戏",
+    chooseWatcher:"选择你的守望者", begin:"开始",
+    prevHero:"上一个英雄", nextHero:"下一个英雄",
+    gameOver:"火焰熄灭了", waves:"波次",
+    selectGear:"选择一件装备以查看详情。", boons:"增益与效果",
+    levelUp:"升级！", chooseBoon:"选择一项增益，将持续整局游戏。", newAbility:"✦ 新技能 —", paused:"已暂停", resume:"继续",
+    tagline:"添柴续火 \u00b7 抵御黑暗",
+    critical:"暴击！", wardenOfDark:"黑暗守望者", combo:"连击",
+    // runtime HUD
+    foes:"敌人", survived:"存活", slain:"击杀", remains:"残骸",
+    watchBegins:"守望开始", waveCleared:"第 {n} 波已清除",
+    nextWaveIn:"{s} 秒后下一波 — 或立即开始", beginWaveN:"开始第 {n} 波", levelWord:"等级",
+    // hero pick + class data
+    chipHP:"生命", chipPower:"攻击", chipRange:"射程",
+    cls_ranger:"游侠", cls_mage:"法师", cls_knight:"骑士",
+    role_ranger:"远程 · 物理", role_mage:"远程 · 奥术", role_knight:"近战 · 物理",
+    blurb_ranger:"风筝手——长弓射程与快速射击，回报走位与暴击。",
+    blurb_mage:"玻璃大炮——近距离奥术打击带溅射、法术毁天灭地，但极其脆弱。",
+    blurb_knight:"坦克型猛士——顺劈横扫与突进近身；越战越勇。",
+    // stat labels (keyed by stat id)
+    stat_attackDamage:"伤害", stat_attackSpeed:"攻击速度", stat_critChance:"暴击", stat_armor:"护甲",
+    stat_maxHealth:"生命", stat_healthRegen:"回复", stat_moveSpeed:"移动速度", stat_attackRange:"射程",
+    stat_lifesteal:"吸血", stat_counter:"反伤", stat_goldFind:"采集", stat_cdr:"冷却",
+    stat_armorPen:"穿甲", stat_cleave:"顺劈", stat_chain:"额外闪电",
+    // game over
+    kills:"击杀", days:"天数", best:"最佳 {n}", newBest:"★ 新纪录！", earned:"获得",
+    embersLabel:"余烬：", watchAd:"看广告 +30", supporterPack:"✦ 支持者礼包",
+    revive:"复活", restart:"重新开始", home:"主菜单",
+    // toasts
+    pickedUp:"拾取", lvShort:"Lv",
+    supporterUnlocked:"支持者礼包已解锁——谢谢你 ✦",
+    supporterAdReward:"支持者免广告——奖励已发放 ✦",
+    noAd:"暂时没有可用的广告", embersGain:"+30 ⬥ 余烬",
+    adNotDone:"广告未看完", alreadySupporter:"你已拥有支持者礼包 ✦",
+    supporterUnavailable:"此版本暂不支持支持者礼包",
+    soundOff:"静音", soundOn:"声音开启",
+    // supporter modal
+    supSub:"支持一款个人开发的游戏，让火焰持续燃烧。",
+    emberGlow:"余烬辉光篝火", emberGlowD:"营地中更温暖、更明亮的装饰性火焰。",
+    noAdsPerk:"永久免广告", noAdsPerkD:"奖励照常发放——只是无需观看。",
+    startEmbers:"300 点初始余烬", startEmbersD:"在复活与解锁上抢占先机。",
+    supPrice:"$4.99 · 一次性买断", supOwnedNote:"你已拥有支持者礼包。感谢你坚守这场守望。✦",
+    supBuy:"支持——解锁礼包", supOwned:"已拥有 ✦", maybeLater:"以后再说",
+    supFine:"在网页版中，购买通过页面商店完成。非投资建议；价格因地区而异。",
+    // equipment slots + item types
+    slot_weapon:"武器", slot_helm:"头盔", slot_armor:"护甲", slot_boots:"靴子", slot_amulet:"护符",
+    slot_shield:"盾牌", slot_ring1:"戒指 I", slot_ring2:"戒指 II",
+    type_weapon:"武器", type_helm:"头盔", type_armor:"护甲", type_boots:"靴子", type_amulet:"护符", type_ring:"戒指", type_shield:"盾牌",
+    setOf:"套装", noBoons:"暂无增益——清剿波次以升级并选择其一。",
+    equip:"装备", salvage:"分解", unequip:"卸下", noSlot:"你的职业没有{type}栏位——只能分解", setWorn:"已装备 {n}/4",
+    stat_critMultiplier:"暴击伤害", stat_evasion:"闪避",
+    // perk / passive / rarity display names
+    nm_common:"普通", nm_rare:"稀有", nm_epic:"史诗", nm_campfire:"篝火",
+    nm_sharpened_edge:"锋锐刃", nm_rapid_loosing:"疾射", nm_deadeye:"神射手", nm_executioner:"处决者",
+    nm_frenzy:"狂怒", nm_vitality:"活力", nm_quickstep:"疾步", nm_hunter_s_reach:"猎手延伸",
+    nm_leeching_shots:"吸血射击", nm_avarice:"贪婪", nm_ironhide:"铁甲", nm_sunder:"破甲",
+    nm_battle_rhythm:"战斗节奏", nm_cleaving_blows:"顺劈打击", nm_thornmail:"荆棘甲", nm_frostbite:"冻伤",
+    nm_ember_touch:"余烬之触", nm_venom_coating:"淬毒", nm_hurricane:"飓风",
+    nm_piercing_shots:"穿透射击", nm_arcane_cascade:"奥术连锁", nm_concussive_blows:"震荡打击",
+    nm_hunter_s_focus:"猎手专注", nm_emberheart:"余烬之心", nm_bulwark:"壁垒",
+    // how-to body (rich text)
+    howtoBody:"<b>桌面端</b> — 按住鼠标移动；松开攻击最近的敌人。<b>Q W E R</b> 朝光标方向施放（或点击技能槽）。<br><b>移动端</b> — 左侧摇杆移动。点击技能朝面向方向施放；或拖动瞄准后松开（松回按钮可取消）。<br>被击杀的敌人掉落<b>残骸</b> — 它们汇入火焰为其添柴；每提升一级火焰都会让火势更旺并赐予一项增益。<b>I</b> 打开行囊 · <b>M</b> 静音。<br>敌人成波进攻；波次之间时间静止，火焰为你疗伤。入夜后远离火光，黑暗便会侵蚀你。"
+  },
+  es:{
+    languageTitle:"Idioma", level:"Nivel", waveLabel:"Oleada", dayLabel:"Día", phaseDay:"Día", phaseNight:"Noche",
+    exposedPre:"Expuesto", exposedPost:"— vuelve a la luz del fuego",
+    beginWave:"Comenzar oleada", pack:"Mochila del Vigía", skip:"Saltar", gotIt:"Entendido",
+    equipment:"Equipo", satchel:"Morral", stats:"Estadísticas", close:"Cerrar", back:"\u2190 Atrás",
+    campfire:"La hoguera", howToPlay:"Cómo jugar", play:"Jugar",
+    chooseWatcher:"Elige tu Vigía", begin:"Comenzar", prevHero:"Héroe anterior", nextHero:"Héroe siguiente",
+    gameOver:"El fuego se apagó", waves:"Oleadas",
+    selectGear:"Selecciona una pieza de equipo para inspeccionarla.", boons:"Bendiciones y efectos",
+    levelUp:"¡Subes de nivel!", chooseBoon:"Elige una bendición. Dura el resto de la partida.", newAbility:"✦ Nueva habilidad —", paused:"Pausado", resume:"Reanudar",
+    tagline:"Alimenta el fuego \u00b7 resiste la oscuridad",
+    critical:"¡CRÍTICO!", wardenOfDark:"GUARDIÁN DE LA OSCURIDAD", combo:"COMBO",
+    foes:"Enemigos", survived:"Sobrevivido", slain:"Abatidos", remains:"Restos",
+    watchBegins:"Comienza la vigilia", waveCleared:"Oleada {n} superada",
+    nextWaveIn:"Próxima oleada en {s}s — o empieza ya", beginWaveN:"Comenzar oleada {n}", levelWord:"Nivel",
+    chipHP:"Vida", chipPower:"Poder", chipRange:"Alcance",
+    cls_ranger:"Guardabosques", cls_mage:"Mago", cls_knight:"Caballero",
+    role_ranger:"A distancia · Físico", role_mage:"A distancia · Arcano", role_knight:"Cuerpo a cuerpo · Físico",
+    stat_attackDamage:"Daño", stat_attackSpeed:"Vel. ataque", stat_critChance:"Crítico", stat_armor:"Armadura",
+    stat_maxHealth:"Vida", stat_healthRegen:"Regen.", stat_moveSpeed:"Vel. mov.", stat_attackRange:"Alcance",
+    stat_lifesteal:"Robo de vida", stat_counter:"Contraataque", stat_goldFind:"Cosecha", stat_cdr:"Enfriamiento",
+    stat_armorPen:"Penetración", stat_cleave:"Tajo", stat_chain:"Rayos extra",
+    kills:"Bajas", days:"Días", best:"Mejor {n}", newBest:"★ ¡Nuevo récord!", earned:"ganados",
+    embersLabel:"Brasas:", watchAd:"Ver anuncio +30", supporterPack:"✦ Pack de apoyo",
+    revive:"Revivir", restart:"Reiniciar", home:"Inicio", pickedUp:"Recogido", soundOff:"Silencio", soundOn:"Sonido",
+    setOf:"conjunto", noBoons:"Aún sin bendiciones — supera oleadas para subir de nivel y elegir una.",
+    equip:"Equipar", salvage:"Reciclar", unequip:"Quitar", noSlot:"Tu clase no tiene ranura de {type} — solo reciclar", setWorn:"{n}/4 equipadas",
+    stat_critMultiplier:"Daño crítico", stat_evasion:"Evasión",
+    nm_common:"Común", nm_rare:"Raro", nm_epic:"Épico",
+    slot_weapon:"Arma", slot_helm:"Casco", slot_armor:"Armadura", slot_boots:"Botas", slot_amulet:"Amuleto",
+    slot_shield:"Escudo", slot_ring1:"Anillo I", slot_ring2:"Anillo II",
+    type_weapon:"Arma", type_helm:"Casco", type_armor:"Armadura", type_boots:"Botas", type_amulet:"Amuleto", type_ring:"Anillo", type_shield:"Escudo",
+    lvShort:"Lv", nm_campfire:"Hoguera",
+    nm_sharpened_edge:"Filo afilado", nm_rapid_loosing:"Disparo rápido", nm_deadeye:"Ojo certero", nm_executioner:"Verdugo",
+    nm_frenzy:"Frenesí", nm_vitality:"Vitalidad", nm_quickstep:"Paso rápido", nm_hunter_s_reach:"Alcance del cazador",
+    nm_leeching_shots:"Disparos vampíricos", nm_avarice:"Avaricia", nm_ironhide:"Piel de hierro", nm_sunder:"Desgarro",
+    nm_battle_rhythm:"Ritmo de batalla", nm_cleaving_blows:"Golpes tajantes", nm_thornmail:"Malla de espinas", nm_frostbite:"Congelación",
+    nm_ember_touch:"Toque de brasa", nm_venom_coating:"Recubrimiento venenoso", nm_hurricane:"Huracán",
+    nm_piercing_shots:"Disparos perforantes", nm_arcane_cascade:"Cascada arcana", nm_concussive_blows:"Golpes aturdidores",
+    nm_hunter_s_focus:"Concentración del cazador", nm_emberheart:"Corazón de brasa", nm_bulwark:"Baluarte",
+    blurb_ranger:"Un hostigador: gran alcance de arco y disparos rápidos que premian el espaciado y el crítico.",
+    blurb_mage:"Cañón de cristal: golpes arcanos de corto alcance que salpican, hechizos devastadores, muy frágil.",
+    blurb_knight:"Bruto resistente: tajos en área y acortadores de distancia; aguanta en el fragor.",
+    supSub:"Apoya un juego hecho por una persona y mantén el fuego vivo.",
+    emberGlow:"Fuego resplandeciente", emberGlowD:"Una llama cosmética más cálida y brillante en tu campamento.",
+    noAdsPerk:"Sin anuncios, nunca", noAdsPerkD:"Las recompensas se siguen otorgando — solo te saltas la espera.",
+    startEmbers:"300 brasas iniciales", startEmbersD:"Una ventaja para revivir y desbloquear.",
+    supPrice:"$4.99 · pago único", supOwnedNote:"Tienes el Pack de Apoyo. Gracias por mantener la vigilia. ✦",
+    supBuy:"Apoyar — desbloquear pack", supOwned:"Obtenido ✦", maybeLater:"Quizá luego",
+    supFine:"En la versión web se completa a través de la tienda de la página. No es asesoramiento financiero; los precios varían por región.",
+    supporterUnlocked:"Pack de Apoyo desbloqueado — ¡gracias! ✦", supporterAdReward:"Los mecenas se saltan anuncios — aquí está la recompensa ✦",
+    noAd:"No hay anuncios disponibles ahora", embersGain:"+30 ⬥ brasas", adNotDone:"Anuncio no completado",
+    alreadySupporter:"Ya tienes el Pack de Apoyo ✦", supporterUnavailable:"Pack de Apoyo no disponible en esta versión",
+    howtoBody:"<b>Escritorio</b> — mantén el ratón para moverte; suéltalo para atacar al enemigo más cercano. <b>Q W E R</b> lanzan hacia el cursor (o pulsa una ranura).<br><b>Móvil</b> — joystick a la izquierda para moverte. Toca una habilidad para lanzarla hacia donde miras; o arrastra para apuntar y suelta (suelta sobre el botón para cancelar).<br>Los enemigos abatidos sueltan <b>restos</b> — fluyen al fuego y lo alimentan; cada nivel de fuego agranda la llama y otorga una bendición. <b>I</b> abre tu morral · <b>M</b> silencia.<br>Los enemigos atacan en oleadas; entre ellas el tiempo se detiene y el fuego te cura. De noche, alejarte de la luz hace que la oscuridad se apodere de ti."
+  },
+  fr:{
+    languageTitle:"Langue", level:"Niveau", waveLabel:"Vague", dayLabel:"Jour", phaseDay:"Jour", phaseNight:"Nuit",
+    exposedPre:"Exposé", exposedPost:"— retourne à la lueur du feu",
+    beginWave:"Lancer la vague", pack:"Sac du Veilleur", skip:"Passer", gotIt:"Compris",
+    equipment:"Équipement", satchel:"Besace", stats:"Stats", close:"Fermer", back:"\u2190 Retour",
+    campfire:"Le feu de camp", howToPlay:"Comment jouer", play:"Jouer",
+    chooseWatcher:"Choisis ton Veilleur", begin:"Commencer", prevHero:"Héros précédent", nextHero:"Héros suivant",
+    gameOver:"Le feu s'est éteint", waves:"Vagues",
+    selectGear:"Sélectionne un équipement pour l'inspecter.", boons:"Faveurs et effets",
+    levelUp:"Niveau supérieur !", chooseBoon:"Choisis une faveur. Elle dure jusqu'à la fin de la partie.", newAbility:"✦ Nouvelle capacité —", paused:"En pause", resume:"Reprendre",
+    tagline:"Nourris le feu \u00b7 repousse les ténèbres",
+    critical:"CRITIQUE !", wardenOfDark:"GARDIEN DES TÉNÈBRES", combo:"COMBO",
+    foes:"Ennemis", survived:"Survie", slain:"Tués", remains:"Restes",
+    watchBegins:"La veille commence", waveCleared:"Vague {n} terminée",
+    nextWaveIn:"Prochaine vague dans {s}s — ou commence", beginWaveN:"Lancer la vague {n}", levelWord:"Niveau",
+    chipHP:"PV", chipPower:"Force", chipRange:"Portée",
+    cls_ranger:"Rôdeur", cls_mage:"Mage", cls_knight:"Chevalier",
+    role_ranger:"À distance · Physique", role_mage:"À distance · Arcane", role_knight:"Mêlée · Physique",
+    stat_attackDamage:"Dégâts", stat_attackSpeed:"Vit. d'attaque", stat_critChance:"Critique", stat_armor:"Armure",
+    stat_maxHealth:"Vie", stat_healthRegen:"Régén.", stat_moveSpeed:"Vit. dépl.", stat_attackRange:"Portée",
+    stat_lifesteal:"Vol de vie", stat_counter:"Riposte", stat_goldFind:"Récolte", stat_cdr:"Recharge",
+    stat_armorPen:"Pénétration", stat_cleave:"Fendoir", stat_chain:"Éclairs sup.",
+    kills:"Éliminations", days:"Jours", best:"Record {n}", newBest:"★ Nouveau record !", earned:"gagnés",
+    embersLabel:"Braises :", watchAd:"Pub +30", supporterPack:"✦ Pack de soutien",
+    revive:"Réanimer", restart:"Recommencer", home:"Accueil", pickedUp:"Ramassé", soundOff:"Muet", soundOn:"Son",
+    setOf:"ensemble", noBoons:"Aucune faveur — termine des vagues pour monter de niveau et en choisir une.",
+    equip:"Équiper", salvage:"Recycler", unequip:"Retirer", noSlot:"Aucune case {type} pour ta classe — recyclage seulement", setWorn:"{n}/4 portées",
+    stat_critMultiplier:"Dégâts critiques", stat_evasion:"Esquive",
+    nm_common:"Commun", nm_rare:"Rare", nm_epic:"Épique",
+    slot_weapon:"Arme", slot_helm:"Casque", slot_armor:"Armure", slot_boots:"Bottes", slot_amulet:"Amulette",
+    slot_shield:"Bouclier", slot_ring1:"Anneau I", slot_ring2:"Anneau II",
+    type_weapon:"Arme", type_helm:"Casque", type_armor:"Armure", type_boots:"Bottes", type_amulet:"Amulette", type_ring:"Anneau", type_shield:"Bouclier",
+    lvShort:"Niv", nm_campfire:"Feu de camp",
+    nm_sharpened_edge:"Lame aiguisée", nm_rapid_loosing:"Tir rapide", nm_deadeye:"Œil de lynx", nm_executioner:"Bourreau",
+    nm_frenzy:"Frénésie", nm_vitality:"Vitalité", nm_quickstep:"Pas vif", nm_hunter_s_reach:"Allonge du chasseur",
+    nm_leeching_shots:"Tirs sangsue", nm_avarice:"Avarice", nm_ironhide:"Peau de fer", nm_sunder:"Fracassement",
+    nm_battle_rhythm:"Rythme de combat", nm_cleaving_blows:"Coups fendoirs", nm_thornmail:"Armure d'épines", nm_frostbite:"Gelure",
+    nm_ember_touch:"Touche de braise", nm_venom_coating:"Enduit venimeux", nm_hurricane:"Ouragan",
+    nm_piercing_shots:"Tirs perforants", nm_arcane_cascade:"Cascade arcanique", nm_concussive_blows:"Coups commotionnants",
+    nm_hunter_s_focus:"Concentration du chasseur", nm_emberheart:"Cœur de braise", nm_bulwark:"Rempart",
+    blurb_ranger:"Un kiteur : grande portée d'arc et tirs rapides qui récompensent l'espacement et le critique.",
+    blurb_mage:"Canon de verre : frappes arcaniques de courte portée qui éclaboussent, sorts dévastateurs, très fragile.",
+    blurb_knight:"Brute résistante : coups de mêlée fendoirs et engagements ; se maintient dans la mêlée.",
+    supSub:"Soutiens un jeu fait par une seule personne et garde le feu allumé.",
+    emberGlow:"Feu rougeoyant", emberGlowD:"Un brasier cosmétique plus chaud et plus brillant à ton camp.",
+    noAdsPerk:"Aucune pub, jamais", noAdsPerkD:"Les récompenses sont toujours accordées — tu sautes juste le visionnage.",
+    startEmbers:"300 braises de départ", startEmbersD:"Une longueur d'avance sur les réanimations et déblocages.",
+    supPrice:"4,99 $ · paiement unique", supOwnedNote:"Tu possèdes le Pack de soutien. Merci de tenir la veille. ✦",
+    supBuy:"Soutenir — débloquer le pack", supOwned:"Possédé ✦", maybeLater:"Plus tard",
+    supFine:"Sur la version web, l'achat se fait via la boutique de la page. Pas un conseil financier ; les prix varient selon la région.",
+    supporterUnlocked:"Pack de soutien débloqué — merci ✦", supporterAdReward:"Les soutiens sautent les pubs — voici la récompense ✦",
+    noAd:"Aucune pub disponible pour l'instant", embersGain:"+30 ⬥ braises", adNotDone:"Pub non terminée",
+    alreadySupporter:"Tu as déjà le Pack de soutien ✦", supporterUnavailable:"Pack de soutien indisponible dans cette version",
+    howtoBody:"<b>Bureau</b> — maintiens la souris pour te déplacer ; relâche pour attaquer l'ennemi le plus proche. <b>Q W E R</b> lancent vers le curseur (ou clique une case).<br><b>Mobile</b> — joystick à gauche pour te déplacer. Touche une capacité pour lancer dans la direction où tu fais face ; ou glisse pour viser et relâche (relâche sur le bouton pour annuler).<br>Les ennemis tués lâchent des <b>restes</b> — ils affluent vers le feu et le nourrissent ; chaque niveau de feu agrandit le brasier et accorde une faveur. <b>I</b> ouvre ta besace · <b>M</b> coupe le son.<br>Les ennemis attaquent par vagues ; entre elles, le temps s'arrête et le feu te soigne. La nuit, t'éloigner de la lueur laisse les ténèbres s'emparer de toi."
+  },
+  ru:{
+    languageTitle:"Язык", level:"Уровень", waveLabel:"Волна", dayLabel:"День", phaseDay:"День", phaseNight:"Ночь",
+    exposedPre:"Уязвим", exposedPost:"— вернитесь к свету костра",
+    beginWave:"Начать волну", pack:"Сумка Стража", skip:"Пропустить", gotIt:"Понятно",
+    equipment:"Снаряжение", satchel:"Котомка", stats:"Характеристики", close:"Закрыть", back:"\u2190 Назад",
+    campfire:"Костёр", howToPlay:"Как играть", play:"Играть",
+    chooseWatcher:"Выберите Стража", begin:"Начать", prevHero:"Предыдущий герой", nextHero:"Следующий герой",
+    gameOver:"Огонь погас", waves:"Волны",
+    selectGear:"Выберите предмет, чтобы осмотреть его.", boons:"Блага и эффекты",
+    levelUp:"Новый уровень!", chooseBoon:"Выберите одно благо. Оно действует до конца забега.", newAbility:"✦ Новое умение —", paused:"Пауза", resume:"Продолжить",
+    tagline:"Питай огонь \u00b7 сдерживай тьму",
+    critical:"КРИТ!", wardenOfDark:"СТРАЖ ТЬМЫ", combo:"КОМБО",
+    foes:"Враги", survived:"Выжито", slain:"Убито", remains:"Останки",
+    watchBegins:"Дозор начинается", waveCleared:"Волна {n} зачищена",
+    nextWaveIn:"Следующая волна через {s}с — или начните", beginWaveN:"Начать волну {n}", levelWord:"Уровень",
+    chipHP:"ОЗ", chipPower:"Сила", chipRange:"Дальн.",
+    cls_ranger:"Следопыт", cls_mage:"Маг", cls_knight:"Рыцарь",
+    role_ranger:"Дальний · Физический", role_mage:"Дальний · Магия", role_knight:"Ближний · Физический",
+    stat_attackDamage:"Урон", stat_attackSpeed:"Скор. атаки", stat_critChance:"Крит", stat_armor:"Броня",
+    stat_maxHealth:"Здоровье", stat_healthRegen:"Реген.", stat_moveSpeed:"Скор. движ.", stat_attackRange:"Дальность",
+    stat_lifesteal:"Вампиризм", stat_counter:"Контрудар", stat_goldFind:"Добыча", stat_cdr:"Перезарядка",
+    stat_armorPen:"Пробитие", stat_cleave:"Рассечение", stat_chain:"Доп. молнии",
+    kills:"Убийства", days:"Дни", best:"Рекорд {n}", newBest:"★ Новый рекорд!", earned:"получено",
+    embersLabel:"Угли:", watchAd:"Реклама +30", supporterPack:"✦ Набор поддержки",
+    revive:"Возродить", restart:"Заново", home:"Главная", pickedUp:"Подобрано", soundOff:"Звук выкл.", soundOn:"Звук вкл.",
+    setOf:"комплект", noBoons:"Пока нет благ — зачищайте волны, чтобы повысить уровень и выбрать.",
+    equip:"Надеть", salvage:"Разобрать", unequip:"Снять", noSlot:"У вашего класса нет слота {type} — только разбор", setWorn:"{n}/4 надето",
+    stat_critMultiplier:"Крит. урон", stat_evasion:"Уклонение",
+    nm_common:"Обычный", nm_rare:"Редкий", nm_epic:"Эпический",
+    slot_weapon:"Оружие", slot_helm:"Шлем", slot_armor:"Броня", slot_boots:"Сапоги", slot_amulet:"Амулет",
+    slot_shield:"Щит", slot_ring1:"Кольцо I", slot_ring2:"Кольцо II",
+    type_weapon:"Оружие", type_helm:"Шлем", type_armor:"Броня", type_boots:"Сапоги", type_amulet:"Амулет", type_ring:"Кольцо", type_shield:"Щит",
+    lvShort:"Ур", nm_campfire:"Костёр",
+    nm_sharpened_edge:"Заточка", nm_rapid_loosing:"Скорый выстрел", nm_deadeye:"Меткий глаз", nm_executioner:"Палач",
+    nm_frenzy:"Ярость", nm_vitality:"Живучесть", nm_quickstep:"Быстрый шаг", nm_hunter_s_reach:"Хват охотника",
+    nm_leeching_shots:"Высасывающие выстрелы", nm_avarice:"Алчность", nm_ironhide:"Железная шкура", nm_sunder:"Раскол",
+    nm_battle_rhythm:"Боевой ритм", nm_cleaving_blows:"Рассекающие удары", nm_thornmail:"Шипастая броня", nm_frostbite:"Обморожение",
+    nm_ember_touch:"Прикосновение углей", nm_venom_coating:"Ядовитое покрытие", nm_hurricane:"Ураган",
+    nm_piercing_shots:"Пробивающие выстрелы", nm_arcane_cascade:"Магический каскад", nm_concussive_blows:"Оглушающие удары",
+    nm_hunter_s_focus:"Сосредоточенность охотника", nm_emberheart:"Сердце углей", nm_bulwark:"Оплот",
+    blurb_ranger:"Кайтер: большая дальность лука и быстрые выстрелы, вознаграждающие дистанцию и крит.",
+    blurb_mage:"Стеклянная пушка: ближние магические удары с разбрызгиванием, разрушительные заклинания, очень хрупкий.",
+    blurb_knight:"Стойкий боец: рассекающие удары в ближнем бою и сближения; держится в гуще.",
+    supSub:"Поддержите игру, созданную одним человеком, и не дайте огню погаснуть.",
+    emberGlow:"Тлеющий огонь", emberGlowD:"Более тёплое и яркое косметическое пламя в вашем лагере.",
+    noAdsPerk:"Никакой рекламы, никогда", noAdsPerkD:"Награды по-прежнему выдаются — вы просто пропускаете просмотр.",
+    startEmbers:"300 стартовых углей", startEmbersD:"Фора на возрождения и разблокировки.",
+    supPrice:"$4.99 · разово", supOwnedNote:"У вас есть Набор поддержки. Спасибо, что несёте дозор. ✦",
+    supBuy:"Поддержать — открыть набор", supOwned:"Получено ✦", maybeLater:"Может позже",
+    supFine:"В веб-версии покупка проходит через магазин страницы. Не финансовый совет; цены зависят от региона.",
+    supporterUnlocked:"Набор поддержки открыт — спасибо ✦", supporterAdReward:"Спонсоры пропускают рекламу — вот награда ✦",
+    noAd:"Сейчас нет доступной рекламы", embersGain:"+30 ⬥ углей", adNotDone:"Реклама не досмотрена",
+    alreadySupporter:"У вас уже есть Набор поддержки ✦", supporterUnavailable:"Набор поддержки недоступен в этой версии",
+    howtoBody:"<b>ПК</b> — удерживайте мышь для движения; отпустите, чтобы атаковать ближайшего врага. <b>Q W E R</b> — умения к курсору (или нажмите ячейку).<br><b>Моб.</b> — джойстик слева для движения. Нажмите умение, чтобы применить по направлению взгляда; или тяните для прицеливания и отпустите (отпустите на кнопке для отмены).<br>Убитые враги роняют <b>останки</b> — они стекаются в огонь и питают его; каждый уровень огня усиливает пламя и даёт благо. <b>I</b> открывает котомку · <b>M</b> отключает звук.<br>Враги атакуют волнами; между ними время замирает, и огонь лечит вас. Ночью, отойдя от света, вы отдаётесь тьме."
+  },
+  ja:{
+    languageTitle:"言語", level:"レベル", waveLabel:"ウェーブ", dayLabel:"日", phaseDay:"昼", phaseNight:"夜",
+    exposedPre:"露出", exposedPost:"— 火明かりへ戻れ",
+    beginWave:"ウェーブ開始", pack:"見張りの袋", skip:"スキップ", gotIt:"OK",
+    equipment:"装備", satchel:"雑のう", stats:"ステータス", close:"閉じる", back:"\u2190 戻る",
+    campfire:"焚き火", howToPlay:"遊び方", play:"プレイ",
+    chooseWatcher:"見張りを選択", begin:"開始", prevHero:"前のヒーロー", nextHero:"次のヒーロー",
+    gameOver:"火が消えた", waves:"ウェーブ",
+    selectGear:"装備を選んで詳細を確認。", boons:"恩恵と効果",
+    levelUp:"レベルアップ！", chooseBoon:"恩恵を一つ選択。今回の最後まで持続します。", newAbility:"✦ 新スキル —", paused:"一時停止", resume:"再開",
+    tagline:"火を絶やすな \u00b7 闇を退けよ",
+    critical:"クリティカル！", wardenOfDark:"闇の見張り", combo:"コンボ",
+    foes:"敵", survived:"生存", slain:"撃破", remains:"亡骸",
+    watchBegins:"見張りが始まる", waveCleared:"ウェーブ {n} クリア",
+    nextWaveIn:"次のウェーブまで {s}秒 — または今すぐ", beginWaveN:"ウェーブ {n} 開始", levelWord:"レベル",
+    chipHP:"HP", chipPower:"攻撃", chipRange:"射程",
+    cls_ranger:"レンジャー", cls_mage:"メイジ", cls_knight:"ナイト",
+    role_ranger:"遠隔 · 物理", role_mage:"遠隔 · 秘術", role_knight:"近接 · 物理",
+    stat_attackDamage:"ダメージ", stat_attackSpeed:"攻撃速度", stat_critChance:"クリ率", stat_armor:"防御",
+    stat_maxHealth:"体力", stat_healthRegen:"回復", stat_moveSpeed:"移動速度", stat_attackRange:"射程",
+    stat_lifesteal:"吸血", stat_counter:"反撃", stat_goldFind:"採取", stat_cdr:"クールダウン",
+    stat_armorPen:"防御貫通", stat_cleave:"範囲斬り", stat_chain:"追加電撃",
+    kills:"撃破数", days:"日数", best:"ベスト {n}", newBest:"★ 新記録！", earned:"獲得",
+    embersLabel:"残火：", watchAd:"広告 +30", supporterPack:"✦ サポーターパック",
+    revive:"復活", restart:"リスタート", home:"ホーム", pickedUp:"入手", soundOff:"ミュート", soundOn:"サウンド",
+    setOf:"セット", noBoons:"恩恵はまだありません — ウェーブをクリアしてレベルアップし選択。",
+    equip:"装備", salvage:"分解", unequip:"外す", noSlot:"あなたの職業に{type}スロットはありません——分解のみ", setWorn:"装備 {n}/4",
+    stat_critMultiplier:"クリダメ", stat_evasion:"回避",
+    nm_common:"コモン", nm_rare:"レア", nm_epic:"エピック",
+    slot_weapon:"武器", slot_helm:"兜", slot_armor:"鎧", slot_boots:"ブーツ", slot_amulet:"護符",
+    slot_shield:"盾", slot_ring1:"指輪 I", slot_ring2:"指輪 II",
+    type_weapon:"武器", type_helm:"兜", type_armor:"鎧", type_boots:"ブーツ", type_amulet:"護符", type_ring:"指輪", type_shield:"盾",
+    lvShort:"Lv", nm_campfire:"焚き火",
+    nm_sharpened_edge:"研ぎ澄まし", nm_rapid_loosing:"速射", nm_deadeye:"必中の眼", nm_executioner:"処刑人",
+    nm_frenzy:"狂乱", nm_vitality:"活力", nm_quickstep:"俊足", nm_hunter_s_reach:"狩人の間合い",
+    nm_leeching_shots:"吸命の矢", nm_avarice:"強欲", nm_ironhide:"鉄皮", nm_sunder:"破甲",
+    nm_battle_rhythm:"戦いのリズム", nm_cleaving_blows:"薙ぎ払い", nm_thornmail:"棘の鎧", nm_frostbite:"凍傷",
+    nm_ember_touch:"残火の触れ", nm_venom_coating:"毒の塗布", nm_hurricane:"ハリケーン",
+    nm_piercing_shots:"貫通射撃", nm_arcane_cascade:"秘術連鎖", nm_concussive_blows:"震撼の一撃",
+    nm_hunter_s_focus:"狩人の集中", nm_emberheart:"残火の心", nm_bulwark:"防壁",
+    blurb_ranger:"カイター——長弓の射程と速射で、間合いとクリティカルが活きる。",
+    blurb_mage:"ガラスの大砲——近距離の秘術打撃が飛散し、呪文は壊滅的だが極めて脆い。",
+    blurb_knight:"頑強な戦士——薙ぎ払う近接攻撃と接近技で、乱戦を持ちこたえる。",
+    supSub:"個人開発のゲームを支援し、火を灯し続けよう。",
+    emberGlow:"残火の輝く炎", emberGlowD:"拠点の、より暖かく明るい装飾の炎。",
+    noAdsPerk:"広告は一切なし", noAdsPerkD:"報酬はそのまま——視聴を省くだけ。",
+    startEmbers:"初期残火 300", startEmbersD:"復活と解放で一歩リード。",
+    supPrice:"$4.99 · 買い切り", supOwnedNote:"サポーターパックをお持ちです。見張りを守ってくれてありがとう。✦",
+    supBuy:"支援——パックを解放", supOwned:"所持済み ✦", maybeLater:"あとで",
+    supFine:"ウェブ版ではページのストアで購入が完了します。投資助言ではありません；価格は地域により異なります。",
+    supporterUnlocked:"サポーターパックを解放——ありがとう ✦", supporterAdReward:"サポーターは広告不要——報酬はこちら ✦",
+    noAd:"現在利用できる広告はありません", embersGain:"+30 ⬥ 残火", adNotDone:"広告を最後まで視聴していません",
+    alreadySupporter:"すでにサポーターパックを所持しています ✦", supporterUnavailable:"このビルドではサポーターパックは利用できません",
+    howtoBody:"<b>PC</b> — マウス長押しで移動、離すと最寄りの敵を攻撃。<b>Q W E R</b> はカーソル方向へ発動（スロットのクリックも可）。<br><b>モバイル</b> — 左のスティックで移動。技をタップで正面へ発動、またはドラッグで照準し離す（ボタンに戻して離すと中断）。<br>倒した敵は<b>亡骸</b>を落とす——焚き火へ流れ込み火を養う。火のレベルが上がるたび炎が大きくなり恩恵を授かる。<b>I</b> で雑のう · <b>M</b> で消音。<br>敵はウェーブで襲来。合間は時が止まり火が回復させる。夜、火明かりから離れると闇に呑まれる。"
+  },
+  ar:{
+    languageTitle:"اللغة", level:"المستوى", waveLabel:"موجة", dayLabel:"يوم", phaseDay:"نهار", phaseNight:"ليل",
+    exposedPre:"مكشوف", exposedPost:"— عُد إلى ضوء النار",
+    beginWave:"ابدأ الموجة", pack:"حقيبة الحارس", skip:"تخطّي", gotIt:"حسناً",
+    equipment:"العتاد", satchel:"الجراب", stats:"الإحصاءات", close:"إغلاق", back:"\u2192 رجوع",
+    campfire:"نار المخيّم", howToPlay:"كيفية اللعب", play:"ابدأ اللعب",
+    chooseWatcher:"اختر حارسك", begin:"ابدأ", prevHero:"البطل السابق", nextHero:"البطل التالي",
+    gameOver:"انطفأت النار", waves:"الموجات",
+    selectGear:"اختر قطعة عتاد لمعاينتها.", boons:"المنح والتأثيرات",
+    levelUp:"ارتقاء المستوى!", chooseBoon:"اختر منحة واحدة. تدوم حتى نهاية الجولة.", newAbility:"✦ مهارة جديدة —", paused:"متوقّف مؤقتاً", resume:"استئناف",
+    tagline:"أطعم النار \u00b7 واصمد في الظلام",
+    critical:"ضربة قاضية!", wardenOfDark:"حارس الظلام", combo:"كومبو",
+    foes:"الأعداء", survived:"النجاة", slain:"القتلى", remains:"البقايا",
+    watchBegins:"يبدأ الحَرَس", waveCleared:"تم اجتياز الموجة {n}",
+    nextWaveIn:"الموجة التالية بعد {s}ث — أو ابدأ الآن", beginWaveN:"ابدأ الموجة {n}", levelWord:"المستوى",
+    chipHP:"الصحة", chipPower:"القوة", chipRange:"المدى",
+    cls_ranger:"الكشّاف", cls_mage:"الساحر", cls_knight:"الفارس",
+    role_ranger:"بعيد المدى · بدني", role_mage:"بعيد المدى · سحري", role_knight:"التحام · بدني",
+    stat_attackDamage:"الضرر", stat_attackSpeed:"سرعة الهجوم", stat_critChance:"حرج", stat_armor:"الدرع",
+    stat_maxHealth:"الصحة", stat_healthRegen:"تجدد", stat_moveSpeed:"سرعة الحركة", stat_attackRange:"المدى",
+    stat_lifesteal:"امتصاص حياة", stat_counter:"ارتداد", stat_goldFind:"حصاد", stat_cdr:"تبريد",
+    stat_armorPen:"اختراق الدرع", stat_cleave:"تشطير", stat_chain:"صواعق إضافية",
+    kills:"القتلى", days:"الأيام", best:"الأفضل {n}", newBest:"★ رقم قياسي جديد!", earned:"مكتسب",
+    embersLabel:"الجمر:", watchAd:"إعلان +30", supporterPack:"✦ حزمة الداعم",
+    revive:"إحياء", restart:"إعادة", home:"الرئيسية", pickedUp:"التُقط", soundOff:"كتم", soundOn:"صوت",
+    setOf:"طقم", noBoons:"لا منح بعد — اجتَز الموجات للارتقاء واختر واحدة.",
+    equip:"تجهيز", salvage:"تفكيك", unequip:"نزع", noSlot:"لا توجد خانة {type} لفئتك — التفكيك فقط", setWorn:"{n}/4 مُرتداة",
+    stat_critMultiplier:"ضرر حرج", stat_evasion:"مراوغة",
+    nm_common:"عادي", nm_rare:"نادر", nm_epic:"أسطوري",
+    slot_weapon:"سلاح", slot_helm:"خوذة", slot_armor:"درع", slot_boots:"حذاء", slot_amulet:"تعويذة",
+    slot_shield:"ترس", slot_ring1:"خاتم I", slot_ring2:"خاتم II",
+    type_weapon:"سلاح", type_helm:"خوذة", type_armor:"درع", type_boots:"حذاء", type_amulet:"تعويذة", type_ring:"خاتم", type_shield:"ترس",
+    lvShort:"مس", nm_campfire:"نار المخيّم",
+    nm_sharpened_edge:"حدّ مسنون", nm_rapid_loosing:"رمي سريع", nm_deadeye:"عين صائبة", nm_executioner:"الجلّاد",
+    nm_frenzy:"هياج", nm_vitality:"حيوية", nm_quickstep:"خطوة سريعة", nm_hunter_s_reach:"مدى الصياد",
+    nm_leeching_shots:"طلقات ماصّة", nm_avarice:"جشع", nm_ironhide:"جلد حديدي", nm_sunder:"تمزيق",
+    nm_battle_rhythm:"إيقاع المعركة", nm_cleaving_blows:"ضربات شاطرة", nm_thornmail:"درع شائك", nm_frostbite:"لسعة صقيع",
+    nm_ember_touch:"لمسة الجمر", nm_venom_coating:"طلاء سام", nm_hurricane:"إعصار",
+    nm_piercing_shots:"طلقات خارقة", nm_arcane_cascade:"شلال سحري", nm_concussive_blows:"ضربات صاعقة",
+    nm_hunter_s_focus:"تركيز الصياد", nm_emberheart:"قلب الجمر", nm_bulwark:"حصن",
+    blurb_ranger:"مناوِر: مدى قوس بعيد ورميات سريعة تكافئ المسافة والضربات الحرجة.",
+    blurb_mage:"مدفع زجاجي: ضربات سحرية قريبة تتطاير، وتعاويذ مدمّرة، لكنه هشّ للغاية.",
+    blurb_knight:"محارب صلب: ضربات التحام شاطرة واقتحامات؛ يصمد في خضمّ القتال.",
+    supSub:"ادعم لعبة من صنع شخص واحد وأبقِ النار مشتعلة.",
+    emberGlow:"نار متوهّجة بالجمر", emberGlowD:"لهب تجميلي أدفأ وأكثر سطوعاً في مخيّمك.",
+    noAdsPerk:"بلا إعلانات إطلاقاً", noAdsPerkD:"تُمنح المكافآت كالعادة — تتخطى المشاهدة فقط.",
+    startEmbers:"300 جمرة ابتدائية", startEmbersD:"بداية متقدّمة في الإحياء والفتح.",
+    supPrice:"$4.99 · دفعة واحدة", supOwnedNote:"أنت تملك حزمة الداعم. شكراً لحراستك. ✦",
+    supBuy:"ادعم — افتح الحزمة", supOwned:"مملوكة ✦", maybeLater:"ربما لاحقاً",
+    supFine:"في نسخة الويب يتمّ الشراء عبر متجر الصفحة. ليست نصيحة مالية؛ تختلف الأسعار حسب المنطقة.",
+    supporterUnlocked:"تم فتح حزمة الداعم — شكراً ✦", supporterAdReward:"الداعمون يتخطون الإعلانات — إليك المكافأة ✦",
+    noAd:"لا يوجد إعلان متاح الآن", embersGain:"+30 ⬥ جمر", adNotDone:"لم يكتمل الإعلان",
+    alreadySupporter:"أنت تملك حزمة الداعم بالفعل ✦", supporterUnavailable:"حزمة الداعم غير متاحة في هذا الإصدار",
+    howtoBody:"<b>الحاسوب</b> — اضغط الفأرة للتحرك؛ أفلتها لمهاجمة أقرب عدو. <b>Q W E R</b> تُطلق نحو المؤشر (أو انقر خانة).<br><b>الجوال</b> — عصا التحكم على اليسار للتحرك. انقر مهارة لإطلاقها نحو اتجاهك؛ أو اسحب للتصويب ثم أفلت (أفلت على الزر للإلغاء).<br>يُسقط الأعداء القتلى <b>بقايا</b> — تتدفق إلى النار وتغذّيها؛ كل مستوى للنار يكبّر اللهب ويمنح منحة. <b>I</b> يفتح جرابك · <b>M</b> يكتم الصوت.<br>يهاجم الأعداء على موجات؛ بينها يتوقف الزمن وتشفيك النار. ليلاً، الابتعاد عن ضوء النار يجعل الظلام يستحوذ عليك."
+  }
+};
+let LANG = (()=>{ try{ return Store.get("ew.lang","en")||"en"; }catch(e){ return "en"; } })();
+function t(key, vars){
+  const tbl = STRINGS[LANG] || STRINGS.en;
+  let s = (tbl && tbl[key]!=null) ? tbl[key] : (STRINGS.en[key]!=null ? STRINGS.en[key] : key);
+  if(vars) s = s.replace(/\{(\w+)\}/g, (_,k)=> vars[k]!=null ? vars[k] : "{"+k+"}");
+  return s;
+}
+function availableLangs(){ return Object.keys(STRINGS); }
+function tf(key, fallback){ const s=t(key); return s===key ? fallback : s; }   // for data-table labels: use the literal if untranslated
+function nmKey(s){ return "nm_"+String(s).replace(/[^A-Za-z0-9]+/g,"_").replace(/^_+|_+$/g,"").toLowerCase(); }
+function tn(name){ return tf(nmKey(name), name); }                             // localize a display name; internal ids/sources stay English
+/* Localized descriptions for perks / signatures / class passives, keyed by their English name.
+   Values mirror the English `ds` (a fn(arg) or a string); desc() falls back to the English ds. */
+const DESC = { zh:{
+  "Sharpened Edge":v=>`攻击伤害提高 ${pct(v)}。`,
+  "Rapid Loosing":v=>`攻击速度提高 ${pct(v)}。`,
+  "Deadeye":v=>`暴击几率提高 ${pct(v)}。`,
+  "Executioner":v=>`暴击伤害提高 ${pct(v)}。`,
+  "Frenzy":v=>`生命低于一半时，伤害提高 ${pct(v)}。`,
+  "Vitality":v=>`最大生命 +${v}，并立即治疗。`,
+  "Quickstep":v=>`移动速度提高 ${pct(v)}。`,
+  "Hunter's Reach":v=>`攻击射程提高 ${pct(v)}。`,
+  "Leeching Shots":v=>`将造成伤害的 ${pct(v)} 转化为治疗。`,
+  "Avarice":v=>`收获的残骸增加 ${pct(v)}。`,
+  "Ironhide":v=>`护甲 +${v}。`,
+  "Sunder":v=>`穿甲 +${v}。`,
+  "Battle Rhythm":v=>`技能冷却减少 ${pct(v)}。`,
+  "Cleaving Blows":v=>`攻击向附近敌人溅射至多 50%——命中点最强、边缘递减（半径 +${v}）。`,
+  "Thornmail":v=>`护甲 +${v}；反弹所受伤害的 12%。`,
+  "Frostbite":v=>`攻击使敌人减速——减速 ${pct(v)}，持续 ${(1.25+v*2.5).toFixed(1)} 秒。`,
+  "Ember Touch":v=>`攻击点燃敌人——每秒燃烧 ${v}（可叠加）。`,
+  "Venom Coating":v=>`攻击使敌人中毒——每秒 ${v}（可叠加）。`,
+  "Hurricane":"向另一名敌人额外释放 1 道闪电（随强度提升；无附加命中效果）。",
+  "Piercing Shots":r=>`普通箭矢额外穿透 ${r} 名敌人——每次穿透伤害降低 30%。`,
+  "Arcane Cascade":r=>`普通打击在 ${r} 名附近敌人间跳跃——每次跳跃伤害降低 30%。`,
+  "Concussive Blows":r=>`普通攻击使敌人眩晕 ${STUN_DUR[r]} 秒。`,
+  "Hunter's Focus":"夜间暴击 +15% · 黎明回复 10% 最大生命",
+  "Emberheart":"夜间攻击伤害 +30%",
+  "Bulwark":"护甲 +14 · 击杀时回复 1% 最大生命"
+},
+  es:{
+  "Sharpened Edge":v=>`+${pct(v)} de daño de ataque.`,
+  "Rapid Loosing":v=>`+${pct(v)} de velocidad de ataque.`,
+  "Deadeye":v=>`+${pct(v)} de prob. de crítico.`,
+  "Executioner":v=>`+${pct(v)} de daño crítico.`,
+  "Frenzy":v=>`+${pct(v)} de daño con la vida bajo la mitad.`,
+  "Vitality":v=>`+${v} de vida máxima, curada al instante.`,
+  "Quickstep":v=>`+${pct(v)} de velocidad de movimiento.`,
+  "Hunter's Reach":v=>`+${pct(v)} de alcance de ataque.`,
+  "Leeching Shots":v=>`Cúrate el ${pct(v)} del daño infligido.`,
+  "Avarice":v=>`+${pct(v)} más restos cosechados.`,
+  "Ironhide":v=>`+${v} de armadura.`,
+  "Sunder":v=>`+${v} de penetración de armadura.`,
+  "Battle Rhythm":v=>`-${pct(v)} de enfriamiento de habilidades.`,
+  "Cleaving Blows":v=>`Los ataques salpican hasta 50% a enemigos cercanos — más fuerte en el impacto (+${v} de radio).`,
+  "Thornmail":v=>`+${v} de armadura; refleja el 12% del daño recibido.`,
+  "Frostbite":v=>`Los ataques ralentizan — ${pct(v)} durante ${(1.25+v*2.5).toFixed(1)} s.`,
+  "Ember Touch":v=>`Los ataques prenden fuego — ${v}/s (acumulable).`,
+  "Venom Coating":v=>`Los ataques envenenan — ${v}/s (acumulable).`,
+  "Hurricane":"+1 rayo a otro enemigo (escala con poder; sin efectos al golpe).",
+  "Piercing Shots":r=>`Las flechas perforan ${r} enemigo(s) más — cada paso inflige 30% menos.`,
+  "Arcane Cascade":r=>`Los golpes saltan a ${r} enemigo(s) cercano(s) — cada salto inflige 30% menos.`,
+  "Concussive Blows":r=>`Los ataques aturden ${STUN_DUR[r]} s.`,
+  "Hunter's Focus":"+15% crítico de noche · cura 10% de vida al amanecer",
+  "Emberheart":"+30% de daño de ataque de noche",
+  "Bulwark":"+14 de armadura · cura 1% de vida máx. al matar"
+},
+  fr:{
+  "Sharpened Edge":v=>`+${pct(v)} de dégâts d'attaque.`,
+  "Rapid Loosing":v=>`+${pct(v)} de vitesse d'attaque.`,
+  "Deadeye":v=>`+${pct(v)} de chances de critique.`,
+  "Executioner":v=>`+${pct(v)} de dégâts critiques.`,
+  "Frenzy":v=>`+${pct(v)} de dégâts sous la moitié de la vie.`,
+  "Vitality":v=>`+${v} de vie max, soignée immédiatement.`,
+  "Quickstep":v=>`+${pct(v)} de vitesse de déplacement.`,
+  "Hunter's Reach":v=>`+${pct(v)} de portée d'attaque.`,
+  "Leeching Shots":v=>`Soigne ${pct(v)} des dégâts infligés.`,
+  "Avarice":v=>`+${pct(v)} de restes récoltés.`,
+  "Ironhide":v=>`+${v} d'armure.`,
+  "Sunder":v=>`+${v} de pénétration d'armure.`,
+  "Battle Rhythm":v=>`-${pct(v)} de temps de recharge.`,
+  "Cleaving Blows":v=>`Les attaques éclaboussent jusqu'à 50% aux ennemis proches — plus fort à l'impact (+${v} de rayon).`,
+  "Thornmail":v=>`+${v} d'armure ; renvoie 12% des dégâts subis.`,
+  "Frostbite":v=>`Les attaques ralentissent — ${pct(v)} pendant ${(1.25+v*2.5).toFixed(1)} s.`,
+  "Ember Touch":v=>`Les attaques enflamment — ${v}/s (cumulable).`,
+  "Venom Coating":v=>`Les attaques empoisonnent — ${v}/s (cumulable).`,
+  "Hurricane":"+1 éclair sur un autre ennemi (évolue avec la puissance ; aucun effet au coup).",
+  "Piercing Shots":r=>`Les flèches transpercent ${r} ennemi(s) de plus — chaque passage inflige 30% de moins.`,
+  "Arcane Cascade":r=>`Les frappes rebondissent sur ${r} ennemi(s) proche(s) — chaque rebond inflige 30% de moins.`,
+  "Concussive Blows":r=>`Les attaques étourdissent ${STUN_DUR[r]} s.`,
+  "Hunter's Focus":"+15% de critique la nuit · soigne 10% de vie à l'aube",
+  "Emberheart":"+30% de dégâts d'attaque la nuit",
+  "Bulwark":"+14 d'armure · soigne 1% de vie max à chaque mise à mort"
+},
+  ru:{
+  "Sharpened Edge":v=>`+${pct(v)} к урону атаки.`,
+  "Rapid Loosing":v=>`+${pct(v)} к скорости атаки.`,
+  "Deadeye":v=>`+${pct(v)} к шансу крита.`,
+  "Executioner":v=>`+${pct(v)} к крит. урону.`,
+  "Frenzy":v=>`+${pct(v)} к урону при здоровье ниже половины.`,
+  "Vitality":v=>`+${v} к макс. здоровью, исцеляет сразу.`,
+  "Quickstep":v=>`+${pct(v)} к скорости передвижения.`,
+  "Hunter's Reach":v=>`+${pct(v)} к дальности атаки.`,
+  "Leeching Shots":v=>`Исцеление на ${pct(v)} нанесённого урона.`,
+  "Avarice":v=>`+${pct(v)} больше собранных останков.`,
+  "Ironhide":v=>`+${v} к броне.`,
+  "Sunder":v=>`+${v} к пробитию брони.`,
+  "Battle Rhythm":v=>`-${pct(v)} к перезарядке умений.`,
+  "Cleaving Blows":v=>`Атаки задевают до 50% ближних врагов — сильнее в точке удара (+${v} радиус).`,
+  "Thornmail":v=>`+${v} к броне; отражает 12% полученного урона.`,
+  "Frostbite":v=>`Атаки замедляют — на ${pct(v)} в течение ${(1.25+v*2.5).toFixed(1)} с.`,
+  "Ember Touch":v=>`Атаки поджигают — ${v}/с (стакается).`,
+  "Venom Coating":v=>`Атаки отравляют — ${v}/с (стакается).`,
+  "Hurricane":"+1 молния по другому врагу (масштабируется силой; без эффектов при ударе).",
+  "Piercing Shots":r=>`Стрелы пробивают ещё ${r} врага — каждое попадание на 30% слабее.`,
+  "Arcane Cascade":r=>`Удары перескакивают на ${r} ближних врагов — каждый прыжок на 30% слабее.`,
+  "Concussive Blows":r=>`Атаки оглушают на ${STUN_DUR[r]} с.`,
+  "Hunter's Focus":"+15% крита ночью · исцеление 10% макс. ОЗ на рассвете",
+  "Emberheart":"+30% к урону атаки ночью",
+  "Bulwark":"+14 к броне · исцеление 1% макс. ОЗ за убийство"
+},
+  ja:{
+  "Sharpened Edge":v=>`攻撃ダメージ +${pct(v)}。`,
+  "Rapid Loosing":v=>`攻撃速度 +${pct(v)}。`,
+  "Deadeye":v=>`クリティカル率 +${pct(v)}。`,
+  "Executioner":v=>`クリティカルダメージ +${pct(v)}。`,
+  "Frenzy":v=>`体力が半分以下のとき、ダメージ +${pct(v)}。`,
+  "Vitality":v=>`最大体力 +${v}、即時回復。`,
+  "Quickstep":v=>`移動速度 +${pct(v)}。`,
+  "Hunter's Reach":v=>`攻撃射程 +${pct(v)}。`,
+  "Leeching Shots":v=>`与ダメージの ${pct(v)} を回復。`,
+  "Avarice":v=>`亡骸の収集 +${pct(v)}。`,
+  "Ironhide":v=>`防御 +${v}。`,
+  "Sunder":v=>`防御貫通 +${v}。`,
+  "Battle Rhythm":v=>`スキルのクールダウン -${pct(v)}。`,
+  "Cleaving Blows":v=>`攻撃が近くの敵に最大50%飛散——着弾点が最強（半径 +${v}）。`,
+  "Thornmail":v=>`防御 +${v}；被ダメージの12%を反射。`,
+  "Frostbite":v=>`攻撃で減速——${pct(v)} を ${(1.25+v*2.5).toFixed(1)} 秒。`,
+  "Ember Touch":v=>`攻撃で着火——毎秒 ${v} 燃焼（重複可）。`,
+  "Venom Coating":v=>`攻撃で毒——毎秒 ${v}（重複可）。`,
+  "Hurricane":"別の敵へ落雷+1（威力で増加；命中効果なし）。",
+  "Piercing Shots":r=>`通常矢が敵を ${r} 体追加で貫通——各貫通で30%減少。`,
+  "Arcane Cascade":r=>`通常打撃が近くの ${r} 体に連鎖——各連鎖で30%減少。`,
+  "Concussive Blows":r=>`通常攻撃で ${STUN_DUR[r]} 秒スタン。`,
+  "Hunter's Focus":"夜間クリティカル +15% · 夜明けに最大体力10%回復",
+  "Emberheart":"夜間の攻撃ダメージ +30%",
+  "Bulwark":"防御 +14 · 撃破時に最大体力1%回復"
+},
+  ar:{
+  "Sharpened Edge":v=>`ضرر الهجوم +${pct(v)}.`,
+  "Rapid Loosing":v=>`سرعة الهجوم +${pct(v)}.`,
+  "Deadeye":v=>`فرصة الضربة الحرجة +${pct(v)}.`,
+  "Executioner":v=>`ضرر الضربة الحرجة +${pct(v)}.`,
+  "Frenzy":v=>`ضرر أكبر بنسبة ${pct(v)} عند انخفاض الصحة دون النصف.`,
+  "Vitality":v=>`الصحة القصوى +${v}، مع شفاء فوري.`,
+  "Quickstep":v=>`سرعة الحركة +${pct(v)}.`,
+  "Hunter's Reach":v=>`مدى الهجوم +${pct(v)}.`,
+  "Leeching Shots":v=>`اشفِ ${pct(v)} من الضرر المُلحَق.`,
+  "Avarice":v=>`بقايا محصودة أكثر بنسبة ${pct(v)}.`,
+  "Ironhide":v=>`الدرع +${v}.`,
+  "Sunder":v=>`اختراق الدرع +${v}.`,
+  "Battle Rhythm":v=>`تبريد المهارات -${pct(v)}.`,
+  "Cleaving Blows":v=>`تتطاير الهجمات حتى 50% للأعداء القريبين — أقوى عند الإصابة (نطاق +${v}).`,
+  "Thornmail":v=>`الدرع +${v}؛ يرتدّ 12% من الضرر المتلقَّى.`,
+  "Frostbite":v=>`الهجمات تُبطئ — ${pct(v)} لمدة ${(1.25+v*2.5).toFixed(1)} ث.`,
+  "Ember Touch":v=>`الهجمات تُشعل — ${v}/ث (تتراكم).`,
+  "Venom Coating":v=>`الهجمات تُسمّم — ${v}/ث (تتراكم).`,
+  "Hurricane":"صاعقة إضافية على عدو آخر (تتناسب مع القوة؛ بلا تأثيرات عند الإصابة).",
+  "Piercing Shots":r=>`تخترق السهام ${r} عدو إضافي — كل اختراق يُلحق ضرراً أقل بنسبة 30%.`,
+  "Arcane Cascade":r=>`تقفز الضربات إلى ${r} عدو قريب — كل قفزة أقل بنسبة 30%.`,
+  "Concussive Blows":r=>`الهجمات تُذهل لمدة ${STUN_DUR[r]} ث.`,
+  "Hunter's Focus":"حرج +15% ليلاً · شفاء 10% من الصحة القصوى عند الفجر",
+  "Emberheart":"ضرر الهجوم +30% ليلاً",
+  "Bulwark":"الدرع +14 · شفاء 1% من الصحة القصوى عند القتل"
+}};
+function desc(name, ds, arg){ const d=(DESC[LANG]||{})[name]; if(d!=null) return typeof d==="function"?d(arg):d; return typeof ds==="function"?ds(arg):ds; }
+function setLang(l){ LANG = STRINGS[l] ? l : "en"; try{ Store.set("ew.lang", LANG); }catch(e){} applyDir(); applyI18n(); }
+const LANG_NAMES = { en:"English", zh:"中文", es:"Español", fr:"Français", ru:"Русский", ja:"日本語", ar:"العربية" };
+const RTL_LANGS = new Set(["ar"]);                      // right-to-left scripts
+function applyDir(){ try{ document.documentElement.setAttribute("dir", RTL_LANGS.has(LANG)?"rtl":"ltr"); }catch(e){} }
+function isRTL(){ return RTL_LANGS.has(LANG); }
+function applyI18n(){                                   // fill every tagged element from the active language
+  try{
+    document.querySelectorAll("[data-i18n]").forEach(el=>{ el.textContent = t(el.getAttribute("data-i18n")); });
+    document.querySelectorAll("[data-i18n-html]").forEach(el=>{ el.innerHTML = t(el.getAttribute("data-i18n-html")); });
+    document.querySelectorAll("[data-i18n-aria]").forEach(el=>{ el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria"))); });
+  }catch(e){}                                           // never let copy-filling break boot
+}
+function renderLangPicker(){ const cur=document.getElementById("langcur"); if(cur) cur.textContent=LANG_NAMES[LANG]||LANG; renderLangGrid(); }
+function renderLangGrid(){
+  const grid=document.getElementById("langgrid"); if(!grid) return;
+  grid.innerHTML = availableLangs().map(c=>
+    `<button class="langitem${c===LANG?' on':''}" onclick="chooseLang('${c}')">${LANG_NAMES[c]||c}</button>`).join("");
+}
+function openLang(){ renderLangGrid(); show("langoverlay"); }
+function closeLang(){ hide("langoverlay"); }
+function chooseLang(code){ setLang(code); renderLangPicker(); }   // setLang persists, flips text direction, and re-fills the markup
 function addEmbers(n){ embers=Math.max(0,embers+n); Store.set("ew.embers",embers); updateEmberUI(); }
 
 /* =========================================================================
@@ -727,7 +1390,7 @@ function grantSupporter(){
   addEmbers(SUPPORTER_EMBERS);
   tele("supporter_pack_purchased",{embers:SUPPORTER_EMBERS});
   try{ refreshSupporterUI(); }catch(e){}
-  msgToast("Supporter Pack unlocked — thank you ✦");
+  msgToast(t("supporterUnlocked"));
 }
 
 function evalCondition(c, self, ctx, other){
@@ -1130,7 +1793,7 @@ const LABEL={maxHealth:"Health",healthRegen:"Regen",attackDamage:"Attack Damage"
   cleave:"Cleave Radius",chain:"Extra Bolts",armorPen:"Armor Pen",cdr:"Cooldown Reduction",
   counter:"Counter",evasion:"Evasion"};
 function modText(m){
-  const L=LABEL[m.stat]||m.stat;
+  const L=tf("stat_"+m.stat, LABEL[m.stat]||m.stat);
   if(m.op==="flat"){ const v=FRAC.has(m.stat)?Math.round(m.value*100)+"%":Math.round(m.value); return (m.value<0?"":"+")+v+" "+L; }
   return (m.value<0?"":"+")+Math.round(m.value*100)+"% "+L;
 }
@@ -2437,8 +3100,8 @@ function levelUp(){
   SFX.fire(); spawnParticles(0,0,"#ffb347",22,{speed:160,life:0.8,size:3,grav:-30});
   const unlocked = ABILITIES.filter(a=>(a.unlock==null?1:a.unlock)===G.level);
   const sub=document.querySelector("#levelup .sub");
-  if(unlocked.length) sub.innerHTML=`<span class="unlockline">✦ New ability — <b>${unlocked.map(a=>a.label+" · "+a.name).join(" &nbsp; ")}</b></span><br>Choose one boon. It lasts the rest of the run.`;
-  else sub.textContent="Choose one boon. It lasts the rest of the run.";
+  if(unlocked.length) sub.innerHTML=`<span class="unlockline">${t("newAbility")} <b>${unlocked.map(a=>a.label+" · "+a.name).join(" &nbsp; ")}</b></span><br>${t("chooseBoon")}`;
+  else sub.textContent=t("chooseBoon");
   // unified pool: generic perks (rarity-rolled) + the next upgrade on each unlocked ability's ladder
   const pool=[];
   for(const p of PERKS){
@@ -2450,10 +3113,10 @@ function levelUp(){
         if(t<=owned) continue;                          // only show a strictly rarer option than owned
       }
       const v=p.tiers[t], src=p.build(v);
-      pool.push({ nm:p.nm, ds:p.ds(v), rarCls:PERK_TIER_CLS[t], rar:PERK_TIER_NM[t], up:false,
+      pool.push({ nm:tn(p.nm), ds:desc(p.nm,p.ds,v), key:p.nm, rarCls:PERK_TIER_CLS[t], rar:PERK_TIER_NM[t], up:false,
         apply:h=>{ h.perks.push(src); if(p.heal)h.currentHealth+=v; if(p.flat){ (h.flatTier||(h.flatTier={}))[p.nm]=t; } rebuild(h); } });
     } else {
-      pool.push({ nm:p.nm, ds:p.ds, up:false, apply:h=>{ h.perks.push(p.src); rebuild(h); } });
+      pool.push({ nm:tn(p.nm), ds:desc(p.nm,p.ds), key:p.nm, up:false, apply:h=>{ h.perks.push(p.src); rebuild(h); } });
     }
   }
   for(const ab of ABILITIES){ if(!abilityUnlocked(ab) || !ab.upgrades) continue;
@@ -2466,17 +3129,17 @@ function levelUp(){
   const sig=SIGNATURE[G.hero.classId];
   if(sig && (G.hero.basicMod?.rank||0) < 3){
     const t=rollPerkTier(), rank=t+1;
-    pool.push({ nm:`✦ ${sig.nm}`, ds:sig.ds(rank), rarCls:PERK_TIER_CLS[t], rar:PERK_TIER_NM[t], up:false,
+    pool.push({ nm:`✦ ${tn(sig.nm)}`, ds:desc(sig.nm,sig.ds,rank), key:sig.nm, rarCls:PERK_TIER_CLS[t], rar:PERK_TIER_NM[t], up:false,
       apply:h=>{ const cur=h.basicMod?.rank||0; if(rank>cur) h.basicMod={kind:sig.kind, rank}; } });
   }
   const choices=[]; while(choices.length<3 && pool.length) choices.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
   const box=document.getElementById("perkcards"); box.innerHTML="";
   for(const card of choices){
     const c=document.createElement("div"); c.className="card"+(card.rarCls?(" "+card.rarCls):"")+(card.up?" upg":"");
-    const rtag = card.rar ? `<div class="rtag">${card.rar}</div>` : "";
+    const rtag = card.rar ? `<div class="rtag">${tn(card.rar)}</div>` : "";
     c.innerHTML=`${rtag}<div class="nm">${card.nm}</div><div class="ds">${card.ds}</div>`;
     c.onclick=()=>{ card.apply(G.hero);
-      tele("level_up",{ level:G.level, choice:card.nm, rar:card.rar||"", up:card.up?1:0 });
+      tele("level_up",{ level:G.level, choice:card.key||card.nm, rar:card.rar||"", up:card.up?1:0 });
       (G.hero.boons||(G.hero.boons=[])).push({nm:card.nm, ds:card.ds, rarCls:card.rarCls||""});   // remember it for the stats modal
       const mx=resolveStat(G.hero,"maxHealth",ctx); if(G.hero.currentHealth>mx)G.hero.currentHealth=mx;
       hide("levelup"); G.paused=false;
@@ -2522,14 +3185,14 @@ let invSel=null;     // {kind:'equip',slotId} | {kind:'loot',idx}
 
 function renderInventory(){
   const cls=CLASSES[G.classId];
-  const lv=document.getElementById("invlvl"); if(lv) lv.textContent=(cls?cls.name:"")+" · Level "+G.level;
+  const lv=document.getElementById("invlvl"); if(lv) lv.textContent=(cls?tf("cls_"+cls.id,cls.name):"")+" · "+t("levelWord")+" "+G.level;
   // ---- equipment grid ----
   const eg=document.getElementById("eqgrid"); eg.innerHTML="";
   for(const slot of G.hero.slots){
     const it=G.hero.equipment[slot.id]; const t=document.createElement("div");
     t.className="tile "+(it?("filled "+it.rarCls):"eqempty")
       + (invSel&&invSel.kind==="equip"&&invSel.slotId===slot.id?" sel":"");
-    t.innerHTML=slotIcon(slot.type)+`<span class="slotlbl">${slot.name}</span>`+(it&&it.lvl?`<span class="lvlb">${it.lvl}</span>`:"")+(it&&it.set&&SETS[it.set]?`<span class="setpip" style="background:${SETS[it.set].col};color:${SETS[it.set].col}"></span>`:"");
+    t.innerHTML=slotIcon(slot.type)+`<span class="slotlbl">${tf("slot_"+slot.id, slot.name)}</span>`+(it&&it.lvl?`<span class="lvlb">${it.lvl}</span>`:"")+(it&&it.set&&SETS[it.set]?`<span class="setpip" style="background:${SETS[it.set].col};color:${SETS[it.set].col}"></span>`:"");
     if(it) t.onclick=()=>{ invSel={kind:"equip",slotId:slot.id}; renderInventory(); };
     eg.appendChild(t);
   }
@@ -2554,28 +3217,28 @@ function renderItemDetail(){
   let it=null, mode=null;
   if(invSel){ if(invSel.kind==="equip"){ it=G.hero.equipment[invSel.slotId]; mode="equip"; }
     else { it=G.satchel[invSel.idx]; mode="loot"; } }
-  if(!it){ invSel=null; dd.className="itemdetail empty-d"; dd.innerHTML="Select a piece of gear to inspect it."; return; }
+  if(!it){ invSel=null; dd.className="itemdetail empty-d"; dd.innerHTML=t("selectGear"); return; }
   dd.className="itemdetail";
   const proc=(it.procDs&&it.procDs.length)?`<div class="dp">✦ ${it.procDs.join(" · ")}</div>`:"";
   let cmp="", acts="";
   if(mode==="loot"){
     const targetId=targetSlotFor(G.hero,it);
     if(targetId){
-      acts=`<button class="mini" id="d-eq">Equip</button><button class="mini sell" id="d-sv">Salvage +${salvageValue(it)}</button>`;
-    } else { cmp=`<div class="dc"><span class="same">No ${TYPE_LABEL[it.slot]||it.slot} slot for your class — salvage only</span></div>`;
-      acts=`<button class="mini sell" id="d-sv">Salvage +${salvageValue(it)}</button>`; }
-  } else { acts=`<button class="mini" id="d-un">Unequip</button>`; }
+      acts=`<button class="mini" id="d-eq">${t("equip")}</button><button class="mini sell" id="d-sv">${t("salvage")} +${salvageValue(it)}</button>`;
+    } else { cmp=`<div class="dc"><span class="same">${t("noSlot",{type:tf("type_"+it.slot, TYPE_LABEL[it.slot]||it.slot)})}</span></div>`;
+      acts=`<button class="mini sell" id="d-sv">${t("salvage")} +${salvageValue(it)}</button>`; }
+  } else { acts=`<button class="mini" id="d-un">${t("unequip")}</button>`; }
   let setInfo="";
   if(it.set && it.set!=="basic" && SETS[it.set]){
     const S=SETS[it.set];
     let n=0; for(const s of G.hero.slots){ const eq=G.hero.equipment[s.id]; if(eq && eq.set===it.set) n++; }
     const line=(mods,active,label)=>`<div class="dsetb ${active?"on":""}"><b>${label}</b> ${mods.map(modText).join(", ")}</div>`;
     setInfo=`<div class="dset" style="--sc:${S.col}">
-      <div class="dsetn">${S.nm} set · ${n}/4 worn</div>
+      <div class="dsetn">${tn(S.nm)} ${t("setOf")} · ${t("setWorn",{n})}</div>
       ${S.b2?line(S.b2.mods, n>=2, "2pc"):""}
       ${S.b4?line(S.b4.mods, n>=4, "4pc"):""}</div>`;
   }
-  dd.innerHTML=`<div class="dn ${it.rarCls}">${it.nm} <span style="color:var(--muted);font-weight:400;font-size:10px">· Lv ${it.lvl||1} · ${it.rarity||""} ${TYPE_LABEL[it.slot]||it.slot}</span></div>
+  dd.innerHTML=`<div class="dn ${it.rarCls}">${it.nm} <span style="color:var(--muted);font-weight:400;font-size:10px">· ${t("lvShort")} ${it.lvl||1} · ${tf("nm_"+(it.rarity||""), it.rarity||"")} ${tf("type_"+it.slot, TYPE_LABEL[it.slot]||it.slot)}</span></div>
     <div class="dm">${it.modifiers.map(modText).join(" · ")}</div>${proc}${setInfo}${cmp}
     <div class="acts">${acts}</div>`;
   const eqb=document.getElementById("d-eq"); if(eqb) eqb.onclick=()=>{ const i=invSel.idx; invSel=null; equip(i); };
@@ -2617,21 +3280,21 @@ function renderStats(){
   sb.innerHTML=rows.map(([l,v,k])=>{
     const d = delta && delta[k]!==undefined ? delta[k] : null;
     const dHtml = d===null ? "" : `<span class="sdelta ${d>0?"up":"down"}">${fmtStatDelta(k,d)}</span>`;
-    return `<div class="srow"><span class="slbl">${l}</span><span class="sright">${dHtml}<span class="sval">${v}</span></span></div>`;
+    return `<div class="srow"><span class="slbl">${tf("stat_"+k,l)}</span><span class="sright">${dHtml}<span class="sval">${v}</span></span></div>`;
   }).join("");
 }
 function renderBoons(){
   const bb=document.getElementById("boonsbox"); if(!bb) return;
   const h=G.hero, list=[];
-  if(h.classPassive && h.classPassive.nm) list.push({nm:h.classPassive.nm, ds:h.classPassive.ds||"", col:"#ffd9a0"});   // class signature
-  const fl=G.fireLevel-1; if(fl>0) list.push({nm:"Campfire", ds:"+"+(12*fl)+" Health", col:"#ff9a4a"});                 // the fire itself
-  for(const b of (h.boons||[])) list.push({nm:b.nm, ds:b.ds, rarCls:b.rarCls});                                          // boons picked at level-up
+  if(h.classPassive && h.classPassive.nm) list.push({nm:tn(h.classPassive.nm), ds:desc(h.classPassive.nm,h.classPassive.ds||""), col:"#ffd9a0"});   // class signature
+  const fl=G.fireLevel-1; if(fl>0) list.push({nm:tn("Campfire"), ds:"+"+(12*fl)+" "+t("stat_maxHealth"), col:"#ff9a4a"});                 // the fire itself
+  for(const b of (h.boons||[])) list.push({nm:b.nm, ds:b.ds, rarCls:b.rarCls});                                          // boons picked at level-up (already localized at pick)
   // active set bonuses from worn gear
   const cnt={}; for(const s of h.slots){ const eq=h.equipment[s.id]; if(eq && eq.set && SETS[eq.set]) cnt[eq.set]=(cnt[eq.set]||0)+1; }
   for(const id in cnt){ const S=SETS[id], n=cnt[id];
-    if(n>=2 && S.b2) list.push({nm:S.nm+" set (2)", ds:S.b2.mods.map(modText).join(", "), col:S.col});
-    if(n>=4 && S.b4) list.push({nm:S.nm+" set (4)", ds:S.b4.mods.map(modText).join(", "), col:S.col}); }
-  if(!list.length){ bb.innerHTML=`<div class="boonempty">No boons yet — clear waves to level up and choose one.</div>`; return; }
+    if(n>=2 && S.b2) list.push({nm:tn(S.nm)+" "+t("setOf")+" (2)", ds:S.b2.mods.map(modText).join(", "), col:S.col});
+    if(n>=4 && S.b4) list.push({nm:tn(S.nm)+" "+t("setOf")+" (4)", ds:S.b4.mods.map(modText).join(", "), col:S.col}); }
+  if(!list.length){ bb.innerHTML=`<div class="boonempty">${t("noBoons")}</div>`; return; }
   bb.innerHTML=list.map(b=>`<div class="boonrow ${b.rarCls||""}"><span class="boonnm"${b.col?` style="color:${b.col}"`:""}>${b.nm}</span><span class="boonds">${b.ds}</span></div>`).join("");
 }
 function matchingSlots(h, type){ return h.slots.filter(s=>s.type===type); }
@@ -3088,7 +3751,7 @@ function render(){
     if(f.critFlag){ const k=Math.max(0,f.life/f.max), pop=f.t!=null?1+Math.max(0,(0.12-f.t)/0.12)*1.1:1;
       g.globalAlpha=k; g.textAlign="center"; const fsz=13*pop; g.font="800 "+fsz.toFixed(1)+"px ui-sans-serif,system-ui";
       g.lineWidth=3.5; g.strokeStyle="rgba(90,0,0,.95)"; g.strokeText("CRITICAL!",x,y);
-      g.fillStyle="#ff4438"; g.fillText("CRITICAL!",x,y); g.globalAlpha=1; continue; }
+      g.fillStyle="#ff4438"; g.fillText(t("critical"),x,y); g.globalAlpha=1; continue; }
     g.globalAlpha=Math.max(0,f.life/0.7);
     const dcol=f.col?f.col:(f.heal?"#9fe6a0":f.crit?"#ff5a4a":(f.splash?"#ffcaa0":"#ffba50"));   // regular = bright orange, crit = bright red
     const pop = f.t!=null ? 1+Math.max(0,(0.12-f.t)/0.12)*(f.crit?0.9:0.5) : 1;   // scale-in pop
@@ -3193,7 +3856,7 @@ function render(){
     g.fillStyle="#b03b6e"; g.fillRect(bx,by,bw*hp,10);
     g.strokeStyle="rgba(255,150,190,.5)"; g.lineWidth=1; g.strokeRect(bx,by,bw,10);
     g.fillStyle="#ffd0e0"; g.font="600 11px ui-sans-serif,system-ui"; g.textAlign="center";
-    g.fillText("WARDEN OF THE DARK", W/2, by-6);
+    g.fillText(t("wardenOfDark"), W/2, by-6);
   }
   // lucidity — as the watcher fades, a pulsing crimson dark closes in from the edges
   if(G.lucidity>0.01){
@@ -3259,7 +3922,7 @@ function render(){
     const fsz=(20+Math.min(G.combo,40)*0.4)*pulse; g.font="900 "+fsz.toFixed(1)+"px ui-sans-serif,system-ui";
     g.lineWidth=4; g.strokeStyle="rgba(0,0,0,.7)"; g.strokeText(G.combo+"×", W/2, 66);
     g.fillStyle=col; g.fillText(G.combo+"×", W/2, 66);
-    g.font="600 11px ui-sans-serif,system-ui"; g.fillStyle="rgba(255,255,255,.6)"; g.fillText("COMBO", W/2, 80);
+    g.font="600 11px ui-sans-serif,system-ui"; g.fillStyle="rgba(255,255,255,.6)"; g.fillText(t("combo"), W/2, 80);
     const bw=70, frac=Math.max(0,G.comboT/COMBO_WINDOW);   // depleting timer bar
     g.fillStyle="rgba(255,255,255,.15)"; g.fillRect(W/2-bw/2, 86, bw, 3);
     g.fillStyle=col; g.fillRect(W/2-bw/2, 86, bw*frac, 3);
@@ -3355,7 +4018,7 @@ function syncHUD(){
   document.getElementById("hpghost").style.width=hppct+"%";
   document.getElementById("hptext").textContent=Math.max(0,Math.ceil(h.currentHealth))+" / "+Math.round(mx);
   document.getElementById("xpfill").style.width=(G.xp/G.xpNext*100)+"%";
-  document.getElementById("xptext").textContent="Remains "+Math.floor(G.xp)+" / "+G.xpNext;
+  document.getElementById("xptext").textContent=t("remains")+" "+Math.floor(G.xp)+" / "+G.xpNext;
   document.getElementById("lvl").textContent=G.level;
   document.getElementById("kills").textContent=G.kills;
   document.getElementById("dayn").textContent=G.dayNum;
@@ -3364,7 +4027,7 @@ function syncHUD(){
   document.getElementById("elapsed").textContent=fmt(G.time);
   // clock — dimmed while frozen between waves
   const len=G.isNight?PHASE_NIGHT:PHASE_DAY, frac=G.phaseTime/len;
-  document.getElementById("phase").textContent=G.isNight?"Night":"Day";
+  document.getElementById("phase").textContent=G.isNight?t("phaseNight"):t("phaseDay");
   document.getElementById("phase").style.color=G.isNight?"var(--cold)":"var(--ember)";
   const hour = G.isNight ? 18+Math.floor(frac*12) : 6+Math.floor(frac*12);
   document.getElementById("ctime").textContent=String(hour%24).padStart(2,"0")+":00";
@@ -3373,7 +4036,7 @@ function syncHUD(){
   document.getElementById("invbadge").classList.toggle("on", hasGearUpgrade());
   // intermission countdown
   if(G.waveState==="intermission"){
-    document.getElementById("isub").textContent=`Next wave in ${Math.max(0,Math.ceil(G.interTimer))}s — or begin now`;
+    document.getElementById("isub").textContent=t("nextWaveIn",{s:Math.max(0,Math.ceil(G.interTimer))});
   }
   // exposure warning
   const ew=document.getElementById("expwarn"), exp=G.exposed||0;
@@ -3407,15 +4070,15 @@ function buildHotbar(){
 }
 function showIntermission(){
   const cleared = G.wave>0;
-  document.getElementById("ititle").textContent = cleared ? `Wave ${G.wave} cleared` : "The watch begins";
-  document.getElementById("isub").textContent = `Next wave in ${Math.ceil(G.interTimer)}s — or begin now`;
-  document.getElementById("beginwave").textContent = `Begin wave ${G.wave+1}`;
+  document.getElementById("ititle").textContent = cleared ? t("waveCleared",{n:G.wave}) : t("watchBegins");
+  document.getElementById("isub").textContent = t("nextWaveIn",{s:Math.ceil(G.interTimer)});
+  document.getElementById("beginwave").textContent = t("beginWaveN",{n:G.wave+1});
   show("intermission");
 }
 function fmt(s){ s=Math.floor(s); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); }
 let toastT=0; function toast(item){
   const el=document.getElementById("loottoast"); if(!el||!item) return;
-  el.innerHTML=`Picked up <b class="${item.rarCls}">${item.nm}</b>${item.lvl?` <span style="opacity:.7">· Lv ${item.lvl}</span>`:""}`;
+  el.innerHTML=`${t("pickedUp")} <b class="${item.rarCls}">${item.nm}</b>${item.lvl?` <span style="opacity:.7">· ${t("lvShort")} ${item.lvl}</span>`:""}`;
   el.classList.add("on"); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("on"),1800);
 }
 function msgToast(text){ const el=document.getElementById("loottoast"); if(!el) return;
@@ -3426,10 +4089,16 @@ addEventListener("keydown",e=>{
   SFX.resume();
   const k=e.key.toLowerCase();
   if(k==="m"){ const m=SFX.toggleMute(); const el=document.getElementById("loottoast");
-    if(el){ el.innerHTML=m?"Sound off":"Sound on"; el.classList.add("on"); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("on"),1300); }
+    if(el){ el.innerHTML=m?t("soundOff"):t("soundOn"); el.classList.add("on"); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("on"),1300); }
     e.preventDefault(); return; }
   if(k==="i"){ togglePanel("inventory"); e.preventDefault(); return; }
-  if(k==="escape"){ closePanels(); return; }
+  if(k==="p"){ togglePause(); e.preventDefault(); return; }
+  if(k==="escape"){
+    if(pauseOpen()){ resumeGame(); return; }
+    if(panelOpen()){ closePanels(); return; }
+    if(running && G && !G.hero.dead && !G.paused){ G.paused=true; show("pause"); }
+    return;
+  }
   // abilities (edge-triggered; ignore key-repeat)
   if(ABILITY_BY_KEY[k] && running && G && !G.paused && !G.hero.dead){
     const ab=ABILITY_BY_KEY[k];
@@ -3452,7 +4121,7 @@ const MOBILE = (typeof matchMedia!=="undefined")
 if(MOBILE && document.body) document.body.classList.add("mobile");
 const JOY_MAXR=58;
 const JOY_TOP=1.0;   // joystick max speed multiplier — 1.0 == same top speed as mouse/keyboard
-function joyCenter(){ return { x: 96, y: innerHeight - 128 }; }   // fixed base, bottom-left
+function joyCenter(){ return { x: isRTL()? innerWidth-96 : 96, y: innerHeight - 128 }; }   // fixed base; bottom-left, or bottom-right in RTL
 const touchState={ joy:null, aim:null };   // joy:{id,dx,dy}  aim:{id,idx,sx,sy,ang,drag}
 function slotHit(cx,cy){ for(let i=0;i<ABILITIES.length;i++){ const el=document.getElementById("hb"+i); if(!el) continue;
     const r=el.getBoundingClientRect(); if(cx>=r.left-6&&cx<=r.right+6&&cy>=r.top-6&&cy<=r.bottom+6) return i; } return -1; }
@@ -3468,7 +4137,7 @@ function onTouchStart(e){ SFX.resume();
       else if(!touchState.aim){ touchState.aim={id:t.identifier, idx:si, sx:x, sy:y, ang:null, drag:false};
         const el=document.getElementById("hb"+si); if(el) el.classList.add("aiming"); }
       consumed=true; continue; }
-    if(x < innerWidth*0.5 && y>96 && !touchState.joy){ const c=joyCenter(); let dx=x-c.x, dy=y-c.y;
+    if((isRTL()? x > innerWidth*0.5 : x < innerWidth*0.5) && y>96 && !touchState.joy){ const c=joyCenter(); let dx=x-c.x, dy=y-c.y;
       const d=Math.hypot(dx,dy); if(d>JOY_MAXR){ dx=dx/d*JOY_MAXR; dy=dy/d*JOY_MAXR; }
       touchState.joy={id:t.identifier, dx, dy}; consumed=true; }   // touch position directly sets direction off the fixed center
   }
@@ -3537,6 +4206,11 @@ function togglePanel(id){
   G.paused=true; show(id);
 }
 function closePanels(){ hide("inventory"); hide("firepanel"); if(G&&!document.getElementById("levelup").classList.contains("on")) G.paused=false; }
+function pauseOpen(){ const el=document.getElementById("pause"); return !!el && el.classList.contains("on"); }
+function panelOpen(){ return document.getElementById("inventory").classList.contains("on") || document.getElementById("firepanel").classList.contains("on"); }
+function togglePause(){ if(pauseOpen()){ resumeGame(); return; } if(running && G && !G.hero.dead && !G.paused){ G.paused=true; show("pause"); } }
+function resumeGame(){ if(!pauseOpen()) return; hide("pause"); if(G) G.paused=false; }
+function pauseHome(){ hide("pause"); toStart("menu"); }
 document.getElementById("invbtn").onclick=()=>togglePanel("inventory");
 function toggleBoons(){ const h=document.getElementById("boonshead"), b=document.getElementById("boonsbox");
   if(!h||!b) return; const open=h.classList.toggle("collapsed"); b.classList.toggle("collapsed", open); }
@@ -3549,12 +4223,12 @@ function renderHeroPick(){
   const c=CLASSES[PICK_ORDER[pickIdx]]; const card=document.getElementById("herocard"); if(!card) return;
   card.style.setProperty("--cc", c.color);
   const s=c.baseStats;
-  const chips=[["HP",s.maxHealth],["Power",s.attackDamage],["Range",s.attackRange]];
-  card.innerHTML=`<div class="hn" style="color:${c.color}">${c.name}</div>`+
-    `<div class="hr">${c.role}</div><div class="hb">${c.blurb}</div>`+
+  const chips=[[t("chipHP"),s.maxHealth],[t("chipPower"),s.attackDamage],[t("chipRange"),s.attackRange]];
+  card.innerHTML=`<div class="hn" style="color:${c.color}">${tf("cls_"+c.id,c.name)}</div>`+
+    `<div class="hr">${tf("role_"+c.id,c.role)}</div><div class="hb">${tf("blurb_"+c.id,c.blurb)}</div>`+
     `<div class="hstats">`+chips.map(([k,v])=>`<span class="hstat">${k} <b>${v}</b></span>`).join("")+`</div>`;
   card.classList.remove("swap"); void card.offsetWidth; card.classList.add("swap");   // re-trigger swap anim
-  const begin=document.getElementById("pickbegin"); if(begin) begin.textContent="Begin";
+  const begin=document.getElementById("pickbegin"); if(begin) begin.textContent=t("begin");
   const dots=document.getElementById("pickdots"); if(dots) dots.innerHTML=PICK_ORDER.map((_,i)=>`<i class="${i===pickIdx?"on":""}"></i>`).join("");
 }
 function cyclePick(dir){ pickIdx=(pickIdx+dir+PICK_ORDER.length)%PICK_ORDER.length; renderHeroPick(); SFX.cast&&SFX.cast(); }
@@ -3667,7 +4341,7 @@ function gameOver(){
     fireLevel:G.fireLevel, cls:G.classId, revives:G.reviveCount||0,
     durSec:Math.round((performance.now()-(G._runStartMs||performance.now()))/1000),
     firstBank:G._firstBankDone?1:0, runNo:Telemetry.runCount });
-  document.getElementById("ov-best").innerHTML = isBest ? `<span class="newbest">★ New best!</span>` : `Best ${bestScore.toLocaleString()}`;
+  document.getElementById("ov-best").innerHTML = isBest ? `<span class="newbest">${t("newBest")}</span>` : t("best",{n:bestScore.toLocaleString()});
   document.getElementById("ov-gain").textContent = gain>0 ? ("+"+gain) : "0";
   updateEmberUI();
   show("over");
@@ -3727,25 +4401,25 @@ function updateEmberUI(){ const e=document.getElementById("ov-embers"); if(e) e.
 let _adCooling=false;
 function watchAd(){
   if(_adCooling) return;
-  if(isSupporter()){ msgToast("Supporters skip ads — here's the reward ✦"); addEmbers(30); tele("ad_reward_granted",{placement:"over",supporter:1}); return; }
-  if(!Ads.available()){ msgToast("No ad available right now"); return; }
+  if(isSupporter()){ msgToast(t("supporterAdReward")); addEmbers(30); tele("ad_reward_granted",{placement:"over",supporter:1}); return; }
+  if(!Ads.available()){ msgToast(t("noAd")); return; }
   const btn=document.getElementById("ov-ad"); _adCooling=true;
   const old=btn?btn.textContent:""; if(btn){ btn.textContent="Watching…"; btn.classList.add("disabled"); }
   Ads.show("over_embers").then(ok=>{
     if(btn){ btn.textContent=old; btn.classList.remove("disabled"); } _adCooling=false;
-    if(ok){ addEmbers(30); tele("ad_reward_granted",{placement:"over"}); msgToast("+30 ⬥ embers"); }
-    else { msgToast("Ad not completed"); }
+    if(ok){ addEmbers(30); tele("ad_reward_granted",{placement:"over"}); msgToast(t("embersGain")); }
+    else { msgToast(t("adNotDone")); }
   });
 }
 /* Supporter Pack — the single IAP. Routes through the host storefront on web;
    real portal IAP slots in behind grantSupporter() with no other changes. */
 function buyEmbers(){
-  if(isSupporter()){ msgToast("You already have the Supporter Pack ✦"); return; }
+  if(isSupporter()){ msgToast(t("alreadySupporter")); return; }
   tele("supporter_pack_viewed",{placement:"over"});
   openSupporter();
 }
 function openSupporter(){
-  const m=document.getElementById("supporter"); if(!m){ msgToast("Supporter Pack unavailable in this build"); return; }
+  const m=document.getElementById("supporter"); if(!m){ msgToast(t("supporterUnavailable")); return; }
   if(G) G.paused=true; show("supporter"); refreshSupporterUI();
 }
 function closeSupporter(){ hide("supporter"); }
@@ -3759,7 +4433,7 @@ function confirmSupporter(){
 }
 function refreshSupporterUI(){
   const owned=isSupporter();
-  const b=document.getElementById("sup-buy"); if(b){ b.textContent=owned?"Owned ✦":"Support — unlock pack";
+  const b=document.getElementById("sup-buy"); if(b){ b.textContent=owned?t("supOwned"):t("supBuy");
     b.classList.toggle("disabled",owned); }
   const note=document.getElementById("sup-owned"); if(note) note.style.display=owned?"block":"none";
   // reflect ad-removal everywhere the ad button shows
@@ -3791,6 +4465,9 @@ Telemetry.cfg.posthog = {
 };
 /* ======================================================================== */
 try{
+  applyDir();        // set text direction for the saved language (RTL for Arabic)
+  applyI18n();       // fill all data-i18n markup from the active language
+  renderLangPicker();// build the main-menu language selector
   renderHeroPick();
   updateEmberUI();   // show the saved ember balance on the main menu
   refreshSupporterUI();
