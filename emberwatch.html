@@ -1910,6 +1910,7 @@ function startWave(){
   G.wave++;
   hide("intermission");
   G.waveState="active";
+  tutBeat("move"); tutBeat("abilities");
   const q=[];
   const isBoss = G.wave>=8 && (G.wave-8)%6===0;   // first boss at wave 8, then every 6 waves (8, 14, 20...)
   if(isBoss){
@@ -2666,14 +2667,14 @@ function update(dt){
     if(o.age<(o.scatT||0.22)){ o.x+=o._sx*dt; o.y+=o._sy*dt; o._sx*=0.87; o._sy*=0.87; o.vs*=0.93; }   // splash outward, tumbling
     else if(d<MAGNET_R){ o.spd=(o.spd||120)+1300*dt; const s=Math.min(o.spd,1000); o.x+=dx/d*s*dt; o.y+=dy/d*s*dt; }  // swept toward you
     else { o.spd=120; }                                                                 // out of reach — rests on the ground
-    if(d<h.r+9){ collect(o); o.dead=true; }                                             // scooped into the satchel
+      if (d < h.r + 9) { collect(o); o.dead = true; tutBeat("remains"); }               // scooped into the satchel
     else if(o.life<=0){ o.dead=true; }                                                  // lingered too long — fades away
   }
   G.orbs=G.orbs.filter(o=>!o.dead);
   // bank carried remains into the fire — a progressive, rhythmic pour while you stand on it
   G._banking = G.carry>0 && BANK_IN_LIGHT && Math.hypot(h.x,h.y) <= BANK_R;
   if(G._banking){
-    if(!G._firstBankDone){ G._firstBankDone=true;
+    if(!G._firstBankDone){ G._firstBankDone=true; tutBeat("bank");
       tele("first_bank",{ sec:Math.round((performance.now()-(G._runStartMs||performance.now()))/1000), carry:G.carry, night:G.isNight?1:0 }); }
     G.bankTimer += dt; const TICK=0.06;
     while(G.bankTimer>=TICK && G.carry>0){
@@ -2694,9 +2695,14 @@ function update(dt){
   if(G.fireFeed>0) G.fireFeed=Math.max(0, G.fireFeed - dt*2.4);                   // flare settles back down
 
   // ground item pickup
-  for(const it of G.drops){ const d=Math.hypot(h.x-it.x,h.y-it.y); it.bob+=dt*3; if(d<h.r+16){ G.satchel.push(it.item); it.dead=true;
-    const col = it.item.rarity==="rare"?"#ffd24a":it.item.rarity==="magic"?"#7fb2ff":"#d8c7a6";
-    spawnParticles(it.x,it.y,col,14,{speed:130,life:0.5,size:2.5,grav:-20}); toast(it.item); } }
+    for (const it of G.drops) {
+        const d = Math.hypot(h.x - it.x, h.y - it.y); it.bob += dt * 3; if (d < h.r + 16) {
+            G.satchel.push(it.item); it.dead = true; tutBeat("gear");
+            const col = it.item.rarity === "rare" ? "#ffd24a" : it.item.rarity === "magic" ? "#7fb2ff" : "#d8c7a6";
+            spawnParticles(it.x, it.y, col, 14, { speed: 130, life: 0.5, size: 2.5, grav: -20 });
+            toast(it.item);
+        }
+    }
   G.drops=G.drops.filter(it=>!it.dead);
 
   // fx
@@ -2813,7 +2819,7 @@ function manageExposure(h, dt){
   // in shadow at night: the dark takes hold. Rate starts at 1 and climbs by 1
   // every EXPOSE_RATE_STEP seconds, capped at EXPOSE_RATE_MAX.
   let ex = h.activeEffects.find(e=>e.key==="exposed");
-  if(!ex){ applyEffectTemplate(h, EXPOSED); ex = h.activeEffects.find(e=>e.key==="exposed"); h.exposeRamp = 0; }
+  if(!ex){ applyEffectTemplate(h, EXPOSED); ex = h.activeEffects.find(e=>e.key==="exposed"); h.exposeRamp = 0; tutBeat("night"); }
   ex.remainingSec = EXPOSED.durationSec;
   ex.maxStacks = EXPOSE_RATE_MAX;
   h.exposeRamp = (h.exposeRamp||0) + dt;
@@ -3148,12 +3154,12 @@ function levelUp(){
     };
     box.appendChild(c);
   }
-  G.paused=true; show("levelup"); screenFlash("255,210,130",0.4); SFX.levelUp();
+  G.paused=true; show("levelup"); screenFlash("255,210,130",0.4); SFX.levelUp(); tutBeat("boons");
 }
 function fireCost(){ return Math.round(18*Math.pow(1.55,G.fireLevel-1)); }
 function openFire(){
   if(!running||G.hero.dead) return;
-  G.paused=true; show("firepanel");
+  G.paused=true; show("firepanel"); tutBeat("fire_panel");
   const cost=fireCost();
   document.getElementById("firesub").textContent="Stray past its light and the dark will take hold. Feed the fire to push that edge back.";
   const luck=perkLuck(), rareOdds=Math.round((0.02+luck*0.30 + 0.16+luck*0.34)*100), epicOdds=Math.round((0.02+luck*0.30)*100);
@@ -4074,6 +4080,7 @@ function showIntermission(){
   document.getElementById("isub").textContent = t("nextWaveIn",{s:Math.ceil(G.interTimer)});
   document.getElementById("beginwave").textContent = t("beginWaveN",{n:G.wave+1});
   show("intermission");
+    if (cleared) tutBeat("beginwave"); fG.paused = true; show("levelup"); screenFlash("255,210,130", 0.4); SFX.levelUp();
 }
 function fmt(s){ s=Math.floor(s); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); }
 let toastT=0; function toast(item){
@@ -4254,35 +4261,67 @@ function startGame(classId){
   playIntro();
   maybeStartTutorial();
 }
-/* --- First-run tutorial: four beats, non-blocking, learn-by-doing -------- */
-const TUT_STEPS=[
-  { title:"The fire is everything", text:"That blaze at the center is <b>your level</b>. Feed it to grow stronger and push back the dark." },
-  { title:"Gather the remains", text:"Slain foes drop glowing <b>remains</b>. Walk near them to sweep them up — you'll carry them as <b>⬥</b>." },
-  { title:"Hold the dark", text:"By night, straying beyond the firelight leaves you <b>Exposed</b> — your life drains. Stay in the glow." },
-  { title:"Bank what you carry", text:"Carry remains <b>back to the fire</b> and stand close to pour them in. That's how the fire — and you — grow." }
-];
-let _tutStep=-1, _tutActive=false;
-function maybeStartTutorial(){
-  if(Store.get("ew.tutDone",false)){ return; }       // only ever the first run
-  _tutActive=true; _tutStep=0; tele("tutorial_start",{});
-  renderTutorial();
+/* --- First-run tutorial: contextual just-in-time beats -------------------
+    Each beat fires once, at the first moment its mechanic becomes relevant.
+    Every game boundary just calls tutBeat("id"); the dispatcher owns dedupe,
+    ordering through one card (a small queue), and completion. First run only. */
+const TUT_BEATS = {
+    fire: { title: "The fire is everything", text: "That blaze at the center is <b>your level</b>. Feed it to grow stronger and push back the dark." },
+    move: { title: "Move & strike", text: m => (m ? "<b>Hold the joystick</b> to move" : "<b>Hold the mouse</b> to move") + "; let go and your watcher strikes the nearest foe on its own." },
+    abilities: { title: "Your abilities", text: m => "Cast with " + (m ? "the <b>buttons</b> — tap to fire where you face, or drag to aim" : "<b>Q W E R</b> toward the cursor") + ". Each has a <b>cooldown</b>; more unlock as you level." },
+    remains: { title: "Gather the remains", text: "Slain foes drop glowing <b>remains</b>. Walk near to sweep them up — you carry them as <b>⬥</b>." },
+    bank: { title: "Bank what you carry", text: "Stand <b>right on the fire</b> to pour your remains in. That feeds the fire — and levels you up." },
+    night: { title: "Hold the dark", text: "You've strayed past the firelight — the dark is taking hold. <b>Exposed</b> drains your life; get back into the glow." },
+    boons: { title: "Choose a boon", text: "Each level, pick <b>one boon</b> — it lasts the whole run. Rarer cards (blue, then gold) are stronger." },
+    gear: { title: "Loot & your pack", text: m => "Foes drop <b>gear</b> too. Open your <b>Pack</b> (" + (m ? "the button" : "<b>I</b>") + ") to equip it, salvage it for remains, or complete a <b>set</b>." },
+    beginwave: { title: "Wave by wave", text: "Foes come in <b>waves</b>. Between them time stops and the fire mends you — begin the next when you're ready." },
+    fire_panel: { title: "Tend the fire", text: "At the fire you can spend <b>◈ Harvest</b> to push the light radius back — reclaiming ground from the dark." },
+    embers: { title: "Embers carry over", text: "Runs end, but <b>⬥ embers</b> persist. Spend them to <b>revive</b> or on lasting unlocks — each run earns more." }
+};
+const TUT_TOTAL = Object.keys(TUT_BEATS).length;
+let _tutSeen = new Set(), _tutQueue = [], _tutDismissed = false;
+
+function maybeStartTutorial() {
+    if (Store.get("ew.tutDone", false)) return;          // only ever the first run
+    _tutSeen.clear(); _tutQueue.length = 0; _tutDismissed = false;
+    tele("tutorial_start", {});
 }
-function renderTutorial(){
-  const wrap=document.getElementById("tutorial"); if(!wrap) return;
-  const s=TUT_STEPS[_tutStep]; if(!s){ endTutorial(true); return; }
-  document.getElementById("tut-title").textContent=s.title;
-  document.getElementById("tut-text").innerHTML=s.text;
-  document.getElementById("tut-prog").textContent=`${_tutStep+1} / ${TUT_STEPS.length}`;
-  const next=document.getElementById("tut-next"); if(next) next.textContent = _tutStep===TUT_STEPS.length-1?"Begin":"Got it";
-  wrap.classList.add("on");
+/* request a beat the first time its mechanic comes up — dedupe + serialize through one card */
+function tutBeat(id) {
+    if (_tutDismissed || Store.get("ew.tutDone", false)) return;
+    if (!TUT_BEATS[id] || _tutSeen.has(id) || _tutQueue.includes(id)) return;
+    _tutQueue.push(id);
+    const wrap = document.getElementById("tutorial");
+    if (!wrap || !wrap.classList.contains("on")) tutAdvance();
 }
-function nextTutorial(){ if(!_tutActive) return; _tutStep++;
-  if(_tutStep>=TUT_STEPS.length){ endTutorial(true); } else { tele("tutorial_step",{step:_tutStep}); renderTutorial(); } }
-function skipTutorial(){ if(!_tutActive) return; tele("tutorial_skip",{step:_tutStep}); endTutorial(false); }
-function endTutorial(completed){
-  _tutActive=false; const wrap=document.getElementById("tutorial"); if(wrap) wrap.classList.remove("on");
-  Store.set("ew.tutDone",true);
-  tele(completed?"tutorial_complete":"tutorial_abandon",{});
+function tutAdvance() {
+    const id = _tutQueue.shift();
+    if (id == null) { if (_tutSeen.size >= TUT_TOTAL) endTutorial(true); return; }
+    _tutSeen.add(id);
+    tele("tutorial_step", { id, n: _tutSeen.size });
+    renderTutorial(id);
+}
+function renderTutorial(id) {
+    const wrap = document.getElementById("tutorial"); if (!wrap) return;
+    const s = TUT_BEATS[id]; if (!s) return;
+    document.getElementById("tut-title").textContent = s.title;
+    document.getElementById("tut-text").innerHTML = (typeof s.text === "function" ? s.text(MOBILE) : s.text);
+    document.getElementById("tut-prog").textContent = `${_tutSeen.size} / ${TUT_TOTAL}`;
+    const next = document.getElementById("tut-next"); if (next) next.textContent = t("gotIt");
+    wrap.classList.add("on");
+}
+function nextTutorial() {                               // "Got it" — dismiss, then show the next queued beat if any
+    const wrap = document.getElementById("tutorial"); if (wrap) wrap.classList.remove("on");
+    if (_tutQueue.length) tutAdvance();
+    else if (_tutSeen.size >= TUT_TOTAL) endTutorial(true);
+}
+function skipTutorial() {                               // "Skip" — suppress all remaining beats for good
+    _tutDismissed = true; tele("tutorial_skip", { n: _tutSeen.size }); endTutorial(false);
+}
+function endTutorial(completed) {
+    _tutDismissed = true; const wrap = document.getElementById("tutorial"); if (wrap) wrap.classList.remove("on");
+    Store.set("ew.tutDone", true);
+    tele(completed ? "tutorial_complete" : "tutorial_abandon", {});
 }
 let _introT=0;
 function playIntro(){
@@ -4329,7 +4368,7 @@ function gameOver(){
   if(!running) return;                       // already ended
   running=false; G.dying=false; G.hero.dead=true;
   hide("intermission"); document.getElementById("hotbar").classList.remove("on");
-  { const tw=document.getElementById("tutorial"); if(tw) tw.classList.remove("on"); _tutActive=false; }
+  { const tw=document.getElementById("tutorial"); if(tw) tw.classList.remove("on"); }
   SFX.silenceAmbience();                       // stop the looping rain/cricket beds
   // award embers for progress made since the last tally (so reviving doesn't double-count)
   const score=runScore();
@@ -4345,6 +4384,7 @@ function gameOver(){
   document.getElementById("ov-gain").textContent = gain>0 ? ("+"+gain) : "0";
   updateEmberUI();
   show("over");
+  tutBeat("embers");
   animateOverStats(score);                     // dramatic count-up from 0
 }
 let _overGen=0;
