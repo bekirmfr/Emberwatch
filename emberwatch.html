@@ -22,7 +22,10 @@
   #topleft{top:14px;left:14px;width:280px}
   .bar{height:13px;border-radius:7px;background:rgba(0,0,0,.45);overflow:hidden;
     border:1px solid var(--line);margin-bottom:6px;position:relative}
-  .bar > i{display:block;height:100%;width:0;transition:width .12s linear}
+  .bar > i{position:absolute;left:0;top:0;height:100%;width:0;transition:width .12s linear}
+  #hpghost{background:rgba(255,90,70,.5);transition:width .55s ease .12s}   /* trails behind to show the chunk just lost */
+  @keyframes hphit{0%{transform:translateX(0)}20%{transform:translateX(-3px)}45%{transform:translateX(2px)}70%{transform:translateX(-1px)}100%{transform:translateX(0)}}
+  .bar.hp.hphit{animation:hphit .25s ease-out}
   .hp > i{background:linear-gradient(90deg,#c8482e,#ff7a4d)}
   .xp > i{background:linear-gradient(90deg,#2f7fb0,#6fd3ff)}
   .bar > span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
@@ -75,6 +78,8 @@
   .hbslot.locked .lock{display:flex}
   .hbslot.locked .kb,.hbslot.locked .gl,.hbslot.locked .cd{opacity:0}
   .hbslot.justunlocked{animation:unlockGlow .8s ease-out}
+  @keyframes abReady{0%{box-shadow:0 0 0 2px var(--ember-hi),0 0 22px rgba(255,180,80,.85)}100%{box-shadow:0 0 0 1px var(--line)}}
+  .hbslot.ready{animation:abReady .5s ease-out}
   .hbslot.aiming{box-shadow:0 0 0 2px var(--ember-hi),0 0 20px rgba(255,160,60,.55)}
   body.mobile #hotbar{position:absolute;left:auto;top:auto;transform:none;right:22px;bottom:36px;width:124px;height:124px;gap:0}
   body.mobile .hbslot{position:absolute;width:50px;height:50px;margin:0;border-radius:50%}
@@ -419,7 +424,7 @@
   <div id="intro"><div class="introspark"></div></div>
 
   <div class="hud" id="topleft">
-    <div class="bar hp"><i id="hpfill"></i><span id="hptext"></span></div>
+    <div class="bar hp"><i id="hpghost"></i><i id="hpfill"></i><span id="hptext"></span></div>
     <div class="bar xp"><i id="xpfill"></i><span id="xptext"></span></div>
     <div class="row"><div class="lvl">Level <span id="lvl">1</span></div></div>
   </div>
@@ -854,7 +859,7 @@ function tickActor(actor, dt){
   actor.currentHealth += regen*dt;
   const mx = resolveStat(actor,"maxHealth",ctx);
   if(actor.currentHealth>mx) actor.currentHealth=mx;
-  if(regen<0 && actor.currentHealth>0){                          // burn / venom / drain is removing HP — show it bleeding
+  if(regen<0 && actor.currentHealth>0){                          // burn / venom / drain is removing HP — show the drain
     actor._dotAcc=(actor._dotAcc||0)+(-regen)*dt; actor._dotT=(actor._dotT||0)+dt;
     if(actor._dotT>=0.55 && actor._dotAcc>=1){ dotFeedback(actor, actor._dotAcc); actor._dotAcc=0; actor._dotT=0; }
   } else if(actor._dotAcc){ actor._dotAcc=0; actor._dotT=0; }      // drain ended — reset the tally
@@ -923,7 +928,7 @@ const PERKS = [
   {nm:"Rapid Loosing", tiers:[.01,.02,.05], ds:v=>`+${pct(v)} attack speed.`, build:v=>({modifiers:[{stat:"attackSpeed",op:"increased",value:v,source:"Rapid Loosing"}],triggers:[]})},
   {nm:"Deadeye", tiers:[.01,.02,.05], ds:v=>`+${pct(v)} critical strike chance.`, build:v=>({modifiers:[{stat:"critChance",op:"increased",value:v,source:"Deadeye"}],triggers:[]})},
   {nm:"Executioner", flat:true, tiers:[.01,.02,.05], ds:v=>`+${pct(v)} critical strike damage.`, build:v=>({modifiers:[{stat:"critMultiplier",op:"flat",value:v,source:"Executioner"}],triggers:[]})},
-  {nm:"Bloodlust", tiers:[.05,.08,.15], ds:v=>`+${pct(v)} MORE damage while below half health.`, build:v=>({modifiers:[{stat:"attackDamage",op:"more",value:v,condition:{kind:"selfHealthBelow",pct:.5},source:"Bloodlust"}],triggers:[]})},
+  {nm:"Frenzy", tiers:[.05,.08,.15], ds:v=>`+${pct(v)} MORE damage while below half health.`, build:v=>({modifiers:[{stat:"attackDamage",op:"more",value:v,condition:{kind:"selfHealthBelow",pct:.5},source:"Frenzy"}],triggers:[]})},
   {nm:"Vitality", flat:true, tiers:[25,60,150], heal:true, ds:v=>`+${v} maximum health, healed now.`, build:v=>({modifiers:[{stat:"maxHealth",op:"flat",value:v,source:"Vitality"}],triggers:[]})},
   {nm:"Quickstep", tiers:[.03,.05,.1], ds:v=>`+${pct(v)} movement speed.`, build:v=>({modifiers:[{stat:"moveSpeed",op:"increased",value:v,source:"Quickstep"}],triggers:[]})},
   {nm:"Hunter's Reach", tiers:[.03,.05,.1], ds:v=>`+${pct(v)} attack range.`, build:v=>({modifiers:[{stat:"attackRange",op:"increased",value:v,source:"Hunter's Reach"}],triggers:[]})},
@@ -985,7 +990,7 @@ const ITEM_BASES = [
   // ring — offensive accents (mage)
   {slot:"ring", nm:"Signet Ring", mods:[{stat:"critChance",op:"increased",value:.05}]},
   {slot:"ring", nm:"Band of Fury", mods:[{stat:"attackDamage",op:"increased",value:.10}]},
-  {slot:"ring", nm:"Bloodband", mods:[{stat:"lifesteal",op:"flat",value:.04}]},
+  {slot:"ring", nm:"Leech Band", mods:[{stat:"lifesteal",op:"flat",value:.04}]},
   // shield — heavy defense (knight)
   {slot:"shield", nm:"Buckler", mods:[{stat:"armor",op:"flat",value:14},{stat:"maxHealth",op:"flat",value:16}]},
   {slot:"shield", nm:"Tower Shield", mods:[{stat:"armor",op:"flat",value:26},{stat:"moveSpeed",op:"increased",value:-.05}]},
@@ -1189,7 +1194,7 @@ function newGame(classId){
   G={ hero, classId:cls.id, enemies:[], shots:[], orbs:[], drops:[], fx:[], rings:[], telegraphs:[], eshots:[], boss:null,
       parts:[], shake:0, hitStop:0, flash:0, flashCol:"255,220,150", lucidity:0, dying:false, deathT:0, deathMax:1.6,
       reviveCount:0, embersAwarded:0,
-      combo:0, comboT:0, comboTier:0, kick:{x:0,y:0}, slowmoT:0,
+      combo:0, comboT:0, comboTier:0, kick:{x:0,y:0}, slowmoT:0, zoom:1,
       storm:{on:false, intensity:0, t:10, strikeIn:0}, rain:[], bolts:[], lightningFlash:0, splats:[],
       embers:[], emberT:0, fireflies:[], butterflies:[],
       cam:{x:0,y:0}, time:0, phaseTime:PHASE_NIGHT/12, isNight:true, dayNum:1, ambient:0.20,
@@ -1312,6 +1317,8 @@ function spawnShot(h, target, inst){
   const ang=Math.atan2(target.y-h.y, target.x-h.x);
   const pierce = (inst.kind==="basic" && h.basicMod && h.basicMod.kind==="pierce") ? h.basicMod.rank : 0;
   G.shots.push({x:h.x,y:h.y,vx:Math.cos(ang)*PROJ_SPEED,vy:Math.sin(ang)*PROJ_SPEED,life:0.9,payload:inst,from:h,arrow:true,pierceLeft:pierce});
+  spawnParticles(h.x+Math.cos(ang)*h.r, h.y+Math.sin(ang)*h.r, "#ffe2b0", 5, {speed:175,life:0.16,size:2,dir:ang,spread:0.5});   // muzzle flash
+  G.fx.push({pop:true, x:h.x+Math.cos(ang)*(h.r+4), y:h.y+Math.sin(ang)*(h.r+4), r:5, color:"#ffe7c0", life:0.12, max:0.12});
 }
 /* embed an arrow in the enemy's body — stored relative to its centre so it rides along until death */
 function stickArrow(e, s){
@@ -1974,9 +1981,9 @@ function update(dt){
 
   // remains: scatter, then a magnet sweep into your satchel; you bank them at the fire
   for(const o of G.orbs){
-    o.age=(o.age||0)+dt; o.life=(o.life==null?REMAINS_TTL:o.life)-dt; o.bob+=dt*8;
+    o.age=(o.age||0)+dt; o.life=(o.life==null?REMAINS_TTL:o.life)-dt; o.bob+=dt*8; o.spin=(o.spin||0)+(o.vs||0)*dt;
     const dx=h.x-o.x, dy=h.y-o.y, d=Math.hypot(dx,dy)||1;
-    if(o.age<0.22){ o.x+=o._sx*dt; o.y+=o._sy*dt; o._sx*=0.85; o._sy*=0.85; }          // scatter outward
+    if(o.age<(o.scatT||0.22)){ o.x+=o._sx*dt; o.y+=o._sy*dt; o._sx*=0.87; o._sy*=0.87; o.vs*=0.93; }   // splash outward, tumbling
     else if(d<MAGNET_R){ o.spd=(o.spd||120)+1300*dt; const s=Math.min(o.spd,1000); o.x+=dx/d*s*dt; o.y+=dy/d*s*dt; }  // swept toward you
     else { o.spd=120; }                                                                 // out of reach — rests on the ground
     if(d<h.r+9){ collect(o); o.dead=true; }                                             // scooped into the satchel
@@ -2022,7 +2029,7 @@ function update(dt){
   G.parts=G.parts.filter(pt=>pt.life>0);
 
   // campfire embers — tiny sparks drift up from the flames and wink out
-  { const lv=G.fireLevel, baseR=11+lv*2.0, rate=7+lv*1.6;        // bigger fires throw more sparks
+  { const lv=G.fireLevel, baseR=12+lv*1.0, rate=7+lv*1.6;        // bigger fires throw more sparks
     G.emberT-=dt; while(G.emberT<=0){ G.emberT+=1/rate;
       G.embers.push({ x:(Math.random()-0.5)*baseR*1.1, y:-baseR*0.4-Math.random()*baseR*0.3,
         vx:(Math.random()-0.5)*14, vy:-26-Math.random()*38, life:0.8+Math.random()*1.1,
@@ -2084,6 +2091,7 @@ function update(dt){
   if(G.flash>0) G.flash=Math.max(0, G.flash-dt*2.2);
   if(G.comboT>0){ G.comboT-=dt; if(G.comboT<=0){ G.combo=0; G.comboTier=0; } }   // streak lapses
   G.kick.x*=Math.pow(0.0001,dt); G.kick.y*=Math.pow(0.0001,dt);                    // camera punch eases back fast
+  if(G.zoom&&G.zoom!==1){ G.zoom += (1-G.zoom)*Math.min(1,dt*9); if(Math.abs(G.zoom-1)<0.002) G.zoom=1; }   // zoom punch settles
 
   // reap dead enemies
   G.enemies=G.enemies.filter(e=>!e.dead);
@@ -2155,23 +2163,29 @@ function killEnemy(e){
     screenFlash(c.col.match(/\w\w/g).map(h=>parseInt(h,16)).join(","), 0.22); shake(7); vibrate([0,30,40,55]);
   }
   G.comboTier=tier;
-  // death juice — a burst of shards in the enemy's colour, an impact ring, and a kick toward the kill
-  spawnParticles(e.x,e.y, e.color, e.boss?46:12, {speed:e.boss?320:200, life:e.boss?0.7:0.45, size:e.boss?4:3, grav:40});
-  spawnBlood(e.x,e.y, e.boss?42:Math.min(22, 10+Math.round(e.r)), G.hero?Math.atan2(e.y-G.hero.y,e.x-G.hero.x):null);
+  // death juice — shatter the body into ground pixels (splashed toward the kill), plus debris, a ring, and a kick
+  spawnDebris(e.x,e.y, e.boss?42:Math.min(22, 10+Math.round(e.r)), G.hero?Math.atan2(e.y-G.hero.y,e.x-G.hero.x):null);
   G.fx.push({cleave:true,x:e.x,y:e.y,r:e.r*(e.boss?3:2.1),life:0.3,max:0.3});
+  G.fx.push({pop:true,x:e.x,y:e.y,r:e.r,color:e.color,life:0.26,max:0.26});                 // shape pops outward as it bursts
+  { const ed=Math.atan2(-e.y,-e.x); spawnParticles(e.x,e.y,"#ffb24a", e.boss?12:4, {speed:64,life:0.95,size:2.2,dir:ed,spread:0.7,grav:-8}); }   // embers drift to the hearth
   if(G.hero) camKick(e.x-G.hero.x, e.y-G.hero.y, e.boss?9:Math.min(4,1+e.r*0.1)+step*0.06);
   shake((e.boss?16:Math.min(5,1.5+e.r*0.12)) + step*0.12);
   if(e.boss){
-    hitstop(0.16); G.slowmoT=2.0;                         // cinematic slow-mo on the boss's fall
+    hitstop(0.16); G.slowmoT=2.0; camZoom(0.09);          // cinematic slow-mo + zoom on the boss's fall
     screenFlash("255,150,190",0.5); vibrate([0,70,40,90]);
     for(let i=0;i<3;i++) G.fx.push({cleave:true,x:e.x,y:e.y,r:e.r*(3.5+i*1.6),life:0.6+i*0.15,max:0.6+i*0.15});
     spawnParticles(e.x,e.y,"#ffd0e0",40,{speed:420,life:1.0,size:4,grav:30});
   } else if(e.r>=18) hitstop(0.04);
+  if(!e.boss && G.waveState==="active" && G.spawnQueue.length===0 && G.enemies.every(en=>en.dead)){
+    G.slowmoT=Math.max(G.slowmoT,0.5); camZoom(0.05); hitstop(0.05);   // the wave's last foe — a brief execution beat
+  }
   const gf=resolveStat(G.hero,"goldFind",ctx);                  // now a "harvest" bonus: more remains
   const remains = Math.max(1, Math.round((e.xp + ri(e.gold[0],e.gold[1])) * (1+gf)));
-  const nOrbs = Math.min(remains, e.boss?48:18);
-  const base=Math.floor(remains/nOrbs); let extra=remains-base*nOrbs;   // exact split, no rounding overshoot
-  for(let i=0;i<nOrbs;i++){ spawnOrb(e.x,e.y,"remains", base+(extra>0?1:0)); if(extra>0) extra--; }
+  const pw = e._killPower || 1;                                 // crit / ability hits splash bigger
+  const dir = G.hero? Math.atan2(e.y-G.hero.y, e.x-G.hero.x) : Math.random()*6.28;
+  const nPix = Math.min(160, Math.round((e.boss?52 : 16+e.r*0.7) * Math.min(2.6, pw)));   // pixel count is drama, not value
+  const per = remains/nPix;                                     // value split evenly (fractional) → exact total preserved
+  for(let i=0;i<nPix;i++) spawnOrb(e.x,e.y,"remains", per, {color:e.color, dir, power:pw});
   const L = ENEMIES[e.tag] && ENEMIES[e.tag].loot;            // per-enemy loot table (count / level range / rarity cap)
   if(L && Math.random()<L.chance){
     const cur = G.level;                                      // "current level" = your level (the fire's level)
@@ -2182,10 +2196,22 @@ function killEnemy(e){
     }
   }
 }
-function spawnOrb(x,y,type,val){
-  const a=Math.random()*Math.PI*2, s=ri(20,70);
-  G.orbs.push({x:x+Math.cos(a)*8,y:y+Math.sin(a)*8,vx:0,vy:0,type,val,bob:Math.random()*6,dead:false,life:REMAINS_TTL,
-    _sx:Math.cos(a)*s,_sy:Math.sin(a)*s});
+function spawnOrb(x,y,type,val,opts){
+  opts=opts||{};
+  const pw=opts.power||1;
+  const dir=opts.dir!=null?opts.dir:Math.random()*Math.PI*2;
+  // distribute the spray in three tiers: a dense near-cluster, mid scattered bits, and a far fine spray
+  const roll=Math.random(); let a,s,scatT;
+  if(roll<0.45){            // near cluster — clusters at the kill, along the throw
+    a=dir+(Math.random()-0.5)*(0.45+0.3*pw); s=ri(40,160)*pw;  scatT=0.16+pw*0.10;
+  } else if(roll<0.78){     // scattered bits — wider spread, medium throw
+    a=dir+(Math.random()-0.5)*(1.25+0.5*pw); s=ri(170,360)*pw; scatT=0.22+pw*0.13;
+  } else {                  // fine spray — flung furthest, fairly forward
+    a=dir+(Math.random()-0.5)*(0.8+0.4*pw);  s=ri(360,560)*pw; scatT=0.30+pw*0.16;
+  }
+  G.orbs.push({x:x+Math.cos(a)*6,y:y+Math.sin(a)*6,vx:0,vy:0,type,val,bob:Math.random()*6,dead:false,life:REMAINS_TTL,
+    _sx:Math.cos(a)*s,_sy:Math.sin(a)*s, scatT, spin:Math.random()*6.28, vs:(Math.random()*2-1)*30,
+    color:opts.color||"#ffce6a", sz:4});                    // every pixel the same size
 }
 function collect(o){
   G.carry += o.val;                      // scooped into your satchel — banked later at the fire
@@ -2287,8 +2313,9 @@ const SFX = (function(){
   return {
     resume(){ ensure(); if(actx && actx.state==="suspended") actx.resume(); },
     toggleMute(){ muted=!muted; return muted; }, isMuted(){ return muted; },
-    hit(){ if(!actx) return; const t=actx.currentTime; if(t-hitLast<0.03) return; hitLast=t;     // throttle the chatter
-      tone(430,0.06,{type:"square",peak:0.16,slideTo:250}); noise(0.045,{peak:0.10,filter:2800,type:"highpass"}); },
+    hit(step){ if(!actx) return; const t=actx.currentTime; if(t-hitLast<0.03) return; hitLast=t;     // throttle the chatter
+      const m=1+Math.min(step||0,16)*0.018;                                                         // combo raises the pitch
+      tone(430*m,0.06,{type:"square",peak:0.16,slideTo:250*m}); noise(0.045,{peak:0.10,filter:2800,type:"highpass"}); },
     swing(){ noise(0.12,{peak:0.11,filter:1500,type:"bandpass",q:0.6}); tone(360,0.10,{type:"sine",peak:0.05,slideTo:150}); },  // air whoosh on a whiff
     feed(step){ step=step||0; const m=Math.pow(1.045,Math.min(step,30)); tone(300*m,0.09,{type:"triangle",peak:0.12,slideTo:470*m}); noise(0.05,{peak:0.06,filter:1700,type:"bandpass",q:0.9}); },  // rising chime as remains pour in
     melee(p){ p=p||1; tone(210,0.10,{type:"square",peak:0.18*p,slideTo:88}); tone(120,0.15,{type:"sine",peak:0.17*p,slideTo:46}); // meaty connect: body thud
@@ -2326,25 +2353,26 @@ const SFX = (function(){
 
 function shake(m){ if(G) G.shake=Math.min(22, Math.max(G.shake, m)); }
 function hitstop(t){ if(G) G.hitStop=Math.max(G.hitStop, t); }
+function camZoom(amt){ if(G) G.zoom=Math.max(G.zoom||1, 1+amt); }   // brief zoom-in punch, eases back in update
 function screenFlash(col,a){ if(G){ G.flash=Math.max(G.flash,a); G.flashCol=col; } }
 function spawnParticles(x,y,color,count,opts){
   opts=opts||{}; const spd=opts.speed||120, life=opts.life||0.5, size=opts.size||2.5, grav=opts.grav||0, dir=opts.dir, spread=opts.spread!=null?opts.spread:Math.PI*2;
   for(let i=0;i<count;i++){ const a=(dir!=null? dir+(Math.random()-0.5)*spread : Math.random()*Math.PI*2), s=spd*(0.4+Math.random()*0.8);
     G.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:life*(0.6+Math.random()*0.7),max:life,color,size:size*(0.6+Math.random()*0.8),grav}); }
 }
-/* wet, heavy blood spray — pops outward (biased along `dir`) then falls fast */
-function spawnBlood(x,y,n,dir){
+/* impact debris — kicked-up dust that pops outward (biased along `dir`) then falls fast */
+function spawnDebris(x,y,n,dir){
   for(let i=0;i<n;i++){ const a=(dir!=null? dir+(Math.random()-0.5)*1.5 : Math.random()*Math.PI*2), s=70+Math.random()*160;
     G.parts.push({x,y,vx:Math.cos(a)*s, vy:Math.sin(a)*s-40, life:0.45+Math.random()*0.55, max:1,
-      color: Math.random()<0.5?"#9c1414":"#6e0d0d", size:2+Math.random()*3, grav:320}); }
-  // a couple of slow droplets that settle like a splat
-  for(let i=0;i<Math.max(1,n>>2);i++) G.parts.push({x:x+ri(-5,5),y:y+ri(-3,6),vx:ri(-12,12),vy:ri(-6,10),life:1.0+Math.random()*0.6,max:1.6,color:"#5a0a0a",size:3+Math.random()*3,grav:120});
+      color: Math.random()<0.5?"#b9a98f":"#8f8472", size:2+Math.random()*3, grav:320}); }
+  // a couple of slow motes that settle like dust
+  for(let i=0;i<Math.max(1,n>>2);i++) G.parts.push({x:x+ri(-5,5),y:y+ri(-3,6),vx:ri(-12,12),vy:ri(-6,10),life:1.0+Math.random()*0.6,max:1.6,color:"#6f6658",size:3+Math.random()*3,grav:120});
 }
-/* damage-over-time / drain feedback — a rising count of HP lost plus a small bleed, tinted by the effect */
+/* damage-over-time / drain feedback — a rising count of HP lost plus a small mote, tinted by the effect */
 function dotFeedback(actor, amount){
   if(typeof G==="undefined" || !G || !G.fx) return;
   const ae=actor.activeEffects||[];
-  let numCol="#ff7064", dripCol="#9c1414";                                    // generic drain → blood red
+  let numCol="#ff7064", dripCol="#9a8a72";                                    // generic drain → dim mote
   if(ae.some(e=>e.key.indexOf("poison")===0)){ numCol="#a6e85f"; dripCol="#5fb53a"; }   // venom → green
   else if(ae.some(e=>e.key.indexOf("burn")===0)){ numCol="#ffb24a"; dripCol="#ff7a2c"; } // burn → ember
   const r=actor.r||12;
@@ -2353,25 +2381,31 @@ function dotFeedback(actor, amount){
 }
 function onDamage(tgt, dealt, crit, p){
   tgt.flash=0.12; tgt.hitScale=crit?1.55:1.32;            // squash-pop on hit
-  if(tgt===G.hero){ if(dealt>0.5){ SFX.hurt(); vibrate(22); screenFlash("255,60,40", Math.min(0.45,0.1+dealt/140)); shake(Math.min(11,2+dealt*0.18)); spawnBlood(tgt.x,tgt.y, Math.min(8,3+Math.round(dealt/10))); } return; }
+  if(tgt===G.hero){ if(dealt>0.5){ SFX.hurt(); vibrate(22); screenFlash("255,60,40", Math.min(0.45,0.1+dealt/140)); shake(Math.min(11,2+dealt*0.18)); camZoom(Math.min(0.06,dealt*0.0016)); spawnDebris(tgt.x,tgt.y, Math.min(8,3+Math.round(dealt/10))); hpBarHit(); } return; }
   if(dealt<0.5) return;
   const splash = p && (p.tags.includes("cleave"));
   const isBolt = p && p.tags && p.tags.includes("bolt");
   const isMelee = p && p.tags && p.tags.includes("melee");
-  if(!splash && !isBolt && !(isMelee && !crit)){ crit ? SFX.crit() : SFX.hit(); }   // melee non-crit handled by the swing thunk
+  tgt._killPower = (crit?1.8:1) * (p && p.kind==="ability" ? 1.35 : 1);   // drives how hard the remains splash on death
+  if(!splash && !isBolt && !(isMelee && !crit)){ crit ? SFX.crit() : SFX.hit(G.combo); }   // combo raises the hit pitch
   if(splash) G.fx.push({x:tgt.x+ri(-6,6), y:tgt.y-tgt.r, vy:-30, life:0.8, t:0, txt:"-"+Math.round(dealt), col:"#ffcf8a"});  // cleave damage — shown like burn/poison ticks
   else G.fx.push({x:tgt.x+ri(-6,6),y:tgt.y-tgt.r,vy:-34,life:0.7,txt:Math.round(dealt),crit,t:0});
-  // spark in the hit direction; crits spark harder + shake + brief freeze
-  spawnParticles(tgt.x,tgt.y, crit?"#ffd24a":(splash?"#ffcaa0":"#ffd9a0"), crit?9:(splash?2:4), {speed:crit?230:150,life:crit?0.4:0.28,size:crit?3:2});
-  // blood — sprays away from the attacker, more on bigger hits
+  // sparks fly from the contact edge along the hit direction — transferred force, not a generic puff
   const dir = G.hero? Math.atan2(tgt.y-G.hero.y, tgt.x-G.hero.x) : null;
-  spawnBlood(tgt.x, tgt.y, Math.min(12, (crit?5:3)+Math.round(dealt/7)), dir);
-  if(crit){ shake(6); hitstop(0.05); vibrate(15); if(G.hero) camKick(tgt.x-G.hero.x, tgt.y-G.hero.y, 6);
+  const cxx = dir!=null ? tgt.x-Math.cos(dir)*tgt.r*0.6 : tgt.x, cyy = dir!=null ? tgt.y-Math.sin(dir)*tgt.r*0.6 : tgt.y;
+  spawnParticles(cxx,cyy, crit?"#ffd24a":(splash?"#ffcaa0":"#ffd9a0"), crit?9:(splash?2:4), {speed:crit?230:150,life:crit?0.4:0.28,size:crit?3:2, dir, spread:crit?1.3:0.8});
+  // debris — flies away from the attacker, more on bigger hits
+  spawnDebris(tgt.x, tgt.y, Math.min(12, (crit?5:3)+Math.round(dealt/7)), dir);
+  const mx=resolveStat(tgt,"maxHealth",ctx)||1, frac=Math.min(1,dealt/mx);
+  hitstop((crit?0.05:0.02) + frac*0.11);                  // weight scales with the bite taken out of the target
+  if(crit){ shake(6); vibrate(15); camZoom(0.045); if(G.hero) camKick(tgt.x-G.hero.x, tgt.y-G.hero.y, 6);
     G.fx.push({critFlag:true, x:tgt.x, y:tgt.y-tgt.r-16, vy:-30, life:0.65, max:0.65, t:0});
     G.fx.push({critRing:true, x:tgt.x, y:tgt.y, life:0.28, max:0.28});
     spawnParticles(tgt.x,tgt.y, "#ff5a3c", 6, {speed:260,life:0.35,size:3});       // red crit burst
   }
   else if(!splash) shake(1.2);
+  if(tgt.currentHealth<=0 && dealt>=mx*0.55){             // overkill finisher — extra burst + a touch of zoom
+    spawnParticles(tgt.x,tgt.y, "#fff1d0", 14, {speed:340,life:0.5,size:3.4, spread:6.28, grav:30}); shake(4); camZoom(0.03); }
 }
 
 /* =========================================================================
@@ -2610,9 +2644,10 @@ function unequip(slotId){ if(!G.hero.equipment[slotId])return; G.satchel.push(G.
    RENDER
    ========================================================================= */
 function render(){
-  g.clearRect(0,0,W,H);
+  g.setTransform(DPR,0,0,DPR,0,0); g.clearRect(0,0,W,H);
   const a=G?G.ambient:1;            // 0 = deep night, 1 = full day
   if(!G){ g.fillStyle="#070a11"; g.fillRect(0,0,W,H); return; }
+  const Z=G.zoom||1; if(Z!==1){ g.translate(W/2,H/2); g.scale(Z,Z); g.translate(-W/2,-H/2); }   // zoom-punch the world (HUD is DOM, unaffected)
   const shk=G.shake>0?G.shake:0, shX=shk?(Math.random()*2-1)*shk:0, shY=shk?(Math.random()*2-1)*shk:0;
   const kx=G.kick?G.kick.x:0, ky=G.kick?G.kick.y:0;
   const sx=x=>x-G.cam.x+shX+kx, sy=y=>y-G.cam.y+shY+ky;
@@ -2735,10 +2770,21 @@ function render(){
   }
   // orbs — remains: glowing embers resting on the ground until you sweep them up
   for(const o of G.orbs){
-    const x=sx(o.x), y=sy(o.y)+Math.sin(o.bob)*1.5;
+    const gx=sx(o.x), gy=sy(o.y), s=o.sz||4;
     const fade = o.life!=null ? Math.max(0.15, Math.min(1, o.life/1.5)) : 1;   // dim as it's about to fade away
-    g.globalAlpha=fade; g.fillStyle="#ffce6a"; g.shadowBlur=10; g.shadowColor="#ff9a3c";
-    g.beginPath(); g.arc(x,y,3.4,0,7); g.fill(); g.shadowBlur=0; g.globalAlpha=1;
+    const c=o.color||"#ffce6a";
+    // fire-cast shadow on the ground — points away from the flame, stronger at night / nearer the fire
+    const dist=Math.hypot(o.x,o.y), litN=Math.max(0,1-dist/lr), strength=night*litN*0.5 + a*0.10;
+    if(strength>0.02){ const sa=Math.atan2(o.y,o.x), off=s*0.6+Math.min(7, dist/140*s);
+      g.save(); g.globalAlpha=Math.min(0.45,strength)*fade; g.fillStyle="#000";
+      g.beginPath(); g.ellipse(gx+Math.cos(sa)*off, gy+Math.sin(sa)*off, s*0.8, s*0.5, sa,0,7); g.fill(); g.restore(); }
+    // the pixel, lifted off the ground so it reads as having height
+    const y = gy - s*0.9 + Math.sin(o.bob)*1.0;
+    g.globalAlpha=fade; g.fillStyle=c; g.shadowBlur=5; g.shadowColor=c;        // faint glow marks it as collectible remains
+    g.save(); g.translate(gx,y); g.rotate(o.spin||0);
+    g.fillRect(-s*0.5,-s*0.5,s,s);
+    g.fillStyle="rgba(0,0,0,0.22)"; g.fillRect(-s*0.5, s*0.18, s, s*0.32);     // shaded underside — fakes a little block height
+    g.restore(); g.shadowBlur=0; g.globalAlpha=1;
   }
   // carried tally above the hero — what you still need to bank at the fire
   if(G.carry>=1 && !G.dying){
@@ -2875,7 +2921,7 @@ function render(){
   const exp = G.exposed||0, expFrac = Math.min(1, exp/EXPOSE_RATE_MAX);
   if(G.dying){
     const dp=1-Math.max(0,G.deathT/G.deathMax);                        // 0 → 1 over the collapse
-    g.save(); g.globalAlpha=0.55*Math.min(1,dp*1.6); g.fillStyle="#5a0a0a";   // spreading blood pool
+    g.save(); g.globalAlpha=0.5*Math.min(1,dp*1.6); g.fillStyle="#160f0a";   // spreading shadow as the hero falls
     g.beginPath(); g.ellipse(hx,hy+h.r*0.45, h.r*(1.1+dp*2.0), h.r*(0.5+dp*1.0),0,0,7); g.fill(); g.restore();
     g.save(); g.globalAlpha=Math.max(0,1-dp*0.85); g.fillStyle="#c4a890";      // hero greys, shrinks, slumps
     g.beginPath(); g.arc(hx,hy+dp*4, h.r*(1-dp*0.4),0,7); g.fill(); g.restore();
@@ -3002,6 +3048,10 @@ function render(){
       g.globalAlpha=k*0.3; g.lineWidth=1.5; g.strokeStyle=`rgb(${col})`; g.beginPath(); g.arc(x,y,f.r,0,7); g.stroke();   // faint reach ring
       g.restore(); g.globalAlpha=1; continue; }
     if(f.strike) continue;                                  // lightning strike is drawn in a late pass (on top of the flash/dark overlays)
+    if(f.pop){ const k=Math.max(0,f.life/f.max), prog=1-k;   // enemy death pop — shape balloons out and fades
+      g.save(); g.globalAlpha=k*0.7; g.fillStyle=f.color;
+      g.beginPath(); g.arc(x,y, f.r*(1+prog*1.5), 0,7); g.fill();
+      g.restore(); g.globalAlpha=1; continue; }
     if(f.blinkfx){ const k=Math.max(0,f.life/f.max), prog=1-k;   // arcane teleport rings
       g.save(); g.globalCompositeOperation="lighter";
       if(f.out){ const R=46*(1-prog);                       // collapse inward at the departure point
@@ -3222,7 +3272,7 @@ function render(){
 function drawFire(x,y){
   const t=performance.now()/1000;
   const lv=G.fireLevel;
-  const baseR=11+lv*2.0;
+  const baseR=12+lv*1.0;   // physical flame size — grows half as fast per level (was 11+lv*2.0)
   const feed=Math.min(1,(G.fireFeed||0)/1.6);          // 0..1 feeding flare — drives extra glow + taller flames
   // glow
   g.save(); g.globalCompositeOperation="lighter";
@@ -3276,9 +3326,12 @@ function drawFire(x,y){
 /* =========================================================================
    HUD / INPUT / FLOW
    ========================================================================= */
+function hpBarHit(){ const b=document.querySelector(".bar.hp"); if(!b) return; b.classList.remove("hphit"); void b.offsetWidth; b.classList.add("hphit"); }
 function syncHUD(){
   const h=G.hero, mx=resolveStat(h,"maxHealth",ctx);
-  document.getElementById("hpfill").style.width=Math.max(0,h.currentHealth/mx*100)+"%";
+  const hppct=Math.max(0,h.currentHealth/mx*100);
+  document.getElementById("hpfill").style.width=hppct+"%";
+  document.getElementById("hpghost").style.width=hppct+"%";
   document.getElementById("hptext").textContent=Math.max(0,Math.ceil(h.currentHealth))+" / "+Math.round(mx);
   document.getElementById("xpfill").style.width=(G.xp/G.xpNext*100)+"%";
   document.getElementById("xptext").textContent="Remains "+Math.floor(G.xp)+" / "+G.xpNext;
@@ -3316,8 +3369,9 @@ function syncHUD(){
     if(locked){ slot.classList.remove("cooling"); return; }
     const rk=document.getElementById("hbrk"+i); if(rk){ const r=(G.hero.abilityRanks[ab.id]||0); rk.textContent = r>0 ? "•".repeat(r) : ""; }
     const cd=G.hero.cooldowns[ab.id]||0, cdEl=document.getElementById("hbcd"+i);
-    if(cd>0.05){ slot.classList.add("cooling"); cdEl.textContent = cd>=1?Math.ceil(cd):cd.toFixed(1); }
-    else slot.classList.remove("cooling"); });
+    if(cd>0.05){ slot.classList.add("cooling"); cdEl.textContent = cd>=1?Math.ceil(cd):cd.toFixed(1); slot.dataset.cooling="1"; }
+    else { slot.classList.remove("cooling");
+      if(slot.dataset.cooling==="1"){ slot.dataset.cooling="0"; slot.classList.remove("ready"); void slot.offsetWidth; slot.classList.add("ready"); } } });
 }
 function buildHotbar(){
   const hb=document.getElementById("hotbar"); hb.innerHTML="";
@@ -3550,8 +3604,8 @@ function startDeath(){
   G.dying=true; G.deathT=G.deathMax=1.6; G.hero.dead=true;     // dead → input/abilities/hotbar all disable
   G.carry = Math.floor(G.carry*(1-DEATH_SPILL));               // un-banked remains spill into the dark
   const h=G.hero;
-  spawnBlood(h.x,h.y,28); spawnBlood(h.x,h.y,16,Math.random()*6.28);
-  spawnParticles(h.x,h.y,"#9c1414",16,{speed:230,life:0.9,size:3,grav:160});
+  spawnDebris(h.x,h.y,28); spawnDebris(h.x,h.y,16,Math.random()*6.28);
+  spawnParticles(h.x,h.y,"#a08d72",16,{speed:230,life:0.9,size:3,grav:160});
   spawnParticles(h.x,h.y,"#ffe9c2",10,{speed:175,life:0.6,size:2.5});            // life guttering out
   shake(16); hitstop(0.28); screenFlash("160,16,16",0.6); SFX.death(); vibrate([0,120,60,200]);
   document.getElementById("hotbar").classList.remove("on");
@@ -3570,7 +3624,7 @@ function tickDeath(dt){
   if(G.flash>0) G.flash=Math.max(0,G.flash-dt*2.2);
   G.cam.x += ((G.hero.x - W/2) - G.cam.x)*Math.min(1,dt*3.5);   // slow drift onto the fallen hero
   G.cam.y += ((G.hero.y - H/2) - G.cam.y)*Math.min(1,dt*3.5);
-  if(Math.random()<0.12) spawnParticles(G.hero.x+ri(-10,10),G.hero.y+ri(-4,6),"#6e0d0d",1,{speed:20,life:0.7,size:2,grav:110});
+  if(Math.random()<0.12) spawnParticles(G.hero.x+ri(-10,10),G.hero.y+ri(-4,6),"#6f6658",1,{speed:20,life:0.7,size:2,grav:110});
   if(G.deathT<=0) gameOver();
 }
 function runScore(){ return G.wave*100 + G.level*40 + G.kills*8 + G.dayNum*60 + G.fireLevel*20; }
