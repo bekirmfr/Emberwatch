@@ -3155,7 +3155,15 @@
                 howtoBody: "<b>الحاسوب</b> — اضغط الفأرة للتحرك؛ أفلتها لمهاجمة أقرب عدو. <b>Q W E R</b> تُطلق نحو المؤشر (أو انقر خانة).<br><b>الجوال</b> — عصا التحكم على اليسار للتحرك. انقر مهارة لإطلاقها نحو اتجاهك؛ أو اسحب للتصويب ثم أفلت (أفلت على الزر للإلغاء).<br>يُسقط الأعداء القتلى <b>بقايا</b> — تتدفق إلى النار وتغذّيها؛ كل مستوى للنار يكبّر اللهب ويمنح منحة. <b>I</b> يفتح جرابك · <b>M</b> يكتم الصوت.<br>يهاجم الأعداء على موجات؛ بينها يتوقف الزمن وتشفيك النار. ليلاً، الابتعاد عن ضوء النار يجعل الظلام يستحوذ عليك."
             }
         };
-        let LANG = (() => { try { return Store.get("ew.lang", "en") || "en"; } catch (e) { return "en"; } })();
+        function detectLang() {                                  // map the browser/system locale onto a supported language
+            try {
+                const cand = (navigator.languages && navigator.languages.length) ? navigator.languages
+                    : [navigator.language || navigator.userLanguage || ""];
+                for (const c of cand) { const base = String(c).toLowerCase().split("-")[0]; if (STRINGS[base]) return base; }
+            } catch (e) { }
+            return "en";
+        }
+        let LANG = (() => { try { const saved = Store.get("ew.lang", null); return (saved && STRINGS[saved]) ? saved : detectLang(); } catch (e) { return "en"; } })();
         function t(key, vars) {
             const tbl = STRINGS[LANG] || STRINGS.en;
             let s = (tbl && tbl[key] != null) ? tbl[key] : (STRINGS.en[key] != null ? STRINGS.en[key] : key);
@@ -5570,9 +5578,9 @@
             const luck = perkLuck(), rareOdds = Math.round((0.02 + luck * 0.30 + 0.16 + luck * 0.34) * 100), epicOdds = Math.round((0.02 + luck * 0.30) * 100);
             document.getElementById("fireinfo").innerHTML =
                 `<div class="item"><div class="nm">Fire level ${G.fireLevel}</div>
-          <div class="mods">Light radius ${Math.round(G.lightR)} · +${12 * (G.fireLevel - 1)} max health · +${5 * (G.fireLevel - 1)}% gold · mends ${(FIRE_REGEN_PER_LEVEL * G.fireLevel).toFixed(1)} hp/sec between waves</div>
-          <div class="mods">Perk luck — ${rareOdds}% rare, ${epicOdds}% epic on level-up cards</div></div>
-         <div style="color:var(--muted);font-size:12.5px">Next level reclaims another 46 of ground from the dark, steels you, and sharpens your perk luck.</div>`;
+              <div class="mods">Light radius ${Math.round(G.lightR)} · +${12 * (G.fireLevel - 1)} max health · +${5 * (G.fireLevel - 1)}% gold · mends ${(FIRE_REGEN_PER_LEVEL * G.fireLevel).toFixed(1)} hp/sec between waves</div>
+              <div class="mods">Perk luck — ${rareOdds}% rare, ${epicOdds}% epic on level-up cards</div></div>
+             <div style="color:var(--muted);font-size:12.5px">Next level reclaims another 46 of ground from the dark, steels you, and sharpens your perk luck.</div>`;
             const ub = document.getElementById("upgradebtn");
             ub.textContent = `Feed fire — ◈ ${cost}`;
             ub.disabled = G.gold < cost;
@@ -5652,13 +5660,13 @@
                 let n = 0; for (const s of G.hero.slots) { const eq = G.hero.equipment[s.id]; if (eq && eq.set === it.set) n++; }
                 const line = (mods, active, label) => `<div class="dsetb ${active ? "on" : ""}"><b>${label}</b> ${mods.map(modText).join(", ")}</div>`;
                 setInfo = `<div class="dset" style="--sc:${S.col}">
-          <div class="dsetn">${tn(S.nm)} ${t("setOf")} · ${t("setWorn", { n })}</div>
-          ${S.b2 ? line(S.b2.mods, n >= 2, "2pc") : ""}
-          ${S.b4 ? line(S.b4.mods, n >= 4, "4pc") : ""}</div>`;
+              <div class="dsetn">${tn(S.nm)} ${t("setOf")} · ${t("setWorn", { n })}</div>
+              ${S.b2 ? line(S.b2.mods, n >= 2, "2pc") : ""}
+              ${S.b4 ? line(S.b4.mods, n >= 4, "4pc") : ""}</div>`;
             }
             dd.innerHTML = `<div class="dn ${it.rarCls}">${it.nm} <span style="color:var(--muted);font-weight:400;font-size:10px">· ${t("lvShort")} ${it.lvl || 1} · ${tf("nm_" + (it.rarity || ""), it.rarity || "")} ${tf("type_" + it.slot, TYPE_LABEL[it.slot] || it.slot)}</span></div>
-        <div class="dm">${it.modifiers.map(modText).join(" · ")}</div>${proc}${setInfo}${cmp}
-        <div class="acts">${acts}</div>`;
+            <div class="dm">${it.modifiers.map(modText).join(" · ")}</div>${proc}${setInfo}${cmp}
+            <div class="acts">${acts}</div>`;
             const eqb = document.getElementById("d-eq"); if (eqb) eqb.onclick = () => { const i = invSel.idx; invSel = null; equip(i); };
             const svb = document.getElementById("d-sv"); if (svb) svb.onclick = () => { const i = invSel.idx; invSel = null; if (G.satchel[i] && G.satchel[i].id === "item_tut") G._tutLoot = 3; G.xp += salvageValue(G.satchel[i]); SFX.pickup(); G.satchel.splice(i, 1); renderInventory(); syncHUD(); };
             const unb = document.getElementById("d-un"); if (unb) unb.onclick = () => { const s = invSel.slotId; invSel = null; unequip(s); };
