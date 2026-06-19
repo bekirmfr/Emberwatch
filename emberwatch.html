@@ -784,12 +784,12 @@ function basicInstance(att, ctx, tags){
    a naive pity counter silently inflates the effective rate. */
 function rollCrit(actor, chance){ return chance>0 && Math.random()<chance; }
 function resolveAttack(att, tgt, p, ctx){
-  if(tgt===G.hero && (G.hero.invulnT||0)>0) return;          // revive shield — no damage while it lasts
+  if(tgt===G.hero && (G.hero.invulnT||0)>0) return false;   // revive shield — no damage while it lasts
   if(tgt!==G.hero && p.kind!=="proc" && !(p.tags&&p.tags.includes("reflect"))){   // enemy evasion — a chance to dodge your hit
     const ev=resolveStat(tgt,"evasion",ctx);
     if(ev>0 && Math.random()<ev){
       if(typeof G!=="undefined" && G && G.fx) G.fx.push({x:tgt.x+ri(-4,4), y:tgt.y-(tgt.r||10)-4, vy:-26, life:0.65, t:0, txt:"miss", col:"#bcd2e8"});
-      return;
+      return false;                                          // evaded — caller can whiff the projectile through
     }
   }
   const crit = p.canCrit && rollCrit(att, p.critChance);
@@ -813,6 +813,7 @@ function resolveAttack(att, tgt, p, ctx){
   if(p.kind==="basic" && !p.tags.includes("reflect"))                          // thorns reflects basic attacks only
     emit({type:"onHitTaken",self:tgt,other:att,payload:p,dealt});
   if(tgt.currentHealth<=0) emit({type:"onKill",self:att,other:tgt});
+  return true;                                               // the hit landed
 }
 function emit(ev){ dispatch(ev); }                  // synchronous bus
 function dispatch(ev){
@@ -1350,7 +1351,7 @@ function stunEnemy(e, dur){
 /* the mage's basic is real magic: an INSTANT arcane lance to the target (no flying projectile),
    carrying the mage's cleave splash and a crackling beam VFX. */
 function magicStrike(h, target, inst){
-  resolveAttack(h, target, inst, ctx);
+  const landed=resolveAttack(h, target, inst, ctx);
   if(!inst.tags.includes("chain")){
     cleaveSplash(h, target);
     const bm=h.basicMod;                            // Arcane Cascade — basic strike arcs to nearby foes
@@ -1364,8 +1365,13 @@ function magicStrike(h, target, inst){
     }
   }
   const ang=Math.atan2(target.y-h.y, target.x-h.x);
-  G.fx.push({zap:true, x1:h.x,y1:h.y, x2:target.x,y2:target.y, life:0.13,max:0.13});
-  spawnParticles(target.x,target.y,"#c9a3ff",7,{speed:150,life:0.3,size:2.5});
+  if(landed){
+    G.fx.push({zap:true, x1:h.x,y1:h.y, x2:target.x,y2:target.y, life:0.13,max:0.13});
+    spawnParticles(target.x,target.y,"#c9a3ff",7,{speed:150,life:0.3,size:2.5});
+  } else {                                          // dodged — the arcane bolt streaks wide of the foe
+    const aa=ang+(Math.random()<0.5?0.22:-0.22), d=Math.hypot(target.x-h.x,target.y-h.y)+26;
+    G.fx.push({zap:true, x1:h.x,y1:h.y, x2:h.x+Math.cos(aa)*d, y2:h.y+Math.sin(aa)*d, life:0.12,max:0.12});
+  }
   spawnParticles(h.x+Math.cos(ang)*15, h.y+Math.sin(ang)*15, "#b98cff",4,{speed:90,life:0.2,size:2,dir:ang,spread:1.4}); // cast flare at the hand
 }
 /* nearest live enemy not already struck, within range — for chain jumps */
@@ -1375,10 +1381,15 @@ function nearestUnhit(x,y,set,maxD){ let best=null,bd=maxD;
    carrying NONE of the basic attack's effects (no pierce, chain, on-hit procs, or lifesteal). */
 function fireBolt(h, target){
   const dmg = resolveStat(h,"attackDamage",ctx) * BOLT_RATIO;
-  resolveAttack(h, target, abilityInstance(h, dmg, ["bolt"]), ctx);     // abilityInstance: crit ok, no on-hit, no lifesteal
+  const landed=resolveAttack(h, target, abilityInstance(h, dmg, ["bolt"]), ctx);     // abilityInstance: crit ok, no on-hit, no lifesteal
   SFX.bolt();
-  G.fx.push({bolt:true, x1:h.x, y1:h.y, x2:target.x, y2:target.y, life:0.18, max:0.18, col:"#6fe9f0", glow:"#22c4d6"});
-  spawnParticles(target.x, target.y, "#9af2ee", 5, {speed:130,life:0.25,size:2});
+  if(landed){
+    G.fx.push({bolt:true, x1:h.x, y1:h.y, x2:target.x, y2:target.y, life:0.18, max:0.18, col:"#6fe9f0", glow:"#22c4d6"});
+    spawnParticles(target.x, target.y, "#9af2ee", 5, {speed:130,life:0.25,size:2});
+  } else {                                                                            // dodged — the bolt cracks wide of the foe
+    const a=Math.atan2(target.y-h.y,target.x-h.x)+(Math.random()<0.5?0.22:-0.22), d=Math.hypot(target.x-h.x,target.y-h.y)+30;
+    G.fx.push({bolt:true, x1:h.x, y1:h.y, x2:h.x+Math.cos(a)*d, y2:h.y+Math.sin(a)*d, life:0.16, max:0.16, col:"#6fe9f0", glow:"#22c4d6"});
+  }
 }
 /* fire the attack — branches on the class's base-attack type; Hurricane adds separate bolts */
 function launchAttack(h){
@@ -1399,10 +1410,12 @@ function meleeSwing(h){
     const dx=e.x-h.x, dy=e.y-h.y, d=Math.hypot(dx,dy);
     if(d<=reach+e.r){
       let diff=Math.abs(((Math.atan2(dy,dx)-h.aim+Math.PI*3)%(Math.PI*2))-Math.PI);
-      if(diff<=1.2){ const hpBefore=e.currentHealth; resolveAttack(h,e,basicInstance(h,ctx,["melee"]),ctx);
-        knockback(e,h.x,h.y,28);                                 // a firmer shove
-        hits++; hx+=e.x; hy+=e.y;
-        if(h.basicMod && h.basicMod.kind==="stun" && !e.dead) stunEnemy(e, STUN_DUR[h.basicMod.rank]); }  // arc hit + nudge (+ stun)
+      if(diff<=1.2){ const landed=resolveAttack(h,e,basicInstance(h,ctx,["melee"]),ctx);
+        if(landed){
+          knockback(e,h.x,h.y,28);                               // a firmer shove
+          hits++; hx+=e.x; hy+=e.y;
+          if(h.basicMod && h.basicMod.kind==="stun" && !e.dead) stunEnemy(e, STUN_DUR[h.basicMod.rank]);   // arc hit + nudge (+ stun)
+        } }                                                      // dodged → no shove, no connect (falls to the whiff feel)
     }
   }
   h.swingSide = h.swingSide ? 0 : 1;                          // alternate L→R / R→L each swing
@@ -1768,7 +1781,7 @@ function update(dt){
     h.dashT-=dt; h.x+=h.dashVX*dt; h.y+=h.dashVY*dt;
     for(const e of G.enemies){ if(e.dead) continue;
       if(Math.hypot(e.x-h.x,e.y-h.y) < h.r+e.r+8){
-        if(h.dashInst && !h.dashHit.has(e)){ h.dashHit.add(e); resolveAttack(h,e,h.dashInst,ctx); if(h.dashKnock) knockback(e,h.x,h.y,h.dashKnock); }
+        if(h.dashInst && !h.dashHit.has(e)){ h.dashHit.add(e); const landed=resolveAttack(h,e,h.dashInst,ctx); if(landed && h.dashKnock) knockback(e,h.x,h.y,h.dashKnock); }
         if(!h.dashPass){
           if(!h.dashWall){ h.dashWall=true;                  // slammed to a halt — impact pop (fires once)
             spawnParticles(h.x,h.y,"#ffe1a6",10,{speed:240,life:0.35,size:2.5}); shake(7); hitstop(0.05); }
@@ -1845,21 +1858,24 @@ function update(dt){
             const ja=(Math.random()-0.5)*0.5, c=Math.cos(ja), si=Math.sin(ja), nvx=s.vx*c-s.vy*si, nvy=s.vx*si+s.vy*c;
             s.vx=nvx; s.vy=nvy; s.life=Math.min(s.life,0.4); s.hitCd=0.05;
             spawnParticles(ix,iy,"#ffe3a0",6,{speed:170,life:0.22,size:2}); shake(1.5);
-          } else {                                     // terminal hit on a soft body — stick
+          } else {                                     // terminal hit on a soft body — stick (only if it lands)
             const inst=Object.assign({}, s.payload, {damage:s.payload.damage*mul});
-            resolveAttack(s.from, hit, inst, ctx);
-            if(!s.payload.tags.includes("chain")) cleaveSplash(s.from, hit);
-            if(!hit.dead) stickArrow(hit, s);
-            s.life=0;
+            const landed=resolveAttack(s.from, hit, inst, ctx);
+            if(landed){
+              if(!s.payload.tags.includes("chain")) cleaveSplash(s.from, hit);
+              if(!hit.dead) stickArrow(hit, s);
+              s.life=0;
+            }                                            // miss → arrow flies on past
           }
         }
       }
     } else {
       const hit=hitEnemy(s.x,s.y);                      // ability / fan arrows: single hit then expire
-      if(hit){
-        resolveAttack(s.from, hit, s.payload, ctx);
-        if(!s.payload.tags.includes("chain")) cleaveSplash(s.from, hit);
-        s.life=0;
+      if(hit){ s._hit=s._hit||new Set();
+        if(!s._hit.has(hit)){ s._hit.add(hit);
+          const landed=resolveAttack(s.from, hit, s.payload, ctx);
+          if(landed){ if(!s.payload.tags.includes("chain")) cleaveSplash(s.from, hit); s.life=0; }   // miss → keep flying
+        }
       }
     }
   }
