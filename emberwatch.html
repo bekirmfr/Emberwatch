@@ -5590,9 +5590,9 @@
             const luck = perkLuck(), rareOdds = Math.round((0.02 + luck * 0.30 + 0.16 + luck * 0.34) * 100), epicOdds = Math.round((0.02 + luck * 0.30) * 100);
             document.getElementById("fireinfo").innerHTML =
                 `<div class="item"><div class="nm">Fire level ${G.fireLevel}</div>
-              <div class="mods">Light radius ${Math.round(G.lightR)} · +${12 * (G.fireLevel - 1)} max health · +${5 * (G.fireLevel - 1)}% gold · mends ${(FIRE_REGEN_PER_LEVEL * G.fireLevel).toFixed(1)} hp/sec between waves</div>
-              <div class="mods">Perk luck — ${rareOdds}% rare, ${epicOdds}% epic on level-up cards</div></div>
-             <div style="color:var(--muted);font-size:12.5px">Next level reclaims another 46 of ground from the dark, steels you, and sharpens your perk luck.</div>`;
+                  <div class="mods">Light radius ${Math.round(G.lightR)} · +${12 * (G.fireLevel - 1)} max health · +${5 * (G.fireLevel - 1)}% gold · mends ${(FIRE_REGEN_PER_LEVEL * G.fireLevel).toFixed(1)} hp/sec between waves</div>
+                  <div class="mods">Perk luck — ${rareOdds}% rare, ${epicOdds}% epic on level-up cards</div></div>
+                 <div style="color:var(--muted);font-size:12.5px">Next level reclaims another 46 of ground from the dark, steels you, and sharpens your perk luck.</div>`;
             const ub = document.getElementById("upgradebtn");
             ub.textContent = `Feed fire — ◈ ${cost}`;
             ub.disabled = G.gold < cost;
@@ -5672,13 +5672,13 @@
                 let n = 0; for (const s of G.hero.slots) { const eq = G.hero.equipment[s.id]; if (eq && eq.set === it.set) n++; }
                 const line = (mods, active, label) => `<div class="dsetb ${active ? "on" : ""}"><b>${label}</b> ${mods.map(modText).join(", ")}</div>`;
                 setInfo = `<div class="dset" style="--sc:${S.col}">
-              <div class="dsetn">${tn(S.nm)} ${t("setOf")} · ${t("setWorn", { n })}</div>
-              ${S.b2 ? line(S.b2.mods, n >= 2, "2pc") : ""}
-              ${S.b4 ? line(S.b4.mods, n >= 4, "4pc") : ""}</div>`;
+                  <div class="dsetn">${tn(S.nm)} ${t("setOf")} · ${t("setWorn", { n })}</div>
+                  ${S.b2 ? line(S.b2.mods, n >= 2, "2pc") : ""}
+                  ${S.b4 ? line(S.b4.mods, n >= 4, "4pc") : ""}</div>`;
             }
             dd.innerHTML = `<div class="dn ${it.rarCls}">${it.nm} <span style="color:var(--muted);font-weight:400;font-size:10px">· ${t("lvShort")} ${it.lvl || 1} · ${tf("nm_" + (it.rarity || ""), it.rarity || "")} ${tf("type_" + it.slot, TYPE_LABEL[it.slot] || it.slot)}</span></div>
-            <div class="dm">${it.modifiers.map(modText).join(" · ")}</div>${proc}${setInfo}${cmp}
-            <div class="acts">${acts}</div>`;
+                <div class="dm">${it.modifiers.map(modText).join(" · ")}</div>${proc}${setInfo}${cmp}
+                <div class="acts">${acts}</div>`;
             const eqb = document.getElementById("d-eq"); if (eqb) eqb.onclick = () => { const i = invSel.idx; invSel = null; equip(i); };
             const svb = document.getElementById("d-sv"); if (svb) svb.onclick = () => { const i = invSel.idx; invSel = null; if (G.satchel[i] && G.satchel[i].id === "item_tut") G._tutLoot = 3; G.xp += salvageValue(G.satchel[i]); SFX.pickup(); G.satchel.splice(i, 1); renderInventory(); syncHUD(); };
             const unb = document.getElementById("d-un"); if (unb) unb.onclick = () => { const s = invSel.slotId; invSel = null; unequip(s); };
@@ -6860,8 +6860,8 @@
             fire: { title: "The fire is everything", text: "That blaze at the center is <b>your level</b>. Feed it to grow stronger and push back the dark." },
             move: { title: "Move & strike", text: m => (m ? "<b>Hold the joystick</b> to move" : "<b>Hold the mouse</b> to move") + "; let go and your watcher strikes the nearest foe on its own." },
             abilities: { title: "Your abilities", text: m => "Cast with " + (m ? "the <b>buttons</b> — tap to fire where you face, or drag to aim" : "<b>Q W E R</b> toward the cursor") + ". Each has a <b>cooldown</b>; more unlock as you level." },
-            remains: { title: "Gather the remains", text: "Your fallen foe left glowing <b>remains</b>. Walk over them to sweep them up — you carry them as <b>⬥</b>." },
-            bank: { title: "Bank what you carry", text: "Stand <b>right on the fire</b> to pour your remains in. That feeds the fire — and levels you up." },
+            remains: { title: "Gather the remains", text: "Your fallen foe left glowing <b>remains</b>. Walk over them to sweep them up — you carry them as <b>⬥</b>. They <b>fade</b> if left too long, but the more you carry the <b>slower</b> you move." },
+            bank: { title: "Bank at your own risk", text: "Stand <b>right on the fire</b> to pour your remains in — it feeds the fire and levels you up. But pouring <b>roots you</b>, and it starts slow then speeds up, so cashing a big haul leaves you <b>exposed</b>. Banked remains are safe; what you still carry is lost if you fall." },
             night: { title: "Hold the dark", text: "By night, stray beyond the firelight and you'll be <b>Exposed</b> — your life drains. Stay in the glow." },
             boons: { title: "Choose a boon", text: "Each level, pick <b>one boon</b> — it lasts the whole run. Rarer cards (blue, then gold) are stronger." },
             gear: { title: "Loot & your pack", text: m => "You picked up <b>gear</b>. Open your <b>Pack</b> (" + (m ? "the button" : "<b>I</b>") + "), select it, and <b>Equip</b> it." },
