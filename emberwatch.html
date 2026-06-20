@@ -4072,6 +4072,13 @@
         const BANK_IN_LIGHT = true;// carried remains pour into the fire while you stand on it
         const DEATH_SPILL = 0.5;   // fraction of UN-banked (carried) remains lost on death
         const REMAINS_TTL = 30;    // seconds a loose remain lingers on the ground before fading
+        // --- carry burden: the more remains you carry, the slower you move (greed has weight) ---
+        const CARRY_SLOW_PER = 0.006;  // move-speed penalty per remain carried
+        const CARRY_SLOW_MAX = 0.40;   // cap — a full hoard slows you at most this much (still mobile = risk, not doom)
+        // --- pour ramp: banking starts SLOW and accelerates the longer you commit (cashing a hoard demands a window) ---
+        const POUR_BASE = 4;    // remains/sec at the instant the pour begins
+        const POUR_ACCEL = 16;   // additional remains/sec added per second of continuous pouring
+        const POUR_MAX = 90;   // pour-rate ceiling (remains/sec)
 
         function startWave() {
             const tut0 = G._tut0Pending;                       // first run, first wave = the scripted Level 0
@@ -4702,7 +4709,8 @@
             if (MOBILE && touchState.joy) { mx = touchState.joy.dx; my = touchState.joy.dy; hasMoveInput = true; }   // analog stick vector
             else if (mouseDown) { mx = (mouse.x + G.cam.x) - h.x; my = (mouse.y + G.cam.y) - h.y; hasMoveInput = true; }
             let ml = Math.hypot(mx, my);
-            const sp = resolveStat(h, "moveSpeed", ctx) * woundMS;
+            const carryBurden = 1 - Math.min(CARRY_SLOW_MAX, (G.carry || 0) * CARRY_SLOW_PER);   // heavy satchel = slower, capped
+            const sp = resolveStat(h, "moveSpeed", ctx) * woundMS * carryBurden;
             const DEAD = 6;                                    // don't jitter when the cursor sits on the hero
             if (MOBILE && touchState.joy) moveScale = Math.min(JOY_TOP, ml / JOY_MAXR);   // partial deflection = walk; capped at JOY_TOP (1x)
             if (h.dashT > 0) {                                   // dash overrides normal movement
@@ -4980,11 +4988,15 @@
                     G._firstBankDone = true; tutBeat("bank");
                     tele("first_bank", { sec: Math.round((performance.now() - (G._runStartMs || performance.now())) / 1000), carry: G.carry, night: G.isNight ? 1 : 0 });
                 }
+                G.pourT = (G.pourT || 0) + dt;                                                  // how long THIS continuous pour has run — drives the ramp
+                const rate = Math.min(POUR_MAX, POUR_BASE + POUR_ACCEL * G.pourT);             // slow at first, accelerates the longer you commit
+                G.pourAcc = (G.pourAcc || 0) + rate * dt;                                       // fractional remains accumulate; deposit whole units
                 G.bankTimer += dt; const TICK = 0.06;
-                while (G.bankTimer >= TICK && G.carry > 0) {
+                while (G.bankTimer >= TICK && G.carry > 0 && G.pourAcc >= 1) {
                     G.bankTimer -= TICK;
-                    const dep = Math.min(G.carry, Math.max(1, Math.round(G.carry * 0.2)));        // pours fast then tapers
-                    G.carry -= dep; G.xp += dep;
+                    const dep = Math.min(G.carry, Math.floor(G.pourAcc));                       // deposit whatever whole remains have accrued this beat
+                    if (dep < 1) break;
+                    G.pourAcc -= dep; G.carry -= dep; G.xp += dep;
                     SFX.feed(G.bankStep++);                                                    // chime climbs as the stream runs
                     G.fireFeed = Math.min(1.5, (G.fireFeed || 0) + 0.5);                              // fire flares up
                     spawnParticles(0, 0, "#ffd98a", 7, { speed: 130, life: 0.5, size: 2.6, dir: -Math.PI / 2, spread: 0.95, grav: -80 });  // embers gush up
@@ -4997,7 +5009,7 @@
                         spawnParticles(0, -10, "#ffce6a", 12, { speed: 150, life: 0.7, size: 2.8, dir: -Math.PI / 2, spread: 1.4, grav: -90 });
                     }   // tall ember plume
                 }
-            } else { G.bankStep = 0; G.bankTimer = 0; }
+            } else { G.bankStep = 0; G.bankTimer = 0; G.pourT = 0; G.pourAcc = 0; }   // left the fire → pour ramp resets (bailing costs you the ramp)
             if (G.fireFeed > 0) G.fireFeed = Math.max(0, G.fireFeed - dt * 2.4);                   // flare settles back down
 
             // ground item pickup
@@ -5929,13 +5941,17 @@
                 g.fillStyle = "rgba(0,0,0,0.22)"; g.fillRect(-s * 0.5, s * 0.18, s, s * 0.32);     // shaded underside — fakes a little block height
                 g.restore(); g.shadowBlur = 0; g.globalAlpha = 1;
             }
-            // carried tally above the hero — what you still need to bank at the fire
+            // carried tally above the hero — what you still need to bank at the fire.
+            // Tints from ember-gold → hot red as the burden grows, so "I'm heavy & slow" reads at a glance.
             if (G.carry >= 1 && !G.dying) {
                 const hx = sx(G.hero.x), hy = sy(G.hero.y) - G.hero.r - 15;
-                g.save(); g.textAlign = "center"; g.font = "700 12px ui-sans-serif,system-ui";
+                const burdenF = Math.min(1, (G.carry || 0) * CARRY_SLOW_PER / CARRY_SLOW_MAX);   // 0 = light, 1 = at the slow cap
+                g.save(); g.textAlign = "center"; g.font = "700 " + (12 + burdenF * 2).toFixed(0) + "px ui-sans-serif,system-ui";
                 const label = "⬥ " + Math.floor(G.carry);
                 g.lineWidth = 3; g.strokeStyle = "rgba(0,0,0,.7)"; g.strokeText(label, hx, hy);
-                g.fillStyle = "#ffce6a"; g.shadowBlur = 6; g.shadowColor = "#ff9a3c"; g.fillText(label, hx, hy);
+                const r = 255, gg = Math.round(206 - 120 * burdenF), b = Math.round(106 - 80 * burdenF);   // #ffce6a → hot red
+                g.fillStyle = `rgb(${r},${gg},${b})`; g.shadowBlur = 6 + burdenF * 6; g.shadowColor = burdenF > 0.5 ? "#ff4a2c" : "#ff9a3c";
+                g.fillText(label, hx, hy);
                 g.restore(); g.shadowBlur = 0;
             }
 
