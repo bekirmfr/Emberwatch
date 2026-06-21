@@ -950,6 +950,18 @@
             justify-content: center;
             flex-wrap: wrap
         }
+        /* --- Leaderboard --- */
+        .lb-tabs { display: flex; gap: 8px; justify-content: center; margin-top: 12px }
+        .lb-tab { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 8px; padding: 5px 12px; cursor: pointer; font: inherit; font-size: 13px }
+        .lb-tab.on { color: var(--cream); border-color: var(--ember-hi) }
+        .lb-list { margin-top: 12px; display: flex; flex-direction: column; gap: 6px }
+        .lb-row { display: grid; grid-template-columns: 28px 1fr auto auto; align-items: center; gap: 10px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; background: rgba(255,255,255,.02) }
+        .lb-row.me { border-color: var(--ember-hi); background: rgba(255,200,120,.06) }
+        .lb-rank { color: var(--muted); font-weight: 700; text-align: center }
+        .lb-score { color: var(--ember-hi); font-weight: 700 }
+        .lb-cls { font-size: 13px }
+        .lb-meta { color: var(--muted); font-size: 11px; letter-spacing: .04em }
+        .lb-empty, .lb-note { color: var(--muted); text-align: center; padding: 16px 0; font-size: 13px }
         /* --- Supporter Pack modal --- */
         .supmodal {
             max-width: 430px
@@ -2599,6 +2611,7 @@
                 <div class="startbtns" id="startmenu">
                     <button class="btn" onclick="showStartPane('howto')" data-i18n="howToPlay">How to Play</button>
                     <button class="btn primary" onclick="showStartPane('choose')" data-i18n="play">Play</button>
+                    <button class="btn" onclick="openLeaderboard()" data-i18n="rankings">Rankings</button>
                 </div>
                 <div class="langrow" id="langrow"><button class="langtoggle" id="langtoggle" onclick="openLang()">🌐 <span id="langcur">English</span></button></div>
 
@@ -2647,6 +2660,7 @@
                 <div class="ovactions">
                     <button class="btn revive" id="ov-revive" onclick="revive()"><span data-i18n="revive">Revive</span> <span class="rc">⬥ 25</span></button>
                     <button class="btn primary" onclick="toStart('choose')" data-i18n="restart">Restart</button>
+                    <button class="btn" onclick="openLeaderboard()" data-i18n="rankings">Rankings</button>
                     <button class="btn" onclick="toStart('menu')" data-i18n="home">Home</button>
                 </div>
             </div>
@@ -2691,6 +2705,19 @@
         </div>
     </div>
 
+    <div class="overlay" id="leaderboard">
+        <div class="modal">
+            <div class="title" data-i18n="lbTitle">Hall of Embers</div>
+            <div class="lb-tabs" id="lb-tabs">
+                <button class="lb-tab on" data-scope="local" onclick="lbTab('local')" data-i18n="lbLocal">Your runs</button>
+                <button class="lb-tab" data-scope="global" onclick="lbTab('global')" data-i18n="lbGlobal" style="display:none">Global</button>
+            </div>
+            <div class="lb-list" id="lb-list"></div>
+            <div class="lb-note" id="lb-note" style="display:none" data-i18n="lbFallback">Showing your runs — global board unavailable.</div>
+            <div style="text-align:center;margin-top:16px"><button class="btn" onclick="closeLeaderboard()" data-i18n="close">Close</button></div>
+        </div>
+    </div>
+
     <script>
         /* =========================================================================
            EMBERWATCH — single-file build.  Section map (search the title to jump):
@@ -2728,6 +2755,50 @@
         let embers = Store.get("ew.embers", 0);     // ⬥ meta currency: earned by playing, ads, or purchase
         let bestScore = Store.get("ew.best", 0);
 
+        /* === LEADERBOARD =========================================================
+           Local top-10 is the source of truth and ALWAYS works offline (same Store
+           boundary as ew.best). A remote provider is optional and additive (the
+           Telemetry model): EVERY remote path degrades to the local board on any
+           failure, so the board can never blank or throw.
+           Provider contract (all optional, all may throw / return null):
+             submit(entry) -> Promise         // best-effort; local is already written
+             top(n)        -> Promise<rows[]>  // null/empty/throw → caller falls back to local
+           ====================================================================== */
+        const Scores = (() => {
+            const KEY = "ew.scores", CAP = 10;
+            let _provider = null;                                   // null = local-only (today)
+            function list() { const a = Store.get(KEY, []); return Array.isArray(a) ? a : []; }
+            function submit(run) {                                   // {score,wave,level,kills,days,cls}
+                const entry = {
+                    score: run.score | 0, wave: run.wave | 0, level: run.level | 0,
+                    kills: run.kills | 0, days: run.days | 0, cls: run.cls || "", ts: Date.now()
+                };
+                const board = list().concat(entry).sort((a, b) => b.score - a.score).slice(0, CAP);
+                Store.set(KEY, board);                               // (1) local ALWAYS written first
+                if (_provider && _provider.submit) {                 // (2) remote best-effort, never blocks/throws
+                    Promise.resolve().then(() => _provider.submit(entry)).catch(() => { });
+                }
+                return board.indexOf(entry);                         // local rank, -1 if it didn't place
+            }
+            function top(scope, n) {                                  // → {rows, source:"global"|"local"}
+                n = n || CAP;
+                const local = list().slice(0, n);
+                if (scope === "global" && _provider && _provider.top) {
+                    return Promise.resolve().then(() => _provider.top(n))
+                        .then(rows => (Array.isArray(rows) && rows.length) ? { rows, source: "global" }
+                                                                            : { rows: local, source: "local" })
+                        .catch(() => ({ rows: local, source: "local" }));   // failure → local, silently
+                }
+                return Promise.resolve({ rows: local, source: "local" });
+            }
+            return {
+                list, submit, top,
+                setProvider(p) { _provider = p; },
+                hasRemote() { return !!(_provider && _provider.top); },
+                get best() { return (list()[0] || {}).score || 0; }
+            };
+        })();
+
         /* === INTERNATIONALIZATION (i18n) =========================================
            Single source of truth for user-facing copy. Add a language by adding a
            key→string map under STRINGS (e.g. `zh:{...}`). t() falls back English → raw
@@ -2748,6 +2819,11 @@
                 prevHero: "Previous hero", nextHero: "Next hero",
                 // game over
                 gameOver: "The fire went out", waves: "Waves",
+                // leaderboard
+                lbTitle: "Hall of Embers", rankings: "Rankings",
+                lbLocal: "Your runs", lbGlobal: "Global",
+                lbEmpty: "No runs yet — feed the fire.", lbMeta: "Wave {w} · Day {d}",
+                lbFallback: "Showing your runs — global board unavailable.",
                 // inventory / level-up / menu copy
                 selectGear: "Select a piece of gear to inspect it.", boons: "Boons & Effects",
                 levelUp: "Level Up!", chooseBoon: "Choose one boon. It lasts the rest of the run.", newAbility: "✦ New ability —", paused: "Paused", resume: "Resume",
@@ -3411,6 +3487,49 @@
         function chooseLang(code) { setLang(code); renderLangPicker(); }   // setLang persists, flips text direction, and re-fills the markup
         function addEmbers(n) { embers = Math.max(0, embers + n); Store.set("ew.embers", embers); updateEmberUI(); }
 
+        /* --- Leaderboard UI: local renders instantly; Global shows local first, then
+           swaps in remote, revealing the fallback note only if it actually fell back. */
+        let _lbScope = "local";
+        function lbRow(r, i) {
+            const c = (CLASSES[r.cls] && CLASSES[r.cls].color) || "var(--cream)";
+            const name = CLASSES[r.cls] ? tf("cls_" + r.cls, CLASSES[r.cls].name) : "—";
+            const rank = (r.rank != null ? r.rank : i + 1);
+            return `<div class="lb-row${r.me ? ' me' : ''}">`
+                + `<span class="lb-rank">${rank}</span>`
+                + `<span class="lb-score">${(r.score || 0).toLocaleString()}</span>`
+                + `<span class="lb-cls" style="color:${c}">${name}</span>`
+                + `<span class="lb-meta">${t("lbMeta", { w: r.wave | 0, d: r.days | 0 })}</span>`
+                + `</div>`;
+        }
+        function renderLeaderboard() {
+            const box = document.getElementById("lb-list"); if (!box) return;
+            const note = document.getElementById("lb-note");
+            const paint = rows => box.innerHTML = rows.length ? rows.map(lbRow).join("")
+                : `<div class="lb-empty">${t("lbEmpty")}</div>`;
+            paint(Scores.list());                                   // instant local render
+            if (note) note.style.display = "none";
+            if (_lbScope === "global") {
+                Scores.top("global").then(res => {
+                    if (_lbScope !== "global") return;              // tab changed while awaiting
+                    paint(res.rows);
+                    if (note) note.style.display = (res.source === "local") ? "" : "none";   // fell back → show note
+                });
+            }
+        }
+        function lbTab(scope) {
+            _lbScope = scope;
+            const tabs = document.querySelectorAll("#lb-tabs .lb-tab");
+            tabs.forEach(b => b.classList.toggle("on", b.getAttribute("data-scope") === scope));
+            renderLeaderboard();
+        }
+        function openLeaderboard() {
+            const gt = document.querySelector('#lb-tabs .lb-tab[data-scope="global"]');
+            if (gt) gt.style.display = Scores.hasRemote() ? "" : "none";   // Global tab appears only when a provider exists
+            lbTab("local");
+            show("leaderboard");
+        }
+        function closeLeaderboard() { hide("leaderboard"); }
+
         /* =========================================================================
            PHASE 0 — VALIDATION INSTRUMENTATION
            Telemetry, real-shaped rewarded-ad hook, and the Supporter Pack.
@@ -3480,7 +3599,7 @@
                 try { window.addEventListener("beforeunload", () => { track("session_end", { runs: runsThisSession }); flush(); }); } catch (e) { }
             }
             return {
-                cfg, track, flush,
+                cfg, track, flush, distinctId,            // distinctId reused by the leaderboard (same anonymous id, no extra PII)
                 get runCount() { return Store.get("ew.runs", 0) || 0; },
                 get enabled() { return !!(cfg.endpoint || (cfg.posthog && cfg.posthog.key)); }
             };
@@ -3514,6 +3633,66 @@
                 }
             };
         })();
+
+        /* --- Leaderboard SaaS provider -------------------------------------------
+           READ is client-safe (board key only) → called straight from the browser.
+           WRITE carries the app_secret → MUST go through YOUR backend, never here.
+           SECURITY: the app_secret is NEVER placed in this file. This file is served
+           to browsers, so anything in it is public; an embedded secret would let any
+           visitor forge scores and delete boards. Submits go through a server proxy
+           that holds the secret (see lb-proxy.js). Until LB.proxy points at that
+           proxy, submit is a no-op and only the local board records the run.
+           Any remote failure is swallowed → Scores falls back to the local board. */
+        const LB = {
+            base:     "https://leaderboard-384f.vms.stackfi.tech",  // SaaS base URL (no trailing slash)
+            boardKey: "lb_ff5cd974a653adc0a9357535",                           // board key — safe to ship in client code
+            proxy:    "https://<your-backend>/lb/submit",  // YOUR server endpoint that holds the app_secret (secure path)
+            /* ⚠️ DEV-ONLY — app secret baked into client code. This file is served to
+               browsers, so this secret is PUBLIC once shipped: anyone can read it and
+               forge scores OR DELETE this board and its members. Accepted here only for
+               a throwaway dev/cosmetic board. Before any real/public build: set this to
+               null, stand up lb-proxy.js, and rotate this secret in the console. */
+            devSecret: "sk_ce28063ce8e7403c4460c183566cfbd54c3e0fd2a8288b86ca602849a3f292c4"
+        };
+        const lbProxyReady = () => LB.proxy.indexOf("<") === -1;   // true once a real proxy URL is set
+        const saasBoard = {
+            submit: (e) => {
+                const payload = {
+                    member_id: Telemetry.distinctId(),                  // reuse the existing anonymous, no-PII device id
+                    score: e.score,
+                    metadata: JSON.stringify({ w: e.wave, d: e.days, cls: e.cls })   // corroborating fields for validation
+                };
+                // Secure path (preferred): route through your server proxy; the secret stays server-side.
+                if (lbProxyReady()) {
+                    return fetch(LB.proxy, {
+                        method: "POST", headers: { "content-type": "application/json" },
+                        body: JSON.stringify(payload)
+                    }).then(r => r.ok).catch(() => false);
+                }
+                // ⚠️ DEV-ONLY INSECURE FALLBACK — submits straight to the SaaS with the app
+                //    secret from client code. Remove this branch (and LB.devSecret) before launch.
+                if (LB.devSecret) {
+                    return fetch(`${LB.base}/leaderboards/${LB.boardKey}/submit`, {
+                        method: "POST",
+                        headers: { "content-type": "application/json", "x-session-token": LB.devSecret },
+                        body: JSON.stringify(payload)
+                    }).then(r => r.ok).catch(() => false);
+                }
+                return Promise.resolve(false);
+            },
+            top: (n) => fetch(`${LB.base}/leaderboards/${LB.boardKey}/list?count=${n}`)
+                .then(r => r.ok ? r.json() : null)
+                .then(d => (d && Array.isArray(d.items)) ? d.items.map(it => {
+                    let m = {}; try { m = JSON.parse(it.metadata || "{}"); } catch (e) { }
+                    return { score: it.score | 0, wave: m.w | 0, days: m.d | 0, cls: m.cls || "",
+                             rank: it.rank, me: it.member_id === Telemetry.distinctId() };
+                }) : null)
+            // NOTE: per-item field names (it.score/member_id/rank/metadata) are assumed —
+            // confirm against a real /list response and adjust this map if they differ.
+        };
+        // Read path is client-safe; global read + (dev) write both active now.
+        Scores.setProvider(saasBoard);
+
 
         /* --- Supporter Pack ------------------------------------------------------
            One non-predatory IAP: removes ads + unlocks a cosmetic ember-glow fire +
@@ -7127,6 +7306,7 @@
             const gain = Math.max(0, deserved - (G.embersAwarded || 0)); G.embersAwarded = deserved;
             if (gain > 0) addEmbers(gain);
             const isBest = score > bestScore; if (isBest) { bestScore = score; Store.set("ew.best", bestScore); }
+            const lbRank = Scores.submit({ score, wave: G.wave, level: G.level, kills: G.kills, days: G.dayNum, cls: G.classId });
             tele("run_end", {
                 score, wave: G.wave, level: G.level, kills: G.kills, days: G.dayNum,
                 fireLevel: G.fireLevel, cls: G.classId, revives: G.reviveCount || 0,
