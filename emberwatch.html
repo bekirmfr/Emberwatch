@@ -1301,6 +1301,33 @@
                 cursor: not-allowed
             }
 
+        .btn.done {
+            opacity: .82
+        }
+
+            .btn.done::after {
+                content: " ✓";
+                color: #7fd18a;
+                font-weight: 700
+            }
+
+        .ovdaily {
+            text-align: center;
+            margin: 2px 0 6px;
+            font-size: 13px;
+            opacity: .92
+        }
+
+            .ovdaily .ok {
+                color: #7fd18a;
+                font-weight: 600
+            }
+
+            .ovdaily .dup {
+                color: #e0a96d;
+                font-weight: 600
+            }
+
         .btn.shake {
             animation: denyShake .35s
         }
@@ -2789,7 +2816,7 @@
                 <div class="startbtns" id="startmenu">
                     <button class="btn" onclick="showStartPane('howto')" data-i18n="howToPlay">How to Play</button>
                     <button class="btn primary" onclick="showStartPane('choose')" data-i18n="play">Play</button>
-                    <button class="btn" onclick="startDaily()" data-i18n="dailyChallenge">Daily Challenge</button>
+                    <button class="btn" id="dailybtn" onclick="startDaily()" data-i18n="dailyChallenge">Daily Challenge</button>
                     <button class="btn" onclick="openLeaderboard()" data-i18n="rankings">Rankings</button>
                 </div>
 
@@ -2843,6 +2870,7 @@
                     <button class="btn tiny" id="ov-ad" onclick="watchAd()" data-i18n="watchAd">Watch ad +30</button>
                     <button class="btn tiny" id="ov-buy" onclick="buyEmbers()" data-i18n="supporterPack">✦ Supporter Pack</button>
                 </div>
+                <div class="ovdaily" id="ov-daily" style="display:none"></div>
                 <div class="ovactions">
                     <button class="btn revive" id="ov-revive" onclick="revive()"><span data-i18n="revive">Revive</span> <span class="rc">⬥ 25</span></button>
                     <button class="btn" onclick="openLeaderboard()" data-i18n="rankings">Rankings</button>
@@ -2988,7 +3016,8 @@
             }
             function submitDaily(run, date) {                        // daily runs go ONLY to the daily board, keyed by challenge date
                 const entry = mkEntry(run);
-                if (_daily && _daily.submit) Promise.resolve().then(() => _daily.submit(entry, date)).catch(() => { });
+                if (_daily && _daily.submit) return Promise.resolve().then(() => _daily.submit(entry, date)).catch(() => null);
+                return Promise.resolve(null);                        // → server body {accepted, rank, score, ...} | null
             }
             function top(scope, n) {                                  // → {rows, source}
                 n = n || CAP;
@@ -3071,9 +3100,9 @@
                 stat_lifesteal: "Lifesteal", stat_counter: "Counter", stat_goldFind: "Harvest", stat_cdr: "Cooldown",
                 stat_armorPen: "Armor Pen", stat_cleave: "Cleave", stat_chain: "Extra Bolts",
                 // game over
-                kills: "Kills", days: "Days", best: "Best {n}", newBest: "★ New best!", earned: "earned",
+                kills: "Kills", days: "Days", best: "Best {n}", newBest: "★ New best!", dailyRecording: "Recording daily…", dailyRecorded: "Daily recorded · rank {n}", dailyAlready: "Daily already recorded · rank {n}", dailySavedLocal: "Daily saved locally", earned: "earned",
                 embersLabel: "Embers:", watchAd: "Watch ad +30", supporterPack: "✦ Supporter Pack",
-                revive: "Revive", restart: "Restart", dailyChallenge: "Daily Challenge", home: "Home",
+                revive: "Revive", restart: "Restart", dailyChallenge: "Daily Challenge", runmod_glasscannon: "Glass Cannon", runmod_glasscannon_d: "More damage, less max health", runmod_juggernaut: "Juggernaut", runmod_juggernaut_d: "More max health, slower", runmod_bloodpact: "Blood Pact", runmod_bloodpact_d: "Heal on kill, but health slowly drains", runmod_zealot: "Zealot", runmod_zealot_d: "More attack speed & crit, less armor", runmod_harvest: "Harvest", runmod_harvest_d: "More harvest, less damage", affix_vigorous: "Vigorous", affix_armored: "Armored", affix_swift: "Swift", affix_brutal: "Brutal", affix_venomous: "Venomous", affix_searing: "Searing", affix_numbing: "Numbing", home: "Home",
                 // toasts
                 pickedUp: "Picked up", lvShort: "Lv",
                 supporterUnlocked: "Supporter Pack unlocked — thank you ✦",
@@ -3143,9 +3172,9 @@
                 blurb_ranger: "Bir kıt-tutucu — uzun yay menzili ve mesafeyi ve kritiği ödüllendiren hızlı atışlar.",
                 blurb_mage: "Cam top — sıçrayan kısa menzilli büyü vuruşları, yıkıcı büyüler, çok kırılgan.",
                 blurb_knight: "Dayanıklı dövüşçü — yarıp geçen yakın vuruşlar ve mesafe kapatıcılar; cengin içinde ayakta kalır.",
-                kills: "Öldürme", days: "Gün", best: "En iyi {n}", newBest: "★ Yeni rekor!", earned: "kazanılan",
+                kills: "Öldürme", days: "Gün", best: "En iyi {n}", newBest: "★ Yeni rekor!", dailyRecording: "Günlük kaydediliyor…", dailyRecorded: "Günlük kaydedildi · sıra {n}", dailyAlready: "Günlük zaten kaydedildi · sıra {n}", dailySavedLocal: "Günlük yerel kaydedildi", earned: "kazanılan",
                 embersLabel: "Korlar:", watchAd: "Reklam izle +30", supporterPack: "✦ Destekçi Paketi",
-                revive: "Diril", restart: "Yeniden başlat", dailyChallenge: "Günlük Görev", home: "Ana menü",
+                revive: "Diril", restart: "Yeniden başlat", dailyChallenge: "Günlük Görev", runmod_glasscannon: "Cam Top", runmod_glasscannon_d: "Daha çok hasar, daha az can", runmod_juggernaut: "Ezici", runmod_juggernaut_d: "Daha çok can, daha yavaş", runmod_bloodpact: "Kan Yemini", runmod_bloodpact_d: "Öldürünce iyileş, ama can yavaşça azalır", runmod_zealot: "Fanatik", runmod_zealot_d: "Daha çok saldırı hızı ve kritik, daha az zırh", runmod_harvest: "Hasat", runmod_harvest_d: "Daha çok hasat, daha az hasar", affix_vigorous: "Dinç", affix_armored: "Zırhlı", affix_swift: "Çevik", affix_brutal: "Vahşi", affix_venomous: "Zehirli", affix_searing: "Kavurucu", affix_numbing: "Uyuşturan", home: "Ana menü",
                 pickedUp: "Alındı", lvShort: "Sv",
                 supporterUnlocked: "Destekçi Paketi açıldı — teşekkürler ✦",
                 supporterAdReward: "Destekçiler reklamı atlar — işte ödülün ✦",
@@ -3210,9 +3239,9 @@
                 stat_lifesteal: "吸血", stat_counter: "反伤", stat_goldFind: "采集", stat_cdr: "冷却",
                 stat_armorPen: "穿甲", stat_cleave: "顺劈", stat_chain: "额外闪电",
                 // game over
-                kills: "击杀", days: "天数", best: "最佳 {n}", newBest: "★ 新纪录！", earned: "获得",
+                kills: "击杀", days: "天数", best: "最佳 {n}", newBest: "★ 新纪录！", dailyRecording: "正在记录每日…", dailyRecorded: "每日已记录 · 排名 {n}", dailyAlready: "今日已记录 · 排名 {n}", dailySavedLocal: "每日已本地保存", earned: "获得",
                 embersLabel: "余烬：", watchAd: "看广告 +30", supporterPack: "✦ 支持者礼包",
-                revive: "复活", restart: "重新开始", dailyChallenge: "每日挑战", home: "主菜单",
+                revive: "复活", restart: "重新开始", dailyChallenge: "每日挑战", runmod_glasscannon: "玻璃大炮", runmod_glasscannon_d: "伤害更高，最大生命更低", runmod_juggernaut: "重装", runmod_juggernaut_d: "最大生命更高，移动更慢", runmod_bloodpact: "血契", runmod_bloodpact_d: "击杀回血，但生命缓慢流失", runmod_zealot: "狂热者", runmod_zealot_d: "攻速与暴击更高，护甲更低", runmod_harvest: "丰收", runmod_harvest_d: "收获更多，伤害更低", affix_vigorous: "强健", affix_armored: "装甲", affix_swift: "迅捷", affix_brutal: "残暴", affix_venomous: "剧毒", affix_searing: "灼烧", affix_numbing: "冰冷", home: "主菜单",
                 // toasts
                 pickedUp: "拾取", lvShort: "Lv",
                 supporterUnlocked: "支持者礼包已解锁——谢谢你 ✦",
@@ -3281,9 +3310,9 @@
                 stat_maxHealth: "Vida", stat_healthRegen: "Regen.", stat_moveSpeed: "Vel. mov.", stat_attackRange: "Alcance",
                 stat_lifesteal: "Robo de vida", stat_counter: "Contraataque", stat_goldFind: "Cosecha", stat_cdr: "Enfriamiento",
                 stat_armorPen: "Penetración", stat_cleave: "Tajo", stat_chain: "Rayos extra",
-                kills: "Bajas", days: "Días", best: "Mejor {n}", newBest: "★ ¡Nuevo récord!", earned: "ganados",
+                kills: "Bajas", days: "Días", best: "Mejor {n}", newBest: "★ ¡Nuevo récord!", dailyRecording: "Guardando diario…", dailyRecorded: "Diario registrado · puesto {n}", dailyAlready: "Diario ya registrado · puesto {n}", dailySavedLocal: "Diario guardado localmente", earned: "ganados",
                 embersLabel: "Brasas:", watchAd: "Ver anuncio +30", supporterPack: "✦ Pack de apoyo",
-                revive: "Revivir", restart: "Reiniciar", dailyChallenge: "Desafío diario", home: "Inicio", pickedUp: "Recogido", soundOff: "Silencio", soundOn: "Sonido",
+                revive: "Revivir", restart: "Reiniciar", dailyChallenge: "Desafío diario", runmod_glasscannon: "Cañón de Cristal", runmod_glasscannon_d: "Más daño, menos vida máxima", runmod_juggernaut: "Coloso", runmod_juggernaut_d: "Más vida máxima, más lento", runmod_bloodpact: "Pacto de Sangre", runmod_bloodpact_d: "Cura al matar, pero la vida baja lenta", runmod_zealot: "Fanático", runmod_zealot_d: "Más vel. ataque y crítico, menos armadura", runmod_harvest: "Cosecha", runmod_harvest_d: "Más cosecha, menos daño", affix_vigorous: "Vigoroso", affix_armored: "Acorazado", affix_swift: "Veloz", affix_brutal: "Brutal", affix_venomous: "Venenoso", affix_searing: "Abrasador", affix_numbing: "Entumecedor", home: "Inicio", pickedUp: "Recogido", soundOff: "Silencio", soundOn: "Sonido",
                 setOf: "conjunto", noBoons: "Aún sin bendiciones — supera oleadas para subir de nivel y elegir una.",
                 equip: "Equipar", salvage: "Reciclar", unequip: "Quitar", noSlot: "Tu clase no tiene ranura de {type} — solo reciclar", setWorn: "{n}/4 equipadas",
                 stat_critMultiplier: "Daño crítico", stat_evasion: "Evasión",
@@ -3347,9 +3376,9 @@
                 stat_maxHealth: "Vie", stat_healthRegen: "Régén.", stat_moveSpeed: "Vit. dépl.", stat_attackRange: "Portée",
                 stat_lifesteal: "Vol de vie", stat_counter: "Riposte", stat_goldFind: "Récolte", stat_cdr: "Recharge",
                 stat_armorPen: "Pénétration", stat_cleave: "Fendoir", stat_chain: "Éclairs sup.",
-                kills: "Éliminations", days: "Jours", best: "Record {n}", newBest: "★ Nouveau record !", earned: "gagnés",
+                kills: "Éliminations", days: "Jours", best: "Record {n}", newBest: "★ Nouveau record !", dailyRecording: "Enregistrement…", dailyRecorded: "Quotidien enregistré · rang {n}", dailyAlready: "Quotidien déjà enregistré · rang {n}", dailySavedLocal: "Quotidien enregistré localement", earned: "gagnés",
                 embersLabel: "Braises :", watchAd: "Pub +30", supporterPack: "✦ Pack de soutien",
-                revive: "Réanimer", restart: "Recommencer", dailyChallenge: "Défi quotidien", home: "Accueil", pickedUp: "Ramassé", soundOff: "Muet", soundOn: "Son",
+                revive: "Réanimer", restart: "Recommencer", dailyChallenge: "Défi quotidien", runmod_glasscannon: "Canon de Verre", runmod_glasscannon_d: "Plus de dégâts, moins de vie max", runmod_juggernaut: "Mastodonte", runmod_juggernaut_d: "Plus de vie max, plus lent", runmod_bloodpact: "Pacte de Sang", runmod_bloodpact_d: "Soin à la mise à mort, mais la vie baisse", runmod_zealot: "Zélote", runmod_zealot_d: "Plus de vitesse d'attaque et critique, moins d'armure", runmod_harvest: "Récolte", runmod_harvest_d: "Plus de récolte, moins de dégâts", affix_vigorous: "Vigoureux", affix_armored: "Blindé", affix_swift: "Rapide", affix_brutal: "Brutal", affix_venomous: "Venimeux", affix_searing: "Brûlant", affix_numbing: "Engourdissant", home: "Accueil", pickedUp: "Ramassé", soundOff: "Muet", soundOn: "Son",
                 setOf: "ensemble", noBoons: "Aucune faveur — termine des vagues pour monter de niveau et en choisir une.",
                 equip: "Équiper", salvage: "Recycler", unequip: "Retirer", noSlot: "Aucune case {type} pour ta classe — recyclage seulement", setWorn: "{n}/4 portées",
                 stat_critMultiplier: "Dégâts critiques", stat_evasion: "Esquive",
@@ -3413,9 +3442,9 @@
                 stat_maxHealth: "Здоровье", stat_healthRegen: "Реген.", stat_moveSpeed: "Скор. движ.", stat_attackRange: "Дальность",
                 stat_lifesteal: "Вампиризм", stat_counter: "Контрудар", stat_goldFind: "Добыча", stat_cdr: "Перезарядка",
                 stat_armorPen: "Пробитие", stat_cleave: "Рассечение", stat_chain: "Доп. молнии",
-                kills: "Убийства", days: "Дни", best: "Рекорд {n}", newBest: "★ Новый рекорд!", earned: "получено",
+                kills: "Убийства", days: "Дни", best: "Рекорд {n}", newBest: "★ Новый рекорд!", dailyRecording: "Сохранение…", dailyRecorded: "Дневной результат · место {n}", dailyAlready: "Уже засчитано сегодня · место {n}", dailySavedLocal: "Сохранено локально", earned: "получено",
                 embersLabel: "Угли:", watchAd: "Реклама +30", supporterPack: "✦ Набор поддержки",
-                revive: "Возродить", restart: "Заново", dailyChallenge: "Испытание дня", home: "Главная", pickedUp: "Подобрано", soundOff: "Звук выкл.", soundOn: "Звук вкл.",
+                revive: "Возродить", restart: "Заново", dailyChallenge: "Испытание дня", runmod_glasscannon: "Стеклянная пушка", runmod_glasscannon_d: "Больше урона, меньше макс. здоровья", runmod_juggernaut: "Джаггернаут", runmod_juggernaut_d: "Больше макс. здоровья, медленнее", runmod_bloodpact: "Кровавый пакт", runmod_bloodpact_d: "Лечение за убийство, но здоровье убывает", runmod_zealot: "Фанатик", runmod_zealot_d: "Больше скорости атаки и крита, меньше брони", runmod_harvest: "Жатва", runmod_harvest_d: "Больше добычи, меньше урона", affix_vigorous: "Крепкий", affix_armored: "Бронированный", affix_swift: "Быстрый", affix_brutal: "Жестокий", affix_venomous: "Ядовитый", affix_searing: "Жгучий", affix_numbing: "Леденящий", home: "Главная", pickedUp: "Подобрано", soundOff: "Звук выкл.", soundOn: "Звук вкл.",
                 setOf: "комплект", noBoons: "Пока нет благ — зачищайте волны, чтобы повысить уровень и выбрать.",
                 equip: "Надеть", salvage: "Разобрать", unequip: "Снять", noSlot: "У вашего класса нет слота {type} — только разбор", setWorn: "{n}/4 надето",
                 stat_critMultiplier: "Крит. урон", stat_evasion: "Уклонение",
@@ -3479,9 +3508,9 @@
                 stat_maxHealth: "体力", stat_healthRegen: "回復", stat_moveSpeed: "移動速度", stat_attackRange: "射程",
                 stat_lifesteal: "吸血", stat_counter: "反撃", stat_goldFind: "採取", stat_cdr: "クールダウン",
                 stat_armorPen: "防御貫通", stat_cleave: "範囲斬り", stat_chain: "追加電撃",
-                kills: "撃破数", days: "日数", best: "ベスト {n}", newBest: "★ 新記録！", earned: "獲得",
+                kills: "撃破数", days: "日数", best: "ベスト {n}", newBest: "★ 新記録！", dailyRecording: "記録中…", dailyRecorded: "デイリー記録 · {n}位", dailyAlready: "本日は記録済み · {n}位", dailySavedLocal: "ローカルに保存しました", earned: "獲得",
                 embersLabel: "残火：", watchAd: "広告 +30", supporterPack: "✦ サポーターパック",
-                revive: "復活", restart: "リスタート", dailyChallenge: "デイリーチャレンジ", home: "ホーム", pickedUp: "入手", soundOff: "ミュート", soundOn: "サウンド",
+                revive: "復活", restart: "リスタート", dailyChallenge: "デイリーチャレンジ", runmod_glasscannon: "ガラスの大砲", runmod_glasscannon_d: "ダメージ増加、最大HP減少", runmod_juggernaut: "ジャガーノート", runmod_juggernaut_d: "最大HP増加、移動速度低下", runmod_bloodpact: "血の契約", runmod_bloodpact_d: "撃破で回復、ただしHPが徐々に減少", runmod_zealot: "狂信者", runmod_zealot_d: "攻撃速度と会心増加、防御低下", runmod_harvest: "収穫", runmod_harvest_d: "収穫増加、ダメージ減少", affix_vigorous: "頑強", affix_armored: "装甲", affix_swift: "迅速", affix_brutal: "残忍", affix_venomous: "猛毒", affix_searing: "灼熱", affix_numbing: "麻痺", home: "ホーム", pickedUp: "入手", soundOff: "ミュート", soundOn: "サウンド",
                 setOf: "セット", noBoons: "恩恵はまだありません — ウェーブをクリアしてレベルアップし選択。",
                 equip: "装備", salvage: "分解", unequip: "外す", noSlot: "あなたの職業に{type}スロットはありません——分解のみ", setWorn: "装備 {n}/4",
                 stat_critMultiplier: "クリダメ", stat_evasion: "回避",
@@ -3545,9 +3574,9 @@
                 stat_maxHealth: "الصحة", stat_healthRegen: "تجدد", stat_moveSpeed: "سرعة الحركة", stat_attackRange: "المدى",
                 stat_lifesteal: "امتصاص حياة", stat_counter: "ارتداد", stat_goldFind: "حصاد", stat_cdr: "تبريد",
                 stat_armorPen: "اختراق الدرع", stat_cleave: "تشطير", stat_chain: "صواعق إضافية",
-                kills: "القتلى", days: "الأيام", best: "الأفضل {n}", newBest: "★ رقم قياسي جديد!", earned: "مكتسب",
+                kills: "القتلى", days: "الأيام", best: "الأفضل {n}", newBest: "★ رقم قياسي جديد!", dailyRecording: "جارٍ الحفظ…", dailyRecorded: "تم تسجيل اليومي · المرتبة {n}", dailyAlready: "سُجّل اليومي مسبقاً · المرتبة {n}", dailySavedLocal: "حُفظ محلياً", earned: "مكتسب",
                 embersLabel: "الجمر:", watchAd: "إعلان +30", supporterPack: "✦ حزمة الداعم",
-                revive: "إحياء", restart: "إعادة", dailyChallenge: "تحدٍ يومي", home: "الرئيسية", pickedUp: "التُقط", soundOff: "كتم", soundOn: "صوت",
+                revive: "إحياء", restart: "إعادة", dailyChallenge: "تحدٍ يومي", runmod_glasscannon: "مدفع زجاجي", runmod_glasscannon_d: "ضرر أكبر، صحة قصوى أقل", runmod_juggernaut: "العملاق", runmod_juggernaut_d: "صحة قصوى أكبر، أبطأ", runmod_bloodpact: "ميثاق الدم", runmod_bloodpact_d: "شفاء عند القتل، لكن الصحة تتناقص", runmod_zealot: "متعصّب", runmod_zealot_d: "سرعة هجوم وحرج أكبر، درع أقل", runmod_harvest: "حصاد", runmod_harvest_d: "حصاد أكبر، ضرر أقل", affix_vigorous: "قوي", affix_armored: "مدرّع", affix_swift: "سريع", affix_brutal: "وحشي", affix_venomous: "سام", affix_searing: "حارق", affix_numbing: "مخدّر", home: "الرئيسية", pickedUp: "التُقط", soundOff: "كتم", soundOn: "صوت",
                 setOf: "طقم", noBoons: "لا منح بعد — اجتَز الموجات للارتقاء واختر واحدة.",
                 equip: "تجهيز", salvage: "تفكيك", unequip: "نزع", noSlot: "لا توجد خانة {type} لفئتك — التفكيك فقط", setWorn: "{n}/4 مُرتداة",
                 stat_critMultiplier: "ضرر حرج", stat_evasion: "مراوغة",
@@ -4058,12 +4087,13 @@
         const dailyBoard = {
             submit: (e, date) => {
                 const meta = JSON.stringify({ w: e.wave, d: e.days, cls: e.cls, n: e.name || "", date: date | 0 });   // challenge date as metadata
+                const parse = r => (r && r.ok) ? r.json().catch(() => null) : null;   // → {accepted, rank, score, ...} | null
                 // Preferred: route through the proxy (token server-side), which targets the daily board.
                 if (lbProxyReady()) {
                     return fetch(LB.proxy, {
                         method: "POST", headers: { "content-type": "application/json" },
                         body: JSON.stringify({ board: "daily", boardKey: DAILY_BOARD, member_id: Telemetry.distinctId(), score: e.score, metadata: meta })
-                    }).then(r => r.ok).catch(() => false);
+                    }).then(parse).catch(() => null);
                 }
                 // Client-side write fallback (mirrors LB.devSecret on the main board).
                 if (LB.dailyDevSecret) {
@@ -4071,9 +4101,9 @@
                         method: "POST",
                         headers: { "content-type": "application/json", "x-session-token": LB.dailyDevSecret },
                         body: JSON.stringify({ member_id: Telemetry.distinctId(), score: e.score, metadata: meta })
-                    }).then(r => r.ok).catch(() => false);
+                    }).then(parse).catch(() => null);
                 }
-                return Promise.resolve(false);
+                return Promise.resolve(null);
             },
             top: (n, date) => fetch(`${LB.base}/leaderboards/${DAILY_BOARD}/list?count=${Math.max(n | 0, 100)}`)   // read is client-safe (board key only)
                 .then(r => r.ok ? r.json() : null)
@@ -4128,6 +4158,7 @@
             if (m.per === "kill") return actor.killCount || 0;
             if (m.per === "second") return Math.floor(actor.combatTime || 0);
             if (m.per === "enemyNearby") return (ctx && ctx.nearbyEnemies) || 0;
+            if (m.per === "relic") return (typeof G !== "undefined" && G && G.runMods) ? G.runMods.length : 0;   // relic-to-relic synergy
             return null;
         }
         function resolveStat(actor, stat, ctx) {
@@ -4424,7 +4455,6 @@
             { nm: "Rupture", tiers: [8, 12, 20], tags: ["poison"], ds: v => `On hit: if the foe has 5+ poison stacks, rupture them for ${v} true damage per stack.`, build: v => ({ tags: ["poison"], modifiers: [], triggers: [{ on: "onHitDealt", source: "Rupture", effect: { kind: "detonate", dotSource: "Poison", threshold: 5, perStack: v, consume: true } }] }) },
             { nm: "Opportunist", tiers: [8, 14, 24], ds: v => `On hit: if the foe suffers 2+ status effects, deal +${v} true damage.`, build: v => ({ modifiers: [], triggers: [{ on: "onHitDealt", source: "Opportunist", condition: { kind: "targetEffectCount", min: 2 }, effect: { kind: "spawnPayload", of: { mode: "flat", amount: { type: "flat", value: v } } } }] }) },
             { nm: "Wildfire", tags: ["fire"], ds: "Critical strikes spread burn to nearby foes.", src: { tags: ["fire"], modifiers: [], triggers: [{ on: "onCrit", source: "Wildfire", effect: { kind: "applyAoE", radius: 80, template: BURN } }] } },
-            { nm: "Annihilation", ds: "Your basic attacks ignore all armor.", src: { convert: { damageType: "true" }, modifiers: [], triggers: [] } },
             // binary perk — no tiers
             { nm: "Hurricane", ds: "+1 lightning bolt at another foe (scales with power; no on-hit effects).", src: { modifiers: [{ stat: "chain", op: "flat", value: 1, source: "Hurricane" }], triggers: [] } },
         ];
@@ -4453,6 +4483,89 @@
             bomber: { tag: "bomber", color: "#e0902f", r: 14, stats: { maxHealth: 30, attackDamage: 26, moveSpeed: 138, armor: 0, evasion: 0.18 }, xp: 6, gold: [2, 5], bomber: true, blast: 60, loot: { chance: 0.08, count: [1, 1], lvl: [-3, 1], rar: 1 } },
             boss: { tag: "boss", color: "#b03b6e", r: 42, stats: { maxHealth: 820, attackDamage: 30, moveSpeed: 46, armor: 14 }, xp: 140, gold: [60, 95], boss: true, loot: { chance: 1.0, count: [2, 3], lvl: [0, 3], rar: 2 } },
         };
+
+        /* === PHASE 4: ENEMY AFFIXES =================================================
+           "Elite" enemies carry one or more affixes. An affix is just another source
+           ({modifiers, triggers}) folded through the SAME pipeline as perks/items — no
+           parallel system. Modifier affixes only use stats that actually drive enemies
+           (maxHealth, armor, attackDamage, moveSpeed); trigger affixes fire on the
+           enemy's own onHitDealt (dispatch is symmetric) and reuse the DoT templates.
+           Affixes are rolled in a per-spawn sub-stream → deterministic for dailies. */
+        const ENEMY_AFFIXES = [
+            { id: "vigorous", nm: "Vigorous", col: "#e06b6b", minWave: 1, weight: 10, build: () => ({ modifiers: [{ stat: "maxHealth", op: "more", value: 0.9, source: "Vigorous" }], triggers: [] }) },
+            { id: "armored", nm: "Armored", col: "#9aa6b2", minWave: 2, weight: 9, build: () => ({ modifiers: [{ stat: "armor", op: "flat", value: 16, source: "Armored" }], triggers: [] }) },
+            { id: "swift", nm: "Swift", col: "#86d0e0", minWave: 2, weight: 8, build: () => ({ modifiers: [{ stat: "moveSpeed", op: "more", value: 0.5, source: "Swift" }], triggers: [] }) },
+            { id: "brutal", nm: "Brutal", col: "#d05a5a", minWave: 5, weight: 7, build: () => ({ modifiers: [{ stat: "attackDamage", op: "more", value: 0.6, source: "Brutal" }], triggers: [] }) },
+            { id: "venomous", nm: "Venomous", col: "#86e07a", minWave: 3, weight: 6, build: () => ({ tags: ["poison"], modifiers: [], triggers: [{ on: "onHitDealt", source: "Venomous", effect: { kind: "applyEffect", to: "other", template: POISON } }] }) },
+            { id: "searing", nm: "Searing", col: "#ff8a3a", minWave: 3, weight: 6, build: () => ({ tags: ["fire"], modifiers: [], triggers: [{ on: "onHitDealt", source: "Searing", effect: { kind: "applyEffect", to: "other", template: BURN } }] }) },
+            { id: "numbing", nm: "Numbing", col: "#9fd6ff", minWave: 4, weight: 5, build: () => ({ tags: ["frost"], modifiers: [], triggers: [{ on: "onHitDealt", source: "Numbing", effect: { kind: "applyEffect", to: "other", template: chillTpl(0.30) } }] }) },
+        ];
+        function affixChance(wave) { return Math.min(0.42, 0.04 + (wave | 0) * 0.025); }   // ramps with wave, capped
+        function pickEnemyAffix(wave, exclude) {                                            // weighted pick among eligible affixes
+            const pool = ENEMY_AFFIXES.filter(a => wave >= a.minWave && (!exclude || a.id !== exclude));
+            if (!pool.length) return null;
+            let tot = 0; for (const a of pool) tot += a.weight;
+            let r = grng() * tot;
+            for (const a of pool) { r -= a.weight; if (r < 0) return a; }
+            return pool[pool.length - 1];
+        }
+        function applyAffix(e, af) {                                                         // attach affix source + scale reward/visual
+            const src = af.build(); src.id = "affix_" + af.id;
+            e.sources.push(src);
+            (e.affixes || (e.affixes = [])).push(af.id);
+            e.elite = true; e._affixCol = af.col;                                            // ring color = most-recent affix
+            e.xp = Math.round(e.xp * 1.7);                                                   // elites are worth more
+            e.gold = [Math.round(e.gold[0] * 1.7), Math.round(e.gold[1] * 1.7)];
+            e.r = Math.round(e.r * 1.12);                                                    // visibly chunkier
+        }
+
+        /* === PHASE 4: RUN MODIFIERS =================================================
+           Run-level mutators applied to the hero as ordinary sources (so they stack and
+           fold through rebuild()/resolveStat exactly like perks). G.runMods is an array,
+           ready to stack; v1 assigns one at run start (deterministic on dailies). Use
+           grantRunMod(id) as the extension point for future acquisition (elite drops,
+           day choices). Each mod trades power for a cost, to stay interesting. */
+        const RUN_MODS = [
+            { id: "glasscannon", nm: "Glass Cannon", ds: "More damage, less max health", build: () => ({ modifiers: [{ stat: "attackDamage", op: "more", value: 0.06, source: "Glass Cannon" }, { stat: "maxHealth", op: "more", value: -0.05, source: "Glass Cannon" }], triggers: [] }) },
+            { id: "juggernaut", nm: "Juggernaut", ds: "More max health, slower", build: () => ({ modifiers: [{ stat: "maxHealth", op: "more", value: 0.07, source: "Juggernaut" }, { stat: "moveSpeed", op: "more", value: -0.03, source: "Juggernaut" }], triggers: [] }) },
+            { id: "bloodpact", nm: "Blood Pact", ds: "Heal on kill, but health slowly drains", build: () => ({ modifiers: [{ stat: "healthRegen", op: "flat", value: -0.3, source: "Blood Pact" }], triggers: [{ on: "onKill", source: "Blood Pact", effect: { kind: "heal", amount: { type: "statPct", stat: "maxHealth", pct: 0.012, of: "self" } } }] }) },
+            { id: "zealot", nm: "Zealot", ds: "More attack speed & crit, less armor", build: () => ({ modifiers: [{ stat: "attackSpeed", op: "more", value: 0.05, source: "Zealot" }, { stat: "critChance", op: "flat", value: 0.03, source: "Zealot" }, { stat: "armor", op: "more", value: -0.04, source: "Zealot" }], triggers: [] }) },
+            { id: "harvest", nm: "Harvest", ds: "More harvest, less damage", build: () => ({ modifiers: [{ stat: "goldFind", op: "increased", value: 0.12, source: "Harvest" }, { stat: "attackDamage", op: "more", value: -0.025, source: "Harvest" }], triggers: [] }) },
+            // --- interacting relics: reference your health, breakpoints, phase, tags, or each other ---
+            { id: "laststand", nm: "Last Stand", ds: "More damage while badly wounded", build: () => ({ modifiers: [{ stat: "attackDamage", op: "more", value: 0.15, condition: { kind: "selfHealthBelow", pct: 0.35 }, source: "Last Stand" }], triggers: [] }) },
+            { id: "adrenaline", nm: "Adrenaline", ds: "Faster while badly wounded", build: () => ({ modifiers: [{ stat: "moveSpeed", op: "more", value: 0.12, condition: { kind: "selfHealthBelow", pct: 0.5 }, source: "Adrenaline" }], triggers: [] }) },
+            { id: "fortress", nm: "Fortress", ds: "More max health while heavily armored", build: () => ({ modifiers: [{ stat: "maxHealth", op: "more", value: 0.12, condition: { kind: "selfStatAtLeast", stat: "armor", value: 40 }, source: "Fortress" }], triggers: [] }) },
+            { id: "resonance", nm: "Resonance", ds: "More damage for each relic you hold", build: () => ({ modifiers: [{ stat: "attackDamage", op: "increased", value: 0.025, per: "relic", source: "Resonance" }], triggers: [] }) },
+            { id: "bulwarkstone", nm: "Bulwark Stone", ds: "Armor for each relic you hold", build: () => ({ modifiers: [{ stat: "armor", op: "flat", value: 3, per: "relic", source: "Bulwark Stone" }], triggers: [] }) },
+            { id: "bloodthirst", nm: "Bloodthirst", ds: "Damage grows with each kill this run", build: () => ({ modifiers: [{ stat: "attackDamage", op: "flat", value: 0.3, per: "kill", source: "Bloodthirst" }], triggers: [] }) },
+            { id: "embercall", nm: "Embercall", ds: "More damage per fire source you own", build: () => ({ tags: ["fire"], modifiers: [{ stat: "attackDamage", op: "increased", value: 0.03, perTag: "fire", source: "Embercall" }], triggers: [] }) },
+            { id: "nightblade", nm: "Nightblade", ds: "More damage at night", build: () => ({ modifiers: [{ stat: "attackDamage", op: "more", value: 0.10, condition: { kind: "phase", phase: "night" }, source: "Nightblade" }], triggers: [] }) },
+        ];
+        function runModById(id) { return RUN_MODS.find(m => m.id === id) || null; }
+        function grantRunMod(id) {                                  // stack a run modifier onto the hero (extension point for future acquisition)
+            if (typeof G === "undefined" || !G) return false;
+            const m = runModById(id); if (!m) return false;
+            const src = m.build(); src.id = "runmod_" + m.id; src.nm = m.nm; src.ds = m.ds;
+            (G.runMods || (G.runMods = [])).push(src);
+            rebuild(G.hero);
+            G.hero.currentHealth = Math.min(G.hero.currentHealth, resolveStat(G.hero, "maxHealth", ctx));   // clamp if max dropped (mid-run safe)
+            return true;
+        }
+        function rollStartRunMod() {                                // one modifier per run; deterministic on dailies (adds daily variety)
+            if (typeof G === "undefined" || !G) return;
+            G.runMods = [];
+            const pick = () => RUN_MODS[Math.floor(grng() * RUN_MODS.length)];
+            const mod = G.isDaily ? withSeed(subSeed("runmod", 0), pick) : pick();
+            if (mod) { grantRunMod(mod.id); G.hero.currentHealth = resolveStat(G.hero, "maxHealth", ctx); }   // start at full under the new max
+        }
+        const RELIC_DROP_CHANCE = 0.14;                             // chance an elite drops a relic (run modifier)
+        function rollEliteRelic(e) {                                // deterministic per spawn ordinal (daily-safe), independent of loot stream
+            let out = null;
+            withSeed(subSeed("relic", e.spawnIdx || 0), () => {
+                if (grng() < RELIC_DROP_CHANCE) out = RUN_MODS[Math.floor(grng() * RUN_MODS.length)].id;
+            });
+            return out;
+        }
         const ITEM_BASES = [
             // weapon — the offense engine
             { slot: "weapon", nm: "Shortbow", mods: [{ stat: "attackDamage", op: "flat", value: 5 }, { stat: "attackRange", op: "flat", value: 30 }] },
@@ -4544,7 +4657,7 @@
            regardless of when/whether the player triggers it. This is what makes a seeded run's
            content (waves, loot, perk offers) play-order-independent. Combat rolls stay on the
            live stream (skill-based execution, legitimately play-dependent). */
-        const _DOMAIN = { wave: 0x9E37, spawn: 0x85EB, loot: 0xC2B2, perk: 0x27D4 };
+        const _DOMAIN = { wave: 0x9E37, spawn: 0x85EB, loot: 0xC2B2, perk: 0x27D4, affix: 0x165F, runmod: 0x6B79, relic: 0x3C8F };
         function subSeed(domain, index) {
             let h = (_runSeed ^ (_DOMAIN[domain] | 0)) >>> 0;
             h = Math.imul(h ^ (index >>> 0), 0x9E3779B1) >>> 0;
@@ -4775,7 +4888,8 @@
         }
         function rebuild(h) {
             const items = []; for (const s of h.slots) if (h.equipment[s.id]) items.push(h.equipment[s.id]);
-            h.sources = [h.classPassive, fireSource(), ...h.perks, ...items, ...setBonusSources(items)];
+            const runMods = (typeof G !== "undefined" && G && G.runMods) ? G.runMods : [];
+            h.sources = [h.classPassive, fireSource(), ...h.perks, ...items, ...setBonusSources(items), ...runMods];
             // theme census: how many of each tag the hero currently owns (drives perTag modifiers)
             const tc = {}; for (const src of h.sources) for (const tag of (src.tags || [])) tc[tag] = (tc[tag] || 0) + 1;
             h.tagCount = tc;
@@ -4785,7 +4899,8 @@
         /* the source list the hero WOULD have with `item` placed into slot id `slotId` (others unchanged) */
         function sourcesWith(h, slotId, item) {
             const items = []; for (const s of h.slots) { const eq = s.id === slotId ? item : h.equipment[s.id]; if (eq) items.push(eq); }
-            return [h.classPassive, fireSource(), ...h.perks, ...items, ...setBonusSources(items)];
+            const runMods = (typeof G !== "undefined" && G && G.runMods) ? G.runMods : [];
+            return [h.classPassive, fireSource(), ...h.perks, ...items, ...setBonusSources(items), ...runMods];
         }
         /* compact delta string for a single stat */
         function fmtStatDelta(stat, d) {
@@ -4898,6 +5013,13 @@
                 e.baseStats.attackDamage = 0; e._tut = opts.tut;
                 if (opts.tut === 1) e.xp = 24;                     // banked, this clears xpNext (16) → the scripted level-up
                 if (opts.tut === 2) e._tutDrop = true;             // drops the one guaranteed piece of gear
+            } else if (!a.boss) {                            // affixes: not on tutorial foes or bosses (bosses are their own fight)
+                withSeed(subSeed("affix", sidx), () => {     // deterministic per spawn ordinal (daily-safe)
+                    if (grng() < affixChance(G.wave)) {
+                        const af = pickEnemyAffix(G.wave); if (af) applyAffix(e, af);
+                        if (af && G.wave >= 10 && grng() < 0.22) { const af2 = pickEnemyAffix(G.wave, af.id); if (af2) applyAffix(e, af2); }   // rare double-affix late
+                    }
+                });
             }
             e.currentHealth = resolveStat(e, "maxHealth", ctx);
             if (a.boss) { e.castT = 3; G.boss = e; }
@@ -5772,6 +5894,13 @@
             // ground item pickup
             for (const it of G.drops) {
                 const d = Math.hypot(h.x - it.x, h.y - it.y); it.bob += dt * 3; if (d < h.r + 16) {
+                    if (it.relic) {                                  // relic → stack a run modifier onto the hero
+                        const m = runModById(it.relic); grantRunMod(it.relic); it.dead = true;
+                        spawnParticles(it.x, it.y, "#c89bff", 18, { speed: 150, life: 0.6, size: 2.6, grav: -20 });
+                        msgToast((m ? tf("runmod_" + it.relic, m.nm) : "Relic") + " ✦");
+                        SFX.levelUp && SFX.levelUp(); renderBoons();
+                        continue;
+                    }
                     G.satchel.push(it.item); it.dead = true; if (it.item && it.item.id === "item_tut") G._tutLoot = 2; tutBeat("gear");
                     const col = it.item.rarity === "rare" ? "#ffd24a" : it.item.rarity === "magic" ? "#7fb2ff" : "#d8c7a6";
                     spawnParticles(it.x, it.y, col, 14, { speed: 130, life: 0.5, size: 2.5, grav: -20 });
@@ -5988,6 +6117,7 @@
                 G._tutLoot = 1;
             }
             for (const item of rollEnemyLoot(e)) G.drops.push({ x: e.x + cri(-18, 18), y: e.y + cri(-18, 18), bob: crand() * 6, item, dead: false });
+            if (e.elite) { const rid = rollEliteRelic(e); if (rid) G.drops.push({ x: e.x + cri(-12, 12), y: e.y + cri(-12, 12), bob: crand() * 6, relic: rid, dead: false }); }   // elites can drop a run-modifier relic
         }
         function spawnOrb(x, y, type, val, opts) {
             opts = opts || {};
@@ -6235,7 +6365,15 @@
             // debris — flies away from the attacker, more on bigger hits
             spawnDebris(tgt.x, tgt.y, Math.min(12, (crit ? 5 : 3) + Math.round(dealt / 7)), dir);
             const mx = resolveStat(tgt, "maxHealth", ctx) || 1, frac = Math.min(1, dealt / mx);
-            hitstop((crit ? 0.05 : 0.02) + frac * 0.11);                  // weight scales with the bite taken out of the target
+            // Per-hit impact freeze is rate-limited (≤~5/s) and capped, so a high-rate / multi-target
+            // crit storm can't re-arm hitstop faster than it drains and starve the sim — which rendered
+            // as a slow-motion crawl (render runs every frame; only update() is gated by hitStop).
+            // Cinematic freezes (boss death, wave clear, kills) call hitstop() directly and are unaffected.
+            const _hsNow = performance.now() / 1000;
+            if (_hsNow - (G._hitHsLast || 0) >= 0.18) {
+                G._hitHsLast = _hsNow;
+                hitstop(Math.min(0.055, (crit ? 0.05 : 0.02) + frac * 0.11));
+            }
             if (crit) {
                 shake(6); vibrate(15); camZoom(0.045); if (G.hero) camKick(tgt.x - G.hero.x, tgt.y - G.hero.y, 6);
                 G.fx.push({ critFlag: true, x: tgt.x, y: tgt.y - tgt.r - 16, vy: -30, life: 0.65, max: 0.65, t: 0 });
@@ -6481,6 +6619,7 @@
             const bb = document.getElementById("boonsbox"); if (!bb) return;
             const h = G.hero, list = [];
             if (h.classPassive && h.classPassive.nm) list.push({ nm: tn(h.classPassive.nm), ds: desc(h.classPassive.nm, h.classPassive.ds || ""), col: "#ffd9a0" });   // class signature
+            for (const rm of (G.runMods || [])) { const k = rm.id.replace("runmod_", ""); list.push({ nm: tf("runmod_" + k, rm.nm), ds: tf("runmod_" + k + "_d", rm.ds), col: "#c89bff" }); }   // run modifiers (Phase 4), localized
             const fl = G.fireLevel - 1; if (fl > 0) list.push({ nm: tn("Campfire"), ds: "+" + (12 * fl) + " " + t("stat_maxHealth"), col: "#ff9a4a" });                 // the fire itself
             for (const b of (h.boons || [])) list.push({ nm: b.nm, ds: b.ds, rarCls: b.rarCls });                                          // boons picked at level-up (already localized at pick)
             // active set bonuses from worn gear
@@ -6668,6 +6807,14 @@
             // drops on ground
             for (const it of G.drops) {
                 const x = sx(it.x), y = sy(it.y) + Math.sin(it.bob) * 2;
+                if (it.relic) {                                       // relic — purple gem, distinct from gear diamonds
+                    g.save(); g.shadowBlur = 18; g.shadowColor = "#c89bff"; g.fillStyle = "#c89bff";
+                    g.beginPath();
+                    for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3 - Math.PI / 2, px = x + Math.cos(a) * 10, py = y + Math.sin(a) * 10; k ? g.lineTo(px, py) : g.moveTo(px, py); }
+                    g.closePath(); g.fill();
+                    g.fillStyle = "rgba(255,255,255,.9)"; g.beginPath(); g.arc(x, y - 1, 3, 0, 7); g.fill(); g.restore();
+                    continue;
+                }
                 const col = it.item.rarity === "rare" ? "#ffd24a" : it.item.rarity === "magic" ? "#7fb2ff" : "#d8c7a6";
                 g.save(); g.shadowBlur = 16; g.shadowColor = col; g.fillStyle = col;
                 g.beginPath(); g.moveTo(x, y - 11); g.lineTo(x + 9, y); g.lineTo(x, y + 11); g.lineTo(x - 9, y); g.closePath(); g.fill(); g.restore();
@@ -6786,6 +6933,17 @@
                     }
                 }
                 if (e.boss) { g.strokeStyle = "rgba(255,200,220,.6)"; g.lineWidth = 2; g.beginPath(); g.arc(x, y, e.r + 3, 0, 7); g.stroke(); }
+                if (e.elite) {                                       // affixed "elite" — ring in the affix color + faint pulse
+                    const pr = e.r + 4 + Math.sin(performance.now() / 260) * 1.2;
+                    g.strokeStyle = e._affixCol || "#ffd36b"; g.lineWidth = 2.2; g.globalAlpha = 0.9;
+                    g.beginPath(); g.arc(x, y, pr, 0, 7); g.stroke(); g.globalAlpha = 1;
+                    if (e.affixes && e.affixes.length) {             // localized affix name(s) above the body
+                        const label = e.affixes.map(id => tf("affix_" + id, (ENEMY_AFFIXES.find(a => a.id === id) || {}).nm || id)).join(" ");
+                        g.save(); g.font = "600 10px system-ui, sans-serif"; g.textAlign = "center"; g.textBaseline = "bottom";
+                        g.fillStyle = e._affixCol || "#ffd36b"; g.globalAlpha = 0.92;
+                        g.fillText(label, x, y - e.r - 7); g.restore();
+                    }
+                }
                 if (e.ranged) { g.fillStyle = "rgba(255,255,255,.7)"; g.beginPath(); g.arc(x, y, 3, 0, 7); g.fill(); }
                 const burning = e.activeEffects.some(ae => ae.key.indexOf("burn") === 0);
                 const poisoned = e.activeEffects.some(ae => ae.key.indexOf("poison") === 0);
@@ -7551,6 +7709,7 @@
         function showStartPane(which) {           // start screen: landing menu ↔ choose-watcher ↔ how-to-play ↔ welcome
             const menu = document.getElementById("startmenu");
             if (menu) menu.style.display = which === "menu" ? "" : "none";
+            if (which === "menu") refreshDailyBtn();              // show ✓ when today's daily is already spent
             const cp = document.getElementById("choosepane"); if (cp) cp.classList.toggle("on", which === "choose");
             const st = document.getElementById("start"); if (st) st.classList.toggle("picking", which === "choose");   // hide the logo header during hero select
             if (which === "choose") renderHeroPick();
@@ -7595,10 +7754,21 @@
         }
         function cyclePick(dir) { pickIdx = (pickIdx + dir + PICK_ORDER.length) % PICK_ORDER.length; renderHeroPick(); SFX.cast && SFX.cast(); }
         function beginPick() { startGame(PICK_ORDER[pickIdx]); }
+        function dailyAttemptKey(seed) { return "ew.dailyDone." + (seed >>> 0); }
+        function dailyAttempted(seed) { return !!Store.get(dailyAttemptKey(seed), 0); }   // local UX guard; the server is the real first-only authority
         function startDaily() {                                    // today's shared challenge: seed + class fixed by the date
             const seed = dailySeed();
+            if (dailyAttempted(seed)) {                            // already played today → show the board instead of replaying
+                openLeaderboard(); lbTab("daily");
+                return;
+            }
+            Store.set(dailyAttemptKey(seed), 1);                   // mark spent at START — quitting/refreshing mid-run still counts as the attempt
             _dailyPending = seed;                                  // startGame consumes this to seed the run
             startGame(PICK_ORDER[seed % PICK_ORDER.length]);       // class fixed by the day's seed (same for everyone)
+        }
+        function refreshDailyBtn() {                               // reflect the spent state on the menu button
+            const b = document.getElementById("dailybtn"); if (!b) return;
+            b.classList.toggle("done", dailyAttempted(dailySeed()));
         }
         addEventListener("keydown", (e) => {                          // arrow keys cycle heroes while choosing
             if (isTyping(e)) return;                                  // same boundary — don't hijack typing
@@ -7621,6 +7791,7 @@
             seedRun(runSeed);
             newGame(classId || "ranger"); running = true; G.paused = false; last = performance.now(); acc = 0;
             G.runSeed = runSeed; G.isDaily = (_dailyPending != null); _dailyPending = null;
+            rollStartRunMod();                                      // assign this run's modifier (deterministic on dailies)
             G._firstBankDone = false; G._runStartMs = performance.now();   // for time-to-first-bank
             tele("run_start", { cls: G.classId, runNo: Telemetry.runCount, sessRun: runsThisSession });
             G.cam.x = G.hero.x - W / 2; G.cam.y = G.hero.y - H / 2;     // snap camera onto the hero (the fire sits just above for the reveal)
@@ -7859,9 +8030,25 @@
             const isBest = score > bestScore; if (isBest) { bestScore = score; Store.set("ew.best", bestScore); }
             if (G.isDaily) { const dk = "ew.daily." + G.runSeed; if (score > Store.get(dk, 0)) Store.set(dk, score); }   // local best for today's seed
             const reviveBtn = document.getElementById("ov-revive"); if (reviveBtn) reviveBtn.style.display = G.isDaily ? "none" : "";   // daily = one life
-            const lbRank = G.isDaily
-                ? (Scores.submitDaily({ score, wave: G.wave, level: G.level, kills: G.kills, days: G.dayNum, cls: G.classId }, G.runSeed), -1)   // daily → daily board only
-                : Scores.submit({ score, wave: G.wave, level: G.level, kills: G.kills, days: G.dayNum, cls: G.classId });
+            const dailyEl = document.getElementById("ov-daily");
+            const runRow = { score, wave: G.wave, level: G.level, kills: G.kills, days: G.dayNum, cls: G.classId };
+            if (G.isDaily) {
+                if (dailyEl) { dailyEl.style.display = ""; dailyEl.textContent = t("dailyRecording"); }
+                Scores.submitDaily(runRow, G.runSeed).then(res => {
+                    if (!dailyEl) return;
+                    if (res && typeof res.accepted === "boolean") {        // server spoke: accepted=true (counted) / false (first attempt stands)
+                        const n = res.rank | 0;
+                        dailyEl.innerHTML = res.accepted
+                            ? `<span class="ok">${t("dailyRecorded", { n })}</span>`
+                            : `<span class="dup">${t("dailyAlready", { n })}</span>`;
+                    } else {
+                        dailyEl.textContent = t("dailySavedLocal");        // offline / no backend reachable
+                    }
+                });
+            } else {
+                if (dailyEl) dailyEl.style.display = "none";
+                Scores.submit(runRow);
+            }
             tele("run_end", {
                 score, wave: G.wave, level: G.level, kills: G.kills, days: G.dayNum,
                 fireLevel: G.fireLevel, cls: G.classId, revives: G.reviveCount || 0,

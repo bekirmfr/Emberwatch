@@ -106,7 +106,7 @@ const loadouts = [
   { name: "tank (EHP)", cls: "knight", perks: [{ nm: "Ironhide" }], items: rolledItems(4, hasStat("armor")) },
   // --- Phase 2 emergent archetypes ---
   { name: "poison detonation (Venom + Rupture)", cls: "ranger", perks: [{ nm: "Venom Coating" }, { nm: "Rupture" }], items: rolledItems(4, hasTag("poison")) },
-  { name: "armor-bypass (Annihilation + AD)", cls: "ranger", perks: [{ nm: "Annihilation" }, { nm: "Sharpened Edge" }], items: rolledItems(4, hasStat("attackDamage")) },
+  { name: "armor-pen (AD + pen gear)", cls: "ranger", perks: [{ nm: "Sharpened Edge" }], items: rolledItems(4, hasStat("armorPen")) },
   { name: "wildfire crit (crit + Wildfire)", cls: "ranger", perks: [{ nm: "Deadeye" }, { nm: "Executioner" }, { nm: "Wildfire" }], items: rolledItems(4, hasStat("critChance")) },
   { name: "opportunist multi-status", cls: "ranger", perks: [{ nm: "Ember Touch" }, { nm: "Venom Coating" }, { nm: "Opportunist" }], items: rolledItems(3) },
 ];
@@ -142,4 +142,46 @@ for (const r of rows) {
 }
 console.log("\n" + (fails ? ("FAIL: " + fails + " loadout(s) exceed " + FAIL_X + "x median DPS") :
   (warns ? ("OK with " + warns + " warning(s) (>= " + WARN_X + "x median)") : "OK: no outliers beyond " + WARN_X + "x median")));
-process.exit(fails ? 1 : 0);
+
+/* ---- PHASE 4: elite-affix balance audit ----------------------------------
+   Affixes are stat sources; an "elite" must be a fair bump, not a wall. For each
+   enemy type × each affix we resolve the elite's effective HP (maxHealth folded
+   through armor mitigation) and attackDamage, and compare to the vanilla of the
+   same type. Bands catch a future affix that inflates an enemy absurdly. On-hit
+   affixes carry no stat modifiers (they apply DoTs to the hero) → ratio 1.0. */
+const EHP_WARN = 3.0, EHP_FAIL = 4.5, DMG_WARN = 1.8, DMG_FAIL = 2.2;
+function enemyEffHp(e) {
+  const hp = api.resolveStat(e, "maxHealth", ctx);
+  const armor = Math.max(0, api.resolveStat(e, "armor", ctx));
+  const eva = Math.min(0.95, Math.max(0, api.resolveStat(e, "evasion", ctx)));
+  return hp / ((1 - armor / (armor + 100)) * (1 - eva));
+}
+function mkEnemy(type, affix) {
+  const a = api.ENEMIES[type];
+  const e = { tag: a.tag, baseStats: api.mkStats(Object.assign({}, a.stats, { critMultiplier: 1.5 })), sources: [{ id: "arch", modifiers: [], triggers: [] }], activeEffects: [] };
+  if (affix) { const src = affix.build(); src.id = "affix_" + affix.id; e.sources.push(src); }
+  return e;
+}
+console.log("\n=== elite-affix audit (effective-HP / damage vs vanilla) ===");
+console.log(pad("enemy + affix", 30) + pad("effHP x", 12) + pad("dmg x", 10) + "flags");
+let eliteFails = 0, eliteWarns = 0;
+const TYPES = Object.keys(api.ENEMIES).filter(t => t !== "boss");
+for (const type of TYPES) {
+  const vh = enemyEffHp(mkEnemy(type)), vd = api.resolveStat(mkEnemy(type), "attackDamage", ctx);
+  for (const af of api.ENEMY_AFFIXES) {
+    const e = mkEnemy(type, af);
+    const eh = enemyEffHp(e) / (vh || 1), ed = api.resolveStat(e, "attackDamage", ctx) / (vd || 1);
+    const stat = (af.build().modifiers.length === 0);
+    let flag = "";
+    if (eh >= EHP_FAIL) { flag = "*** effHP FAIL"; eliteFails++; }
+    else if (eh >= EHP_WARN) { flag = "!! effHP high"; eliteWarns++; }
+    if (ed >= DMG_FAIL) { flag += (flag ? " | " : "") + "*** dmg FAIL"; eliteFails++; }
+    else if (ed >= DMG_WARN) { flag += (flag ? " | " : "") + "!! dmg high"; eliteWarns++; }
+    if (stat && eh < 1.01 && ed < 1.01) flag = flag || "(on-hit DoT, no stat inflation)";
+    console.log(pad(type + " + " + af.id, 30) + pad("x" + eh.toFixed(2), 12) + pad("x" + ed.toFixed(2), 10) + flag);
+  }
+}
+console.log("\n" + (eliteFails ? ("ELITE FAIL: " + eliteFails + " affix combo(s) out of band")
+  : (eliteWarns ? ("elite OK with " + eliteWarns + " warning(s)") : "elite OK: all affixes within fair band")));
+
+process.exit((fails || eliteFails) ? 1 : 0);
