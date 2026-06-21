@@ -955,13 +955,20 @@
         .lb-tab { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 8px; padding: 5px 12px; cursor: pointer; font: inherit; font-size: 13px }
         .lb-tab.on { color: var(--cream); border-color: var(--ember-hi) }
         .lb-list { margin-top: 12px; display: flex; flex-direction: column; gap: 6px }
-        .lb-row { display: grid; grid-template-columns: 28px 1fr auto auto; align-items: center; gap: 10px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; background: rgba(255,255,255,.02) }
+        .lb-row { display: grid; grid-template-columns: 28px 1fr auto auto auto; align-items: center; gap: 10px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; background: rgba(255,255,255,.02) }
         .lb-row.me { border-color: var(--ember-hi); background: rgba(255,200,120,.06) }
         .lb-rank { color: var(--muted); font-weight: 700; text-align: center }
+        .lb-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: var(--cream) }
         .lb-score { color: var(--ember-hi); font-weight: 700 }
         .lb-cls { font-size: 13px }
         .lb-meta { color: var(--muted); font-size: 11px; letter-spacing: .04em }
         .lb-empty, .lb-note { color: var(--muted); text-align: center; padding: 16px 0; font-size: 13px }
+        .lb-namerow { margin-top: 10px }
+        /* editable name field (welcome pane + leaderboard) */
+        .namelabel { display: block; color: var(--muted); font-size: 12px; letter-spacing: .04em; margin: 10px 0 5px; text-align: center }
+        .namefield { display: block; width: 100%; max-width: 260px; margin: 0 auto; box-sizing: border-box; background: rgba(255,255,255,.03); border: 1px solid var(--line); color: var(--cream); border-radius: 9px; padding: 9px 12px; font: inherit; font-size: 14px; text-align: center }
+        .namefield:focus { outline: none; border-color: var(--ember-hi) }
+        .welcomesub { color: var(--muted); font-size: 13px; text-align: center; margin: 6px auto 4px; max-width: 320px; line-height: 1.5 }
         /* --- Supporter Pack modal --- */
         .supmodal {
             max-width: 430px
@@ -2636,6 +2643,14 @@
                     <button class="btn primary" id="pickbegin" onclick="beginPick()" data-i18n="begin">Begin</button>
                     <div class="paneback"><button class="btn" onclick="showStartPane('menu')" data-i18n="back">← Back</button></div>
                 </div>
+
+                <div class="startpane" id="welcomepane">
+                    <div class="choose" data-i18n="welcomeTitle">Welcome, watcher</div>
+                    <div class="welcomesub" data-i18n="welcomeSub">This is the name you'll carry on the boards. Keep it, or make it your own.</div>
+                    <label class="namelabel" for="welcome-name" data-i18n="nameLabel">Your name</label>
+                    <input class="namefield" id="welcome-name" type="text" maxlength="16" autocomplete="off" spellcheck="false" />
+                    <div style="margin-top:14px"><button class="btn primary" onclick="finishWelcome()" data-i18n="welcomeBegin">Enter the watch</button></div>
+                </div>
             </div>
         </div>
 
@@ -2708,6 +2723,10 @@
     <div class="overlay" id="leaderboard">
         <div class="modal">
             <div class="title" data-i18n="lbTitle">Hall of Embers</div>
+            <div class="lb-namerow">
+                <label class="namelabel" for="lb-name" data-i18n="nameLabel">Your name</label>
+                <input class="namefield" id="lb-name" type="text" maxlength="16" autocomplete="off" spellcheck="false" onchange="setName(this.value); this.value = playerName();" />
+            </div>
             <div class="lb-tabs" id="lb-tabs">
                 <button class="lb-tab on" data-scope="local" onclick="lbTab('local')" data-i18n="lbLocal">Your runs</button>
                 <button class="lb-tab" data-scope="global" onclick="lbTab('global')" data-i18n="lbGlobal" style="display:none">Global</button>
@@ -2771,7 +2790,8 @@
             function submit(run) {                                   // {score,wave,level,kills,days,cls}
                 const entry = {
                     score: run.score | 0, wave: run.wave | 0, level: run.level | 0,
-                    kills: run.kills | 0, days: run.days | 0, cls: run.cls || "", ts: Date.now()
+                    kills: run.kills | 0, days: run.days | 0, cls: run.cls || "",
+                    name: (typeof playerName === "function" ? playerName() : ""), ts: Date.now()
                 };
                 const board = list().concat(entry).sort((a, b) => b.score - a.score).slice(0, CAP);
                 Store.set(KEY, board);                               // (1) local ALWAYS written first
@@ -2824,6 +2844,10 @@
                 lbLocal: "Your runs", lbGlobal: "Global",
                 lbEmpty: "No runs yet — feed the fire.", lbMeta: "Wave {w} · Day {d}",
                 lbFallback: "Showing your runs — global board unavailable.",
+                // player name + welcome
+                autoNameWord: "Watcher", lbAnon: "Anonymous", nameLabel: "Your name",
+                welcomeTitle: "Welcome, watcher", welcomeBegin: "Enter the watch",
+                welcomeSub: "This is the name you'll carry on the boards. Keep it, or make it your own.",
                 // inventory / level-up / menu copy
                 selectGear: "Select a piece of gear to inspect it.", boons: "Boons & Effects",
                 levelUp: "Level Up!", chooseBoon: "Choose one boon. It lasts the rest of the run.", newAbility: "✦ New ability —", paused: "Paused", resume: "Resume",
@@ -2895,6 +2919,15 @@
                 chooseWatcher: "Gözcünü seç", begin: "Başla",
                 prevHero: "Önceki kahraman", nextHero: "Sonraki kahraman",
                 gameOver: "Ateş söndü", waves: "Dalga",
+                // leaderboard
+                lbTitle: "Korlar Salonu", rankings: "Sıralama",
+                lbLocal: "Turların", lbGlobal: "Küresel",
+                lbEmpty: "Henüz tur yok — ateşi besle.", lbMeta: "Dalga {w} · Gün {d}",
+                lbFallback: "Turların gösteriliyor — küresel tablo kullanılamıyor.",
+                // player name + welcome
+                autoNameWord: "Gözcü", lbAnon: "Anonim", nameLabel: "Adın",
+                welcomeTitle: "Hoş geldin, gözcü", welcomeBegin: "Nöbete başla",
+                welcomeSub: "Bu, sıralamalarda taşıyacağın isim. İster böyle bırak, ister kendine göre değiştir.",
                 selectGear: "İncelemek için bir teçhizat seç.", boons: "Lütuflar ve Etkiler",
                 levelUp: "Seviye Atladın!", chooseBoon: "Bir lütuf seç. Turun geri kalanında kalır.", newAbility: "✦ Yeni yetenek —", paused: "Duraklatıldı", resume: "Devam et",
                 tagline: "Ateşi besle \u00b7 karanlığa karşı koy",
@@ -2943,6 +2976,15 @@
                 chooseWatcher: "选择你的守望者", begin: "开始",
                 prevHero: "上一个英雄", nextHero: "下一个英雄",
                 gameOver: "火焰熄灭了", waves: "波次",
+                // leaderboard
+                lbTitle: "余烬之厅", rankings: "排行榜",
+                lbLocal: "你的战绩", lbGlobal: "全球",
+                lbEmpty: "还没有战绩——去添柴续火吧。", lbMeta: "第 {w} 波 · 第 {d} 天",
+                lbFallback: "正在显示你的战绩——全球榜暂不可用。",
+                // player name + welcome
+                autoNameWord: "守望者", lbAnon: "匿名", nameLabel: "你的名字",
+                welcomeTitle: "欢迎你，守望者", welcomeBegin: "开始守望",
+                welcomeSub: "这是你将在排行榜上使用的名字。可以保留，也可以改成你喜欢的。",
                 selectGear: "选择一件装备以查看详情。", boons: "增益与效果",
                 levelUp: "升级！", chooseBoon: "选择一项增益，将持续整局游戏。", newAbility: "✦ 新技能 —", paused: "已暂停", resume: "继续",
                 tagline: "添柴续火 \u00b7 抵御黑暗",
@@ -3010,6 +3052,15 @@
                 campfire: "La hoguera", howToPlay: "Cómo jugar", play: "Jugar",
                 chooseWatcher: "Elige tu Vigía", begin: "Comenzar", prevHero: "Héroe anterior", nextHero: "Héroe siguiente",
                 gameOver: "El fuego se apagó", waves: "Oleadas",
+                // leaderboard
+                lbTitle: "Salón de las Brasas", rankings: "Clasificación",
+                lbLocal: "Tus partidas", lbGlobal: "Global",
+                lbEmpty: "Aún no hay partidas — alimenta el fuego.", lbMeta: "Oleada {w} · Día {d}",
+                lbFallback: "Mostrando tus partidas — clasificación global no disponible.",
+                // player name + welcome
+                autoNameWord: "Vigía", lbAnon: "Anónimo", nameLabel: "Tu nombre",
+                welcomeTitle: "Bienvenido, vigía", welcomeBegin: "Comienza la vigilia",
+                welcomeSub: "Este es el nombre que llevarás en las clasificaciones. Consérvalo o hazlo tuyo.",
                 selectGear: "Selecciona una pieza de equipo para inspeccionarla.", boons: "Bendiciones y efectos",
                 levelUp: "¡Subes de nivel!", chooseBoon: "Elige una bendición. Dura el resto de la partida.", newAbility: "✦ Nueva habilidad —", paused: "Pausado", resume: "Reanudar",
                 tagline: "Alimenta el fuego \u00b7 resiste la oscuridad",
@@ -3065,6 +3116,15 @@
                 campfire: "Le feu de camp", howToPlay: "Comment jouer", play: "Jouer",
                 chooseWatcher: "Choisis ton Veilleur", begin: "Commencer", prevHero: "Héros précédent", nextHero: "Héros suivant",
                 gameOver: "Le feu s'est éteint", waves: "Vagues",
+                // leaderboard
+                lbTitle: "Hall des Braises", rankings: "Classement",
+                lbLocal: "Tes parties", lbGlobal: "Mondial",
+                lbEmpty: "Aucune partie — nourris le feu.", lbMeta: "Vague {w} · Jour {d}",
+                lbFallback: "Affichage de tes parties — classement mondial indisponible.",
+                // player name + welcome
+                autoNameWord: "Veilleur", lbAnon: "Anonyme", nameLabel: "Ton nom",
+                welcomeTitle: "Bienvenue, veilleur", welcomeBegin: "Commence la veille",
+                welcomeSub: "C'est le nom que tu porteras dans les classements. Garde-le, ou personnalise-le.",
                 selectGear: "Sélectionne un équipement pour l'inspecter.", boons: "Faveurs et effets",
                 levelUp: "Niveau supérieur !", chooseBoon: "Choisis une faveur. Elle dure jusqu'à la fin de la partie.", newAbility: "✦ Nouvelle capacité —", paused: "En pause", resume: "Reprendre",
                 tagline: "Nourris le feu \u00b7 repousse les ténèbres",
@@ -3120,6 +3180,15 @@
                 campfire: "Костёр", howToPlay: "Как играть", play: "Играть",
                 chooseWatcher: "Выберите Стража", begin: "Начать", prevHero: "Предыдущий герой", nextHero: "Следующий герой",
                 gameOver: "Огонь погас", waves: "Волны",
+                // leaderboard
+                lbTitle: "Зал Углей", rankings: "Рейтинг",
+                lbLocal: "Ваши попытки", lbGlobal: "Глобальный",
+                lbEmpty: "Пока нет попыток — питайте огонь.", lbMeta: "Волна {w} · День {d}",
+                lbFallback: "Показаны ваши попытки — глобальный рейтинг недоступен.",
+                // player name + welcome
+                autoNameWord: "Страж", lbAnon: "Аноним", nameLabel: "Ваше имя",
+                welcomeTitle: "Добро пожаловать, страж", welcomeBegin: "Заступить на стражу",
+                welcomeSub: "Это имя, под которым вы будете в рейтингах. Оставьте его или измените на своё.",
                 selectGear: "Выберите предмет, чтобы осмотреть его.", boons: "Блага и эффекты",
                 levelUp: "Новый уровень!", chooseBoon: "Выберите одно благо. Оно действует до конца забега.", newAbility: "✦ Новое умение —", paused: "Пауза", resume: "Продолжить",
                 tagline: "Питай огонь \u00b7 сдерживай тьму",
@@ -3175,6 +3244,15 @@
                 campfire: "焚き火", howToPlay: "遊び方", play: "プレイ",
                 chooseWatcher: "見張りを選択", begin: "開始", prevHero: "前のヒーロー", nextHero: "次のヒーロー",
                 gameOver: "火が消えた", waves: "ウェーブ",
+                // leaderboard
+                lbTitle: "残火の殿堂", rankings: "ランキング",
+                lbLocal: "あなたの記録", lbGlobal: "グローバル",
+                lbEmpty: "まだ記録がありません——火に薪をくべよう。", lbMeta: "ウェーブ {w} · {d} 日目",
+                lbFallback: "あなたの記録を表示中——グローバル順位表は利用できません。",
+                // player name + welcome
+                autoNameWord: "守人", lbAnon: "名無し", nameLabel: "あなたの名前",
+                welcomeTitle: "ようこそ、守人よ", welcomeBegin: "守りに就く",
+                welcomeSub: "ランキングで使う名前です。そのままでも、好きに変えても構いません。",
                 selectGear: "装備を選んで詳細を確認。", boons: "恩恵と効果",
                 levelUp: "レベルアップ！", chooseBoon: "恩恵を一つ選択。今回の最後まで持続します。", newAbility: "✦ 新スキル —", paused: "一時停止", resume: "再開",
                 tagline: "火を絶やすな \u00b7 闇を退けよ",
@@ -3230,6 +3308,15 @@
                 campfire: "نار المخيّم", howToPlay: "كيفية اللعب", play: "ابدأ اللعب",
                 chooseWatcher: "اختر حارسك", begin: "ابدأ", prevHero: "البطل السابق", nextHero: "البطل التالي",
                 gameOver: "انطفأت النار", waves: "الموجات",
+                // leaderboard
+                lbTitle: "قاعة الجمر", rankings: "التصنيف",
+                lbLocal: "محاولاتك", lbGlobal: "عالمي",
+                lbEmpty: "لا محاولات بعد — غذِّ النار.", lbMeta: "موجة {w} · يوم {d}",
+                lbFallback: "عرض محاولاتك — لوحة الصدارة العالمية غير متاحة.",
+                // player name + welcome
+                autoNameWord: "حارس", lbAnon: "مجهول", nameLabel: "اسمك",
+                welcomeTitle: "أهلاً بك أيها الحارس", welcomeBegin: "ابدأ الحراسة",
+                welcomeSub: "هذا هو الاسم الذي ستحمله في لوحات الصدارة. أبقِه أو اجعله خاصًا بك.",
                 selectGear: "اختر قطعة عتاد لمعاينتها.", boons: "المنح والتأثيرات",
                 levelUp: "ارتقاء المستوى!", chooseBoon: "اختر منحة واحدة. تدوم حتى نهاية الجولة.", newAbility: "✦ مهارة جديدة —", paused: "متوقّف مؤقتاً", resume: "استئناف",
                 tagline: "أطعم النار \u00b7 واصمد في الظلام",
@@ -3476,6 +3563,31 @@
                 document.querySelectorAll("[data-i18n-aria]").forEach(el => { el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria"))); });
             } catch (e) { }                                           // never let copy-filling break boot
         }
+        /* === PLAYER NAME ==========================================================
+           A cosmetic leaderboard handle. Identity/dedupe stays the anonymous member_id
+           (Telemetry.distinctId) — the name is display-only. esc() guards the render
+           path (own input AND attacker-controlled names from the shared global board);
+           sanitizeName() guards storage/submit. First launch = no stored ew.name, so we
+           mint a localized "{word}#NNNN" and persist it immediately (no separate flag).
+           Collisions are fine: rank/me run off member_id, never the name. =========== */
+        function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+        function sanitizeName(s) { return String(s == null ? "" : s).replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, 16); }
+        function genName() { return t("autoNameWord") + "#" + String(Math.floor(Math.random() * 10000)).padStart(4, "0"); }
+        const FIRST_LAUNCH = (() => { try { return Store.get("ew.name", null) == null; } catch (e) { return false; } })();
+        let _playerName = (() => {
+            let n = null; try { n = Store.get("ew.name", null); } catch (e) { }
+            if (n == null) { n = genName(); try { Store.set("ew.name", n); } catch (e) { } }
+            return sanitizeName(n) || genName();
+        })();
+        function playerName() { return _playerName; }
+        function setName(v) {
+            _playerName = sanitizeName(v) || genName();
+            try { Store.set("ew.name", _playerName); } catch (e) { }
+            const lb = document.getElementById("leaderboard");
+            if (lb && lb.classList.contains("on") && typeof renderLeaderboard === "function") renderLeaderboard();
+            return _playerName;
+        }
+        function finishWelcome() { const el = document.getElementById("welcome-name"); if (el) setName(el.value); showStartPane("menu"); }
         function renderLangPicker() { const cur = document.getElementById("langcur"); if (cur) cur.textContent = LANG_NAMES[LANG] || LANG; renderLangGrid(); }
         function renderLangGrid() {
             const grid = document.getElementById("langgrid"); if (!grid) return;
@@ -3492,12 +3604,13 @@
         let _lbScope = "local";
         function lbRow(r, i) {
             const c = (CLASSES[r.cls] && CLASSES[r.cls].color) || "var(--cream)";
-            const name = CLASSES[r.cls] ? tf("cls_" + r.cls, CLASSES[r.cls].name) : "—";
+            const cls = CLASSES[r.cls] ? tf("cls_" + r.cls, CLASSES[r.cls].name) : "—";
             const rank = (r.rank != null ? r.rank : i + 1);
             return `<div class="lb-row${r.me ? ' me' : ''}">`
                 + `<span class="lb-rank">${rank}</span>`
+                + `<span class="lb-name">${r.name ? esc(r.name) : t("lbAnon")}</span>`
                 + `<span class="lb-score">${(r.score || 0).toLocaleString()}</span>`
-                + `<span class="lb-cls" style="color:${c}">${name}</span>`
+                + `<span class="lb-cls" style="color:${c}">${cls}</span>`
                 + `<span class="lb-meta">${t("lbMeta", { w: r.wave | 0, d: r.days | 0 })}</span>`
                 + `</div>`;
         }
@@ -3525,6 +3638,7 @@
         function openLeaderboard() {
             const gt = document.querySelector('#lb-tabs .lb-tab[data-scope="global"]');
             if (gt) gt.style.display = Scores.hasRemote() ? "" : "none";   // Global tab appears only when a provider exists
+            const ln = document.getElementById("lb-name"); if (ln) ln.value = playerName();
             lbTab("local");
             show("leaderboard");
         }
@@ -3660,7 +3774,7 @@
                 const payload = {
                     member_id: Telemetry.distinctId(),                  // reuse the existing anonymous, no-PII device id
                     score: e.score,
-                    metadata: JSON.stringify({ w: e.wave, d: e.days, cls: e.cls })   // corroborating fields for validation
+                    metadata: JSON.stringify({ w: e.wave, d: e.days, cls: e.cls, n: e.name || "" })   // corroborating fields for validation
                 };
                 // Secure path (preferred): route through your server proxy; the secret stays server-side.
                 if (lbProxyReady()) {
@@ -3684,7 +3798,7 @@
                 .then(r => r.ok ? r.json() : null)
                 .then(d => (d && Array.isArray(d.items)) ? d.items.map(it => {
                     let m = {}; try { m = JSON.parse(it.metadata || "{}"); } catch (e) { }
-                    return { score: it.score | 0, wave: m.w | 0, days: m.d | 0, cls: m.cls || "",
+                    return { score: it.score | 0, wave: m.w | 0, days: m.d | 0, cls: m.cls || "", name: sanitizeName(m.n),
                              rank: it.rank, me: it.member_id === Telemetry.distinctId() };
                 }) : null)
             // NOTE: per-item field names (it.score/member_id/rank/metadata) are assumed —
@@ -7011,13 +7125,15 @@
 
         function show(id) { hideToast(); document.getElementById(id).classList.add("on"); }
         function hide(id) { document.getElementById(id).classList.remove("on"); }
-        function showStartPane(which) {           // start screen: landing menu ↔ choose-watcher ↔ how-to-play
+        function showStartPane(which) {           // start screen: landing menu ↔ choose-watcher ↔ how-to-play ↔ welcome
             const menu = document.getElementById("startmenu");
             if (menu) menu.style.display = which === "menu" ? "" : "none";
             const cp = document.getElementById("choosepane"); if (cp) cp.classList.toggle("on", which === "choose");
             const st = document.getElementById("start"); if (st) st.classList.toggle("picking", which === "choose");   // hide the logo header during hero select
             if (which === "choose") renderHeroPick();
             const hp = document.getElementById("howtopane"); if (hp) hp.classList.toggle("on", which === "howto");
+            const wp = document.getElementById("welcomepane"); if (wp) wp.classList.toggle("on", which === "welcome");
+            if (which === "welcome") { const wn = document.getElementById("welcome-name"); if (wn) wn.value = playerName(); }
         }
         function togglePanel(id) {
             if (!running || G.hero.dead) return;
@@ -7456,6 +7572,7 @@
             renderHeroPick();
             updateEmberUI();   // show the saved ember balance on the main menu
             refreshSupporterUI();
+            if (FIRST_LAUNCH) showStartPane("welcome");   // first run → greet with the editable, pre-filled name
             requestAnimationFrame(frame);
         } catch (e) {
             try { console.error("boot error", e); } catch (_) { }
