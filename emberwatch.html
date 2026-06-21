@@ -713,34 +713,6 @@
                 text-align: center
             }
 
-        .langrow {
-            display: flex;
-            justify-content: center;
-            margin-top: 18px
-        }
-
-        .langtoggle {
-            font: inherit;
-            font-size: 12px;
-            letter-spacing: .04em;
-            color: var(--muted);
-            background: transparent;
-            border: 1px solid rgba(255,255,255,.14);
-            padding: 6px 16px;
-            border-radius: 999px;
-            cursor: pointer;
-            transition: .15s
-        }
-
-            .langtoggle:hover {
-                color: #fff;
-                border-color: rgba(255,255,255,.32)
-            }
-
-        .langmodal {
-            max-width: 300px
-        }
-
         .langgrid {
             display: flex;
             flex-direction: column;
@@ -768,6 +740,68 @@
                 color: var(--ember-hi);
                 border-color: var(--ember-hi)
             }
+
+        /* settings gear (top-right of the start screen) + settings panel */
+        .topctl {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            z-index: 5;
+            display: flex;
+            gap: 8px
+        }
+
+        html[dir="rtl"] .topctl {
+            right: auto;
+            left: 16px
+        }
+
+        .gearbtn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            line-height: 1;
+            color: var(--muted);
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.14);
+            border-radius: 999px;
+            cursor: pointer;
+            transition: .2s
+        }
+
+            .gearbtn:hover {
+                color: #fff;
+                border-color: rgba(255,255,255,.32)
+            }
+
+            #settingsbtn:hover {
+                transform: rotate(40deg)
+            }
+
+        .settingsmodal, .langmodal {
+            max-width: 360px
+        }
+
+        .set-sec {
+            margin-top: 16px
+        }
+
+            .set-sec:first-of-type {
+                margin-top: 6px
+            }
+
+        .mutebtn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            width: 100%;
+            max-width: 260px;
+            margin: 0 auto
+        }
 
         html[dir="rtl"] .modal, html[dir="rtl"] .keys {
             text-align: right
@@ -963,8 +997,7 @@
         .lb-cls { font-size: 13px }
         .lb-meta { color: var(--muted); font-size: 11px; letter-spacing: .04em }
         .lb-empty, .lb-note { color: var(--muted); text-align: center; padding: 16px 0; font-size: 13px }
-        .lb-namerow { margin-top: 10px }
-        /* editable name field (welcome pane + leaderboard) */
+        /* editable name field (welcome pane + settings) */
         .namelabel { display: block; color: var(--muted); font-size: 12px; letter-spacing: .04em; margin: 10px 0 5px; text-align: center }
         .namefield { display: block; width: 100%; max-width: 260px; margin: 0 auto; box-sizing: border-box; background: rgba(255,255,255,.03); border: 1px solid var(--line); color: var(--cream); border-radius: 9px; padding: 9px 12px; font: inherit; font-size: 14px; text-align: center }
         .namefield:focus { outline: none; border-color: var(--ember-hi) }
@@ -2294,7 +2327,7 @@
             margin: 18px 0 30px
         }
 
-        #start.picking .titlebox, #start.picking .tag, #start.picking .menuembers, #start.picking .langrow {
+        #start.picking .titlebox, #start.picking .tag, #start.picking .menuembers, #start.picking .topctl {
             display: none
         }
 
@@ -2607,6 +2640,10 @@
         </div>
 
         <div class="overlay on" id="start">
+            <div class="topctl">
+                <button class="gearbtn" id="langbtn" aria-label="Language" data-i18n-aria="languageTitle" onclick="openLang()">🌐</button>
+                <button class="gearbtn" id="settingsbtn" aria-label="Settings" data-i18n-aria="settingsTitle" onclick="openSettings()">⚙</button>
+            </div>
             <div class="modal">
                 <div class="titlebox">
                     <span class="titleshadow" aria-hidden="true">EMBERWATCH</span>
@@ -2620,7 +2657,6 @@
                     <button class="btn primary" onclick="showStartPane('choose')" data-i18n="play">Play</button>
                     <button class="btn" onclick="openLeaderboard()" data-i18n="rankings">Rankings</button>
                 </div>
-                <div class="langrow" id="langrow"><button class="langtoggle" id="langtoggle" onclick="openLang()">🌐 <span id="langcur">English</span></button></div>
 
                 <div class="startpane" id="howtopane">
                     <div class="keys" data-i18n-html="howtoBody">
@@ -2712,6 +2748,21 @@
         </div>
     </div>
 
+    <div class="overlay" id="settingsoverlay">
+        <div class="modal settingsmodal">
+            <h2 data-i18n="settingsTitle">Settings</h2>
+            <div class="set-sec">
+                <label class="namelabel" data-i18n="soundLabel">Sound</label>
+                <button class="btn mutebtn" id="mutebtn" onclick="toggleMuteUI()">🔊 Sound on</button>
+            </div>
+            <div class="set-sec">
+                <label class="namelabel" for="set-name" data-i18n="nameLabel">Your name</label>
+                <input class="namefield" id="set-name" type="text" maxlength="16" autocomplete="off" spellcheck="false" onchange="setName(this.value); this.value = playerName();" />
+            </div>
+            <div style="text-align:center;margin-top:18px"><button class="btn" onclick="closeSettings()" data-i18n="close">Close</button></div>
+        </div>
+    </div>
+
     <div class="overlay" id="langoverlay">
         <div class="modal langmodal">
             <h2 data-i18n="languageTitle">Language</h2>
@@ -2723,10 +2774,6 @@
     <div class="overlay" id="leaderboard">
         <div class="modal">
             <div class="title" data-i18n="lbTitle">Hall of Embers</div>
-            <div class="lb-namerow">
-                <label class="namelabel" for="lb-name" data-i18n="nameLabel">Your name</label>
-                <input class="namefield" id="lb-name" type="text" maxlength="16" autocomplete="off" spellcheck="false" onchange="setName(this.value); this.value = playerName();" />
-            </div>
             <div class="lb-tabs" id="lb-tabs">
                 <button class="lb-tab on" data-scope="local" onclick="lbTab('local')" data-i18n="lbLocal">Your runs</button>
                 <button class="lb-tab" data-scope="global" onclick="lbTab('global')" data-i18n="lbGlobal" style="display:none">Global</button>
@@ -2848,6 +2895,8 @@
                 autoNameWord: "Watcher", lbAnon: "Anonymous", nameLabel: "Your name",
                 welcomeTitle: "Welcome, watcher", welcomeBegin: "Enter the watch",
                 welcomeSub: "This is the name you'll carry on the boards. Keep it, or make it your own.",
+                // settings
+                settingsTitle: "Settings", soundLabel: "Sound",
                 // inventory / level-up / menu copy
                 selectGear: "Select a piece of gear to inspect it.", boons: "Boons & Effects",
                 levelUp: "Level Up!", chooseBoon: "Choose one boon. It lasts the rest of the run.", newAbility: "✦ New ability —", paused: "Paused", resume: "Resume",
@@ -2928,6 +2977,8 @@
                 autoNameWord: "Gözcü", lbAnon: "Anonim", nameLabel: "Adın",
                 welcomeTitle: "Hoş geldin, gözcü", welcomeBegin: "Nöbete başla",
                 welcomeSub: "Bu, sıralamalarda taşıyacağın isim. İster böyle bırak, ister kendine göre değiştir.",
+                // settings
+                settingsTitle: "Ayarlar", soundLabel: "Ses",
                 selectGear: "İncelemek için bir teçhizat seç.", boons: "Lütuflar ve Etkiler",
                 levelUp: "Seviye Atladın!", chooseBoon: "Bir lütuf seç. Turun geri kalanında kalır.", newAbility: "✦ Yeni yetenek —", paused: "Duraklatıldı", resume: "Devam et",
                 tagline: "Ateşi besle \u00b7 karanlığa karşı koy",
@@ -2985,6 +3036,8 @@
                 autoNameWord: "守望者", lbAnon: "匿名", nameLabel: "你的名字",
                 welcomeTitle: "欢迎你，守望者", welcomeBegin: "开始守望",
                 welcomeSub: "这是你将在排行榜上使用的名字。可以保留，也可以改成你喜欢的。",
+                // settings
+                settingsTitle: "设置", soundLabel: "声音",
                 selectGear: "选择一件装备以查看详情。", boons: "增益与效果",
                 levelUp: "升级！", chooseBoon: "选择一项增益，将持续整局游戏。", newAbility: "✦ 新技能 —", paused: "已暂停", resume: "继续",
                 tagline: "添柴续火 \u00b7 抵御黑暗",
@@ -3061,6 +3114,8 @@
                 autoNameWord: "Vigía", lbAnon: "Anónimo", nameLabel: "Tu nombre",
                 welcomeTitle: "Bienvenido, vigía", welcomeBegin: "Comienza la vigilia",
                 welcomeSub: "Este es el nombre que llevarás en las clasificaciones. Consérvalo o hazlo tuyo.",
+                // settings
+                settingsTitle: "Ajustes", soundLabel: "Sonido",
                 selectGear: "Selecciona una pieza de equipo para inspeccionarla.", boons: "Bendiciones y efectos",
                 levelUp: "¡Subes de nivel!", chooseBoon: "Elige una bendición. Dura el resto de la partida.", newAbility: "✦ Nueva habilidad —", paused: "Pausado", resume: "Reanudar",
                 tagline: "Alimenta el fuego \u00b7 resiste la oscuridad",
@@ -3125,6 +3180,8 @@
                 autoNameWord: "Veilleur", lbAnon: "Anonyme", nameLabel: "Ton nom",
                 welcomeTitle: "Bienvenue, veilleur", welcomeBegin: "Commence la veille",
                 welcomeSub: "C'est le nom que tu porteras dans les classements. Garde-le, ou personnalise-le.",
+                // settings
+                settingsTitle: "Paramètres", soundLabel: "Son",
                 selectGear: "Sélectionne un équipement pour l'inspecter.", boons: "Faveurs et effets",
                 levelUp: "Niveau supérieur !", chooseBoon: "Choisis une faveur. Elle dure jusqu'à la fin de la partie.", newAbility: "✦ Nouvelle capacité —", paused: "En pause", resume: "Reprendre",
                 tagline: "Nourris le feu \u00b7 repousse les ténèbres",
@@ -3189,6 +3246,8 @@
                 autoNameWord: "Страж", lbAnon: "Аноним", nameLabel: "Ваше имя",
                 welcomeTitle: "Добро пожаловать, страж", welcomeBegin: "Заступить на стражу",
                 welcomeSub: "Это имя, под которым вы будете в рейтингах. Оставьте его или измените на своё.",
+                // settings
+                settingsTitle: "Настройки", soundLabel: "Звук",
                 selectGear: "Выберите предмет, чтобы осмотреть его.", boons: "Блага и эффекты",
                 levelUp: "Новый уровень!", chooseBoon: "Выберите одно благо. Оно действует до конца забега.", newAbility: "✦ Новое умение —", paused: "Пауза", resume: "Продолжить",
                 tagline: "Питай огонь \u00b7 сдерживай тьму",
@@ -3253,6 +3312,8 @@
                 autoNameWord: "守人", lbAnon: "名無し", nameLabel: "あなたの名前",
                 welcomeTitle: "ようこそ、守人よ", welcomeBegin: "守りに就く",
                 welcomeSub: "ランキングで使う名前です。そのままでも、好きに変えても構いません。",
+                // settings
+                settingsTitle: "設定", soundLabel: "サウンド",
                 selectGear: "装備を選んで詳細を確認。", boons: "恩恵と効果",
                 levelUp: "レベルアップ！", chooseBoon: "恩恵を一つ選択。今回の最後まで持続します。", newAbility: "✦ 新スキル —", paused: "一時停止", resume: "再開",
                 tagline: "火を絶やすな \u00b7 闇を退けよ",
@@ -3317,6 +3378,8 @@
                 autoNameWord: "حارس", lbAnon: "مجهول", nameLabel: "اسمك",
                 welcomeTitle: "أهلاً بك أيها الحارس", welcomeBegin: "ابدأ الحراسة",
                 welcomeSub: "هذا هو الاسم الذي ستحمله في لوحات الصدارة. أبقِه أو اجعله خاصًا بك.",
+                // settings
+                settingsTitle: "الإعدادات", soundLabel: "الصوت",
                 selectGear: "اختر قطعة عتاد لمعاينتها.", boons: "المنح والتأثيرات",
                 levelUp: "ارتقاء المستوى!", chooseBoon: "اختر منحة واحدة. تدوم حتى نهاية الجولة.", newAbility: "✦ مهارة جديدة —", paused: "متوقّف مؤقتاً", resume: "استئناف",
                 tagline: "أطعم النار \u00b7 واصمد في الظلام",
@@ -3588,15 +3651,28 @@
             return _playerName;
         }
         function finishWelcome() { const el = document.getElementById("welcome-name"); if (el) setName(el.value); showStartPane("menu"); }
-        function renderLangPicker() { const cur = document.getElementById("langcur"); if (cur) cur.textContent = LANG_NAMES[LANG] || LANG; renderLangGrid(); }
+        function renderLangPicker() { renderLangGrid(); }   // language now lives in the Settings panel
         function renderLangGrid() {
             const grid = document.getElementById("langgrid"); if (!grid) return;
             grid.innerHTML = availableLangs().map(c =>
                 `<button class="langitem${c === LANG ? ' on' : ''}" onclick="chooseLang('${c}')">${LANG_NAMES[c] || c}</button>`).join("");
         }
+        function chooseLang(code) { setLang(code); renderLangGrid(); setMuteLabel(); }   // setLang persists, flips direction, re-fills markup; refresh JS-set labels
+        /* --- Settings panel (gear → mute + name + language) --- */
+        function setMuteLabel() {
+            const b = document.getElementById("mutebtn"); if (!b) return;
+            const m = (SFX && SFX.isMuted) ? SFX.isMuted() : false;
+            b.textContent = (m ? "🔇 " : "🔊 ") + t(m ? "soundOff" : "soundOn");
+        }
+        function toggleMuteUI() { SFX.toggleMute(); setMuteLabel(); }
         function openLang() { renderLangGrid(); show("langoverlay"); }
         function closeLang() { hide("langoverlay"); }
-        function chooseLang(code) { setLang(code); renderLangPicker(); }   // setLang persists, flips text direction, and re-fills the markup
+        function openSettings() {
+            const n = document.getElementById("set-name"); if (n) n.value = playerName();
+            setMuteLabel();
+            show("settingsoverlay");
+        }
+        function closeSettings() { hide("settingsoverlay"); }
         function addEmbers(n) { embers = Math.max(0, embers + n); Store.set("ew.embers", embers); updateEmberUI(); }
 
         /* --- Leaderboard UI: local renders instantly; Global shows local first, then
@@ -3638,7 +3714,6 @@
         function openLeaderboard() {
             const gt = document.querySelector('#lb-tabs .lb-tab[data-scope="global"]');
             if (gt) gt.style.display = Scores.hasRemote() ? "" : "none";   // Global tab appears only when a provider exists
-            const ln = document.getElementById("lb-name"); if (ln) ln.value = playerName();
             lbTab("local");
             show("leaderboard");
         }
@@ -7001,28 +7076,40 @@
         function hideToast() { const el = document.getElementById("loottoast"); if (el) el.classList.remove("on"); clearTimeout(toastT); }
 
         const keys = new Set(); let mouseDown = false; const mouse = { x: 0, y: 0 };
+        // A focused text field (or an in-progress IME composition) owns every keystroke —
+        // the game must not interpret it as a shortcut. This is the single boundary that
+        // keeps menu/field typing (e.g. the username) from leaking into game controls.
+        function isTyping(e) {
+            if (e.isComposing || e.keyCode === 229) return true;            // mid-IME composition (CJK input)
+            const el = e.target;
+            return !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || !!el.isContentEditable);
+        }
         addEventListener("keydown", e => {
             SFX.resume();
+            if (isTyping(e)) return;                                        // typing into a field → never a shortcut
             const k = e.key.toLowerCase();
-            if (k === "m") {
-                const m = SFX.toggleMute(); const el = document.getElementById("loottoast");
-                if (el) { el.innerHTML = m ? t("soundOff") : t("soundOn"); el.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("on"), 1300); }
-                e.preventDefault(); return;
-            }
-            if (k === "i") { togglePanel("inventory"); e.preventDefault(); return; }
-            if (k === "p") { togglePause(); e.preventDefault(); return; }
-            if (k === "escape") {
+            if (k === "escape") {                                          // context-aware: only acts on a live run/panel/pause
                 if (pauseOpen()) { resumeGame(); return; }
                 if (panelOpen()) { closePanels(); return; }
                 if (running && G && !G.hero.dead && !G.paused) { G.paused = true; show("pause"); }
                 return;
             }
-            // abilities (edge-triggered; ignore key-repeat)
-            if (ABILITY_BY_KEY[k] && running && G && !G.paused && !G.hero.dead) {
-                const ab = ABILITY_BY_KEY[k];
-                if (!e.repeat) castAbilityClick(ab);          // aims toward the mouse position
-                if (k === " ") e.preventDefault();
-                return;
+            // in-run shortcuts — scoped to the gameplay context so they never leak onto the start/menu screen
+            if (running) {
+                if (k === "m") {
+                    const m = SFX.toggleMute(); const el = document.getElementById("loottoast");
+                    if (el) { el.innerHTML = m ? t("soundOff") : t("soundOn"); el.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("on"), 1300); }
+                    e.preventDefault(); return;
+                }
+                if (k === "i") { togglePanel("inventory"); e.preventDefault(); return; }
+                if (k === "p") { togglePause(); e.preventDefault(); return; }
+                // abilities (edge-triggered; ignore key-repeat)
+                if (ABILITY_BY_KEY[k] && G && !G.paused && !G.hero.dead) {
+                    const ab = ABILITY_BY_KEY[k];
+                    if (!e.repeat) castAbilityClick(ab);          // aims toward the mouse position
+                    if (k === " ") e.preventDefault();
+                    return;
+                }
             }
             if (k === " ") e.preventDefault();   // never scroll the page
             keys.add(k);
@@ -7173,6 +7260,7 @@
         function cyclePick(dir) { pickIdx = (pickIdx + dir + PICK_ORDER.length) % PICK_ORDER.length; renderHeroPick(); SFX.cast && SFX.cast(); }
         function beginPick() { startGame(PICK_ORDER[pickIdx]); }
         addEventListener("keydown", (e) => {                          // arrow keys cycle heroes while choosing
+            if (isTyping(e)) return;                                  // same boundary — don't hijack typing
             const st = document.getElementById("start"), cp = document.getElementById("choosepane");
             if (!st || !st.classList.contains("on") || !cp || !cp.classList.contains("on")) return;
             if (e.key === "ArrowLeft") { cyclePick(-1); e.preventDefault(); }
