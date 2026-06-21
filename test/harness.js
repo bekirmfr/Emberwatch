@@ -111,7 +111,7 @@ const test = [
   // --- CENSUS: rebuild tallies perk tags onto hero.tagCount ---
   'startGame("ranger");',
   'var et = PERKS.find(p => p.nm === "Ember Touch"), py = PERKS.find(p => p.nm === "Pyromancer");',
-  'G.hero.perks = [et.build(7), py.build(py.tiers[2])];',
+  'G.hero.perks = [et.build(7), py.build(py.tiers[2])]; G.runMods = [];',   // clear the random start modifier — this test asserts an absolute tag count
   'rebuild(G.hero);',
   'assert(G.hero.tagCount && G.hero.tagCount.fire === 2, "census: Ember Touch + Pyromancer -> fire=2 (got " + JSON.stringify(G.hero.tagCount) + ")");',
   'console.log("census ok");',
@@ -129,7 +129,7 @@ const test = [
 
   // --- INTEGRATION: a fire item raises the census, which raises Pyromancer damage ---
   'startGame("ranger");',
-  'G.hero.perks = [PERKS.find(p=>p.nm==="Pyromancer").build(0.12)];',
+  'G.hero.perks = [PERKS.find(p=>p.nm==="Pyromancer").build(0.12)]; G.runMods = [];',
   'rebuild(G.hero); var adBefore = resolveStat(G.hero, "attackDamage", ctx); var fireBefore = (G.hero.tagCount.fire||0);',
   'var fireItem = { id:"t_fire", slot:"ring", tags:["fire"], modifiers:[], triggers:[], procDs:[] };',
   'G.hero.sources.push(fireItem);',                                  // simulate an equipped fire source in the resolved list
@@ -376,13 +376,18 @@ const test = [
   'assert(_r1===_r2, "elite relic identical per spawn ordinal regardless of live churn");',
   'assert(_r1===null || runModById(_r1), "relic grants a valid run modifier (or none)");',
   'console.log("phase4 relics ok: deterministic elite relic drops -> run mods");',
-  // run-mod values must stay small enough to stack safely (guards against re-bloating)
-  '(function(){ var bad=[]; for (var i=0;i<RUN_MODS.length;i++){ var b=RUN_MODS[i].build(); for (var j=0;j<b.modifiers.length;j++){ var m=b.modifiers[j]; var lim = m.op==="more" ? (m.condition?0.25:0.10) : (m.op==="increased"?0.25 : (FRAC.has(m.stat)?0.05:6)); if (Math.abs(m.value) > lim+1e-9) bad.push(RUN_MODS[i].id+"."+m.stat+"("+m.op+(m.condition?",cond":"")+")="+m.value+">"+lim); } } assert(bad.length===0, "run-mod values within stackable-safe bounds; offenders: "+bad.join(", ")); })();',
-  // stacking is now gentle: 10x Glass Cannon survivable, 10x Zealot not auto-100%-crit
+  // run-mod values: relics are capped at RELIC_CAP, so per-unit values can be meatier — but bounded scalers
+  // (perMax) and count-scaled (per:relic) totals must still stay sane so no single relic runs away.
+  '(function(){ var bad=[]; for (var i=0;i<RUN_MODS.length;i++){ var b=RUN_MODS[i].build(); for (var j=0;j<b.modifiers.length;j++){ var m=b.modifiers[j]; var lim = m.op==="more" ? (m.condition?0.30:0.15) : (m.op==="increased"?0.25 : (FRAC.has(m.stat)?0.06:8)); if (Math.abs(m.value) > lim+1e-9) bad.push(RUN_MODS[i].id+"."+m.stat+"("+m.op+(m.condition?",cond":"")+")="+m.value+">"+lim); if (m.perMax!=null){ var tot=Math.abs(m.value*m.perMax); var tl=(m.op==="flat")?(FRAC.has(m.stat)?0.6:80):1.0; if (tot>tl+1e-9) bad.push(RUN_MODS[i].id+"."+m.stat+" perMax-total="+tot+">"+tl); } if (m.per==="relic"){ var ct=Math.abs(m.value*RELIC_CAP); var cl=(m.op==="flat")?80:0.5; if (ct>cl+1e-9) bad.push(RUN_MODS[i].id+"."+m.stat+" per:relic@cap="+ct+">"+cl); } } } assert(bad.length===0, "run-mod values within capped-regime bounds; offenders: "+bad.join(", ")); })();',
+  // stacking stays controlled even at the relic cap: 10x Glass Cannon survivable, 10x Zealot not guaranteed-crit
   'startGame("ranger"); G.runMods=[]; rebuild(G.hero); var _baseHp = resolveStat(G.hero,"maxHealth",ctx);',
   'for (var i=0;i<10;i++) grantRunMod("glasscannon"); assert(resolveStat(G.hero,"maxHealth",ctx) > _baseHp*0.45, "10x Glass Cannon stays survivable");',
-  'G.runMods=[]; rebuild(G.hero); for (var i=0;i<10;i++) grantRunMod("zealot"); assert(resolveStat(G.hero,"critChance",ctx) < 0.6, "10x Zealot crit stays controlled (was guaranteed-crit at old values)");',
-  'console.log("run-mod balance ok: values bounded, stacking gentle");',
+  'G.runMods=[]; rebuild(G.hero); for (var i=0;i<10;i++) grantRunMod("zealot"); assert(resolveStat(G.hero,"critChance",ctx) < 0.75, "10x Zealot crit stays controlled (not guaranteed-crit even at the relic cap)");',
+  // Bloodthirst per:kill is bounded by perMax — a million kills cannot keep scaling it
+  'startGame("ranger"); G.runMods=[]; G.hero.killCount=0; rebuild(G.hero); grantRunMod("bloodthirst"); var _adK0 = resolveStat(G.hero,"attackDamage",ctx);',
+  'G.hero.killCount = 1000000; var _adK1 = resolveStat(G.hero,"attackDamage",ctx); G.hero.killCount = 50; var _adK50 = resolveStat(G.hero,"attackDamage",ctx);',
+  'assert(_adK1 > _adK0 && Math.abs(_adK1 - _adK50) < 1e-6, "Bloodthirst per:kill is capped at perMax (no kill-driven runaway)");',
+  'console.log("run-mod balance ok: values bounded, stacking gentle, per:kill capped");',
 
   // ===== interacting relics =====
   // Resonance scales with how many relics you hold (relic-to-relic interaction)
@@ -399,8 +404,41 @@ const test = [
   'assert(!PERKS.find(function(p){return p.nm==="Annihilation";}), "Annihilation perk removed");',
   'console.log("interacting relics ok: per-relic scaling + conditional threshold; annihilation removed");',
 
+  // ===== relic descriptions are numeric (value-derived, never drift) =====
+  'startGame("ranger"); G.runMods=[];',
+  'var _rmGc = runModDesc(runModById("glasscannon"));',
+  'assert(/\\+10% .*Damage/.test(_rmGc) && /Health/.test(_rmGc) && !/More/i.test(_rmGc), "runModDesc is numeric, not qualitative (glasscannon: "+_rmGc+")");',
+  'var _rmBp = runModDesc(runModById("bloodpact"));',
+  'assert(/-0\\.5 /.test(_rmBp) && /heal/i.test(_rmBp) && /on kill/i.test(_rmBp), "runModDesc keeps small decimals + shows triggers (bloodpact: "+_rmBp+")");',
+  'var _rmRs = runModDesc(runModById("resonance"));',
+  'assert(/\\/ relic/.test(_rmRs), "runModDesc shows per-relic scaling (resonance: "+_rmRs+")");',
+  'var _rmBt = runModDesc(runModById("bloodthirst"));',
+  'assert(/60% .*Damage/.test(_rmBt) && /ramps/.test(_rmBt) && !/\\/ kill/.test(_rmBt), "runModDesc shows bounded per:kill as a capped total (bloodthirst: "+_rmBt+")");',
+  'var _rmLs = runModDesc(runModById("laststand"));',
+  'assert(/while <35% HP/.test(_rmLs), "runModDesc shows conditions (laststand: "+_rmLs+")");',
+  'console.log("relic desc ok: numeric values, decimals, per-scaling, conditions");',
+
+  // ===== relic pickup consent: Take grants+removes, Leave removes without granting =====
+  'startGame("ranger"); G.runMods=[]; rebuild(G.hero);',
+  'var _rpDrop = { relic:"juggernaut", x:0, y:0, dead:false }; G._relicPick = _rpDrop; var _rpN0 = G.runMods.length;',
+  'takeRelic();',
+  'assert(G.runMods.length === _rpN0+1 && _rpDrop.dead === true && G._relicPick === null, "Take grants the relic and removes the drop");',
+  'var _rpDrop2 = { relic:"zealot", x:0, y:0, dead:false }; G._relicPick = _rpDrop2; var _rpN1 = G.runMods.length;',
+  'leaveRelic();',
+  'assert(G.runMods.length === _rpN1 && _rpDrop2.dead === true && G._relicPick === null, "Leave removes the relic without granting it");',
+  'console.log("relic consent ok: Take grants+removes, Leave removes only");',
+
+  // ===== relic slot cap + swap-or-leave =====
+  'startGame("ranger"); G.runMods=[]; rebuild(G.hero); for (var i=0;i<RELIC_CAP;i++) grantRunMod("zealot");',
+  'G._relicPick = { relic:"glasscannon", x:0, y:0, dead:false }; takeRelic();',
+  'assert(G.runMods.length === RELIC_CAP, "takeRelic refuses past the cap (bag full must swap)");',
+  'G._relicPick = { relic:"juggernaut", x:0, y:0, dead:false }; swapRelic(0);',
+  'assert(G.runMods.length === RELIC_CAP && G.runMods.some(function(r){return r.id==="runmod_juggernaut";}), "swapRelic holds at cap and inserts the new relic");',
+  'assert(RELIC_CAP >= 6 && RELIC_CAP <= 16, "relic cap is in the intended band");',
+  'console.log("relic cap ok: bag bounded at "+RELIC_CAP+", swap-or-leave when full");',
+
   // ===== crit-storm slow-mo fix: per-hit hitstop bounded + rate-limited =====
-  'startGame("ranger"); var _dh = dummy({maxHealth:200}); _dh.x=0; _dh.y=0; _dh.r=12; G._hitHsLast=0; G.hitStop=0;',
+  'startGame("ranger"); var _dh = dummy({maxHealth:200}); _dh.x=0; _dh.y=0; _dh.r=12; G._hitHsLast=-1; G.hitStop=0;',
   'onDamage(_dh, 80, true, {tags:["melee"], kind:"basic"}); var _hs1 = G.hitStop;',
   'assert(_hs1 > 0 && _hs1 <= 0.056, "per-hit hitstop is bounded (<=0.055)");',
   'onDamage(_dh, 80, true, {tags:["melee"], kind:"basic"}); onDamage(_dh, 80, true, {tags:["melee"], kind:"basic"});',

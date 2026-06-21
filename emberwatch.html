@@ -1704,6 +1704,26 @@
             line-height: 1.6
         }
 
+        .relic-card { border-color: rgba(200, 155, 255, 0.5); }
+        .relic-card .ds { color: #d7c6ef; min-height: 34px; }
+        .relicbtns { display: flex; gap: 10px; margin-top: 14px; }
+        .rbtn {
+            flex: 1; padding: 11px 8px; border-radius: 9px; font: inherit; font-weight: 700;
+            font-size: 14px; cursor: pointer; border: 1px solid transparent; transition: filter .12s, transform .06s;
+        }
+        .rbtn:active { transform: translateY(1px); }
+        .rbtn.take { background: linear-gradient(180deg, #8a5fd0, #6a3fb0); color: #fff; border-color: #a880e8; }
+        .rbtn.take:hover { filter: brightness(1.12); }
+        .rbtn.leave { background: rgba(255, 255, 255, 0.05); color: var(--muted); border-color: rgba(255, 255, 255, 0.14); }
+        .rbtn.leave:hover { filter: brightness(1.3); }
+        .swaplbl { margin-top: 14px; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+        .swaplist { display: flex; flex-direction: column; gap: 7px; margin-top: 8px; max-height: 240px; overflow-y: auto; }
+        .rbtn.swap { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; padding: 8px 11px;
+            background: rgba(200, 155, 255, 0.07); border-color: rgba(200, 155, 255, 0.22); color: #e7dcff; }
+        .rbtn.swap:hover { filter: brightness(1.2); border-color: rgba(200, 155, 255, 0.5); }
+        .rbtn.swap .swnm { font-weight: 700; font-size: 13px; }
+        .rbtn.swap .swds { font-weight: 400; font-size: 11px; color: #b9a8d8; }
+
         body.mobile .card {
             padding: 14px 11px
         }
@@ -2773,6 +2793,14 @@
             </div>
         </div>
 
+        <div class="overlay" id="relicpick">
+            <div class="luwrap">
+                <h2 class="lutitle" data-i18n="relicFound">Relic Found</h2>
+                <div class="sub" data-i18n="relicChoose">Take it to stack its power for the rest of the run — or leave it behind for good.</div>
+                <div class="cards" id="reliccard"></div>
+            </div>
+        </div>
+
         <div class="overlay" id="inventory">
             <div class="modal lh">
                 <div class="lh-head"><h2 data-i18n="pack">Watcher's Pack</h2><span class="lh-lvl" id="invlvl"></span></div>
@@ -3102,7 +3130,7 @@
                 // game over
                 kills: "Kills", days: "Days", best: "Best {n}", newBest: "★ New best!", dailyRecording: "Recording daily…", dailyRecorded: "Daily recorded · rank {n}", dailyAlready: "Daily already recorded · rank {n}", dailySavedLocal: "Daily saved locally", earned: "earned",
                 embersLabel: "Embers:", watchAd: "Watch ad +30", supporterPack: "✦ Supporter Pack",
-                revive: "Revive", restart: "Restart", dailyChallenge: "Daily Challenge", runmod_glasscannon: "Glass Cannon", runmod_glasscannon_d: "More damage, less max health", runmod_juggernaut: "Juggernaut", runmod_juggernaut_d: "More max health, slower", runmod_bloodpact: "Blood Pact", runmod_bloodpact_d: "Heal on kill, but health slowly drains", runmod_zealot: "Zealot", runmod_zealot_d: "More attack speed & crit, less armor", runmod_harvest: "Harvest", runmod_harvest_d: "More harvest, less damage", affix_vigorous: "Vigorous", affix_armored: "Armored", affix_swift: "Swift", affix_brutal: "Brutal", affix_venomous: "Venomous", affix_searing: "Searing", affix_numbing: "Numbing", home: "Home",
+                revive: "Revive", restart: "Restart", dailyChallenge: "Daily Challenge", relicFound: "Relic Found", relicChoose: "Take it to stack its power for the rest of the run — or leave it behind for good.", relicFull: "Bag full — swap a relic out, or leave this one behind.", relicSwap: "Replace which relic?", takeRelic: "Take", leaveRelic: "Leave", relicTag: "RELIC", runmod_glasscannon: "Glass Cannon", runmod_glasscannon_d: "More damage, less max health", runmod_juggernaut: "Juggernaut", runmod_juggernaut_d: "More max health, slower", runmod_bloodpact: "Blood Pact", runmod_bloodpact_d: "Heal on kill, but health slowly drains", runmod_zealot: "Zealot", runmod_zealot_d: "More attack speed & crit, less armor", runmod_harvest: "Harvest", runmod_harvest_d: "More harvest, less damage", affix_vigorous: "Vigorous", affix_armored: "Armored", affix_swift: "Swift", affix_brutal: "Brutal", affix_venomous: "Venomous", affix_searing: "Searing", affix_numbing: "Numbing", home: "Home",
                 // toasts
                 pickedUp: "Picked up", lvShort: "Lv",
                 supporterUnlocked: "Supporter Pack unlocked — thank you ✦",
@@ -4154,12 +4182,14 @@
            perTag uses the rebuild() census; per:kill/second are actor counters; enemyNearby
            is a spatial fact, so it lives on ctx (set each frame by the world loop). */
         function scaleCount(m, actor, ctx) {
-            if (m.perTag) return (actor.tagCount && actor.tagCount[m.perTag]) || 0;
-            if (m.per === "kill") return actor.killCount || 0;
-            if (m.per === "second") return Math.floor(actor.combatTime || 0);
-            if (m.per === "enemyNearby") return (ctx && ctx.nearbyEnemies) || 0;
-            if (m.per === "relic") return (typeof G !== "undefined" && G && G.runMods) ? G.runMods.length : 0;   // relic-to-relic synergy
-            return null;
+            let c = null;
+            if (m.perTag) c = (actor.tagCount && actor.tagCount[m.perTag]) || 0;
+            else if (m.per === "kill") c = actor.killCount || 0;
+            else if (m.per === "second") c = Math.floor(actor.combatTime || 0);
+            else if (m.per === "enemyNearby") c = (ctx && ctx.nearbyEnemies) || 0;
+            else if (m.per === "relic") c = (typeof G !== "undefined" && G && G.runMods) ? G.runMods.length : 0;   // relic-to-relic synergy
+            if (c != null && m.perMax != null) c = Math.min(c, m.perMax);   // bound unbounded scalers (kills, seconds) so a single relic can't run away
+            return c;
         }
         function resolveStat(actor, stat, ctx) {
             let flat = 0, inc = 0, more = 1, hyp = 0;
@@ -4525,21 +4555,22 @@
            ready to stack; v1 assigns one at run start (deterministic on dailies). Use
            grantRunMod(id) as the extension point for future acquisition (elite drops,
            day choices). Each mod trades power for a cost, to stay interesting. */
+        const RELIC_CAP = 10;                                      // max relics held — bounds per:relic synergy and total stacking; full bag prompts swap-or-leave
         const RUN_MODS = [
-            { id: "glasscannon", nm: "Glass Cannon", ds: "More damage, less max health", build: () => ({ modifiers: [{ stat: "attackDamage", op: "more", value: 0.06, source: "Glass Cannon" }, { stat: "maxHealth", op: "more", value: -0.05, source: "Glass Cannon" }], triggers: [] }) },
-            { id: "juggernaut", nm: "Juggernaut", ds: "More max health, slower", build: () => ({ modifiers: [{ stat: "maxHealth", op: "more", value: 0.07, source: "Juggernaut" }, { stat: "moveSpeed", op: "more", value: -0.03, source: "Juggernaut" }], triggers: [] }) },
-            { id: "bloodpact", nm: "Blood Pact", ds: "Heal on kill, but health slowly drains", build: () => ({ modifiers: [{ stat: "healthRegen", op: "flat", value: -0.3, source: "Blood Pact" }], triggers: [{ on: "onKill", source: "Blood Pact", effect: { kind: "heal", amount: { type: "statPct", stat: "maxHealth", pct: 0.012, of: "self" } } }] }) },
-            { id: "zealot", nm: "Zealot", ds: "More attack speed & crit, less armor", build: () => ({ modifiers: [{ stat: "attackSpeed", op: "more", value: 0.05, source: "Zealot" }, { stat: "critChance", op: "flat", value: 0.03, source: "Zealot" }, { stat: "armor", op: "more", value: -0.04, source: "Zealot" }], triggers: [] }) },
-            { id: "harvest", nm: "Harvest", ds: "More harvest, less damage", build: () => ({ modifiers: [{ stat: "goldFind", op: "increased", value: 0.12, source: "Harvest" }, { stat: "attackDamage", op: "more", value: -0.025, source: "Harvest" }], triggers: [] }) },
+            { id: "glasscannon", nm: "Glass Cannon", ds: "More damage, less max health", build: () => ({ modifiers: [{ stat: "attackDamage", op: "more", value: 0.10, source: "Glass Cannon" }, { stat: "maxHealth", op: "more", value: -0.07, source: "Glass Cannon" }], triggers: [] }) },
+            { id: "juggernaut", nm: "Juggernaut", ds: "More max health, slower", build: () => ({ modifiers: [{ stat: "maxHealth", op: "more", value: 0.12, source: "Juggernaut" }, { stat: "moveSpeed", op: "more", value: -0.05, source: "Juggernaut" }], triggers: [] }) },
+            { id: "bloodpact", nm: "Blood Pact", ds: "Heal on kill, but health slowly drains", build: () => ({ modifiers: [{ stat: "healthRegen", op: "flat", value: -0.5, source: "Blood Pact" }], triggers: [{ on: "onKill", source: "Blood Pact", effect: { kind: "heal", amount: { type: "statPct", stat: "maxHealth", pct: 0.02, of: "self" } } }] }) },
+            { id: "zealot", nm: "Zealot", ds: "More attack speed & crit, less armor", build: () => ({ modifiers: [{ stat: "attackSpeed", op: "more", value: 0.08, source: "Zealot" }, { stat: "critChance", op: "flat", value: 0.05, source: "Zealot" }, { stat: "armor", op: "more", value: -0.06, source: "Zealot" }], triggers: [] }) },
+            { id: "harvest", nm: "Harvest", ds: "More harvest, less damage", build: () => ({ modifiers: [{ stat: "goldFind", op: "increased", value: 0.20, source: "Harvest" }, { stat: "attackDamage", op: "more", value: -0.04, source: "Harvest" }], triggers: [] }) },
             // --- interacting relics: reference your health, breakpoints, phase, tags, or each other ---
-            { id: "laststand", nm: "Last Stand", ds: "More damage while badly wounded", build: () => ({ modifiers: [{ stat: "attackDamage", op: "more", value: 0.15, condition: { kind: "selfHealthBelow", pct: 0.35 }, source: "Last Stand" }], triggers: [] }) },
-            { id: "adrenaline", nm: "Adrenaline", ds: "Faster while badly wounded", build: () => ({ modifiers: [{ stat: "moveSpeed", op: "more", value: 0.12, condition: { kind: "selfHealthBelow", pct: 0.5 }, source: "Adrenaline" }], triggers: [] }) },
-            { id: "fortress", nm: "Fortress", ds: "More max health while heavily armored", build: () => ({ modifiers: [{ stat: "maxHealth", op: "more", value: 0.12, condition: { kind: "selfStatAtLeast", stat: "armor", value: 40 }, source: "Fortress" }], triggers: [] }) },
-            { id: "resonance", nm: "Resonance", ds: "More damage for each relic you hold", build: () => ({ modifiers: [{ stat: "attackDamage", op: "increased", value: 0.025, per: "relic", source: "Resonance" }], triggers: [] }) },
-            { id: "bulwarkstone", nm: "Bulwark Stone", ds: "Armor for each relic you hold", build: () => ({ modifiers: [{ stat: "armor", op: "flat", value: 3, per: "relic", source: "Bulwark Stone" }], triggers: [] }) },
-            { id: "bloodthirst", nm: "Bloodthirst", ds: "Damage grows with each kill this run", build: () => ({ modifiers: [{ stat: "attackDamage", op: "flat", value: 0.3, per: "kill", source: "Bloodthirst" }], triggers: [] }) },
-            { id: "embercall", nm: "Embercall", ds: "More damage per fire source you own", build: () => ({ tags: ["fire"], modifiers: [{ stat: "attackDamage", op: "increased", value: 0.03, perTag: "fire", source: "Embercall" }], triggers: [] }) },
-            { id: "nightblade", nm: "Nightblade", ds: "More damage at night", build: () => ({ modifiers: [{ stat: "attackDamage", op: "more", value: 0.10, condition: { kind: "phase", phase: "night" }, source: "Nightblade" }], triggers: [] }) },
+            { id: "laststand", nm: "Last Stand", ds: "More damage while badly wounded", build: () => ({ modifiers: [{ stat: "attackDamage", op: "more", value: 0.25, condition: { kind: "selfHealthBelow", pct: 0.35 }, source: "Last Stand" }], triggers: [] }) },
+            { id: "adrenaline", nm: "Adrenaline", ds: "Faster while badly wounded", build: () => ({ modifiers: [{ stat: "moveSpeed", op: "more", value: 0.20, condition: { kind: "selfHealthBelow", pct: 0.5 }, source: "Adrenaline" }], triggers: [] }) },
+            { id: "fortress", nm: "Fortress", ds: "More max health while heavily armored", build: () => ({ modifiers: [{ stat: "maxHealth", op: "more", value: 0.20, condition: { kind: "selfStatAtLeast", stat: "armor", value: 40 }, source: "Fortress" }], triggers: [] }) },
+            { id: "resonance", nm: "Resonance", ds: "More damage for each relic you hold", build: () => ({ modifiers: [{ stat: "attackDamage", op: "increased", value: 0.03, per: "relic", source: "Resonance" }], triggers: [] }) },
+            { id: "bulwarkstone", nm: "Bulwark Stone", ds: "Armor for each relic you hold", build: () => ({ modifiers: [{ stat: "armor", op: "flat", value: 5, per: "relic", source: "Bulwark Stone" }], triggers: [] }) },
+            { id: "bloodthirst", nm: "Bloodthirst", ds: "Damage ramps with kills, up to a cap", build: () => ({ modifiers: [{ stat: "attackDamage", op: "increased", value: 0.012, per: "kill", perMax: 50, source: "Bloodthirst" }], triggers: [] }) },
+            { id: "embercall", nm: "Embercall", ds: "More damage per fire source you own", build: () => ({ tags: ["fire"], modifiers: [{ stat: "attackDamage", op: "increased", value: 0.04, perTag: "fire", source: "Embercall" }], triggers: [] }) },
+            { id: "nightblade", nm: "Nightblade", ds: "More damage at night", build: () => ({ modifiers: [{ stat: "attackDamage", op: "more", value: 0.15, condition: { kind: "phase", phase: "night" }, source: "Nightblade" }], triggers: [] }) },
         ];
         function runModById(id) { return RUN_MODS.find(m => m.id === id) || null; }
         function grantRunMod(id) {                                  // stack a run modifier onto the hero (extension point for future acquisition)
@@ -4793,6 +4824,53 @@
             const L = tf("stat_" + m.stat, LABEL[m.stat] || m.stat);
             if (m.op === "flat") { const v = FRAC.has(m.stat) ? Math.round(m.value * 100) + "%" : Math.round(m.value); return (m.value < 0 ? "" : "+") + v + " " + L; }
             return (m.value < 0 ? "" : "+") + Math.round(m.value * 100) + "% " + L;
+        }
+        // Numeric description for a run modifier, generated from its actual values so it can
+        // never drift when those values are tuned. Accepts a built source (.modifiers) or a
+        // RUN_MODS def (.build()). Stat names localize via tf; connectives are English for now.
+        function runModDesc(rm) {
+            const b = rm && rm.modifiers ? rm : (rm && typeof rm.build === "function" ? rm.build() : rm);
+            if (!b) return "";
+            const fmtMod = (m) => {
+                const L = tf("stat_" + m.stat, LABEL[m.stat] || m.stat);
+                const sign = m.value < 0 ? "" : "+";
+                let n;
+                if (m.op === "flat") {
+                    n = FRAC.has(m.stat) ? (Math.round(m.value * 100) + "%")
+                        : (Math.abs(m.value) < 1 ? (+m.value.toFixed(1)) : Math.round(m.value));   // keep small decimals (e.g. -0.3 regen) instead of rounding to 0
+                } else {                                                                           // more / increased / hyperbolic
+                    const pct = m.value * 100;
+                    n = (Math.abs(pct) < 9.95 && Math.abs(pct - Math.round(pct)) > 0.05) ? (+pct.toFixed(1) + "%") : (Math.round(pct) + "%");   // keep precision on small per-stack values (2.5% not 3%)
+                }
+                let s = sign + n + " " + L;
+                if (m.perMax != null) {                                                            // bounded scaler — show the capped total, it ramps then plateaus
+                    const cap = m.op === "flat" ? (FRAC.has(m.stat) ? Math.round(m.value * m.perMax * 100) + "%" : (Math.abs(m.value * m.perMax) < 1 ? +(m.value * m.perMax).toFixed(1) : Math.round(m.value * m.perMax))) : Math.round(m.value * m.perMax * 100) + "%";
+                    s = sign + cap + " " + L + (m.per === "kill" ? ", ramps with kills" : m.per === "second" ? ", ramps over time" : "");
+                    return s;
+                }
+                if (m.perTag) s += " / " + tf("stat_tag_" + m.perTag, m.perTag) + " src";           // scales with how many of that tag you own
+                else if (m.per === "relic") s += " / relic";
+                else if (m.per === "kill") s += " / kill";
+                else if (m.per === "second") s += " / sec";
+                else if (m.per === "enemyNearby") s += " / foe near";
+                if (m.condition) {
+                    const c = m.condition;
+                    if (c.kind === "selfHealthBelow") s += " while <" + Math.round(c.pct * 100) + "% HP";
+                    else if (c.kind === "selfStatAtLeast") s += " if " + tf("stat_" + c.stat, LABEL[c.stat] || c.stat) + " ≥ " + c.value;
+                    else if (c.kind === "phase") s += (c.phase === "night" ? " at night" : " by day");
+                }
+                return s;
+            };
+            const parts = (b.modifiers || []).map(fmtMod);
+            for (const tr of (b.triggers || [])) {
+                const e = tr.effect;
+                if (e && e.kind === "heal" && tr.on === "onKill") {
+                    const a = e.amount || {};
+                    const amt = a.type === "statPct" ? (Math.round(a.pct * 100) + "%") : (a.value != null ? a.value : "");
+                    parts.push("heal " + amt + " on kill");
+                }
+            }
+            return parts.join(", ");
         }
 
         /* =========================================================================
@@ -5894,11 +5972,8 @@
             // ground item pickup
             for (const it of G.drops) {
                 const d = Math.hypot(h.x - it.x, h.y - it.y); it.bob += dt * 3; if (d < h.r + 16) {
-                    if (it.relic) {                                  // relic → stack a run modifier onto the hero
-                        const m = runModById(it.relic); grantRunMod(it.relic); it.dead = true;
-                        spawnParticles(it.x, it.y, "#c89bff", 18, { speed: 150, life: 0.6, size: 2.6, grav: -20 });
-                        msgToast((m ? tf("runmod_" + it.relic, m.nm) : "Relic") + " ✦");
-                        SFX.levelUp && SFX.levelUp(); renderBoons();
+                    if (it.relic) {                                  // relic → ask Take / Leave instead of auto-applying
+                        if (!G._relicPick) openRelicPick(it);        // one prompt at a time; pauses the game
                         continue;
                     }
                     G.satchel.push(it.item); it.dead = true; if (it.item && it.item.id === "item_tut") G._tutLoot = 2; tutBeat("gear");
@@ -6470,6 +6545,68 @@
             }
             G.paused = true; show("levelup"); screenFlash("255,210,130", 0.4); SFX.levelUp(); tutBeat("boons");
         }
+        // Relic pickup is a choice, not an auto-grab: walking onto a relic pauses and asks
+        // Take (stack it for the run) or Leave (it's gone). Relics shape build direction, so consent matters.
+        function openRelicPick(drop) {
+            if (!drop || !drop.relic) return;
+            G._relicPick = drop;
+            const m = runModById(drop.relic);
+            const nm = m ? tf("runmod_" + drop.relic, m.nm) : "Relic";
+            const ds = m ? runModDesc(m) : "";
+            const held = (G.runMods || []).length;
+            const full = held >= RELIC_CAP;
+            const sub = document.querySelector("#relicpick .sub");
+            if (sub) sub.textContent = full ? tf("relicFull", "Bag full — swap a relic out, or leave this one behind.") : tf("relicChoose", "Take it to stack its power for the rest of the run — or leave it behind for good.");
+            const box = document.getElementById("reliccard"); box.innerHTML = "";
+            box.style.gridTemplateColumns = "minmax(0,360px)"; box.style.justifyContent = "center";
+            const c = document.createElement("div"); c.className = "card relic-card";
+            let html = `<div class="rtag" style="color:#c89bff">${tf("relicTag", "RELIC")} ${held}/${RELIC_CAP}</div>` +
+                `<div class="nm">✦ ${nm}</div><div class="ds">${ds}</div>`;
+            if (!full) html += `<div class="relicbtns"><button class="rbtn take" id="relic-take">${tf("takeRelic", "Take")}</button>` +
+                `<button class="rbtn leave" id="relic-leave">${tf("leaveRelic", "Leave")}</button></div>`;
+            else html += `<div class="swaplbl">${tf("relicSwap", "Replace which relic?")}</div><div class="swaplist" id="relic-swaplist"></div>` +
+                `<div class="relicbtns"><button class="rbtn leave" id="relic-leave">${tf("leaveRelic", "Leave")}</button></div>`;
+            c.innerHTML = html; box.appendChild(c);
+            document.getElementById("relic-leave").onclick = leaveRelic;
+            if (!full) document.getElementById("relic-take").onclick = takeRelic;
+            else {
+                const list = document.getElementById("relic-swaplist");
+                (G.runMods || []).forEach((rm, i) => {
+                    const k = rm.id.replace("runmod_", "");
+                    const b = document.createElement("button"); b.className = "rbtn swap";
+                    b.innerHTML = `<span class="swnm">${tf("runmod_" + k, rm.nm)}</span><span class="swds">${runModDesc(rm)}</span>`;
+                    b.onclick = () => swapRelic(i);
+                    list.appendChild(b);
+                });
+            }
+            G.paused = true; show("relicpick"); screenFlash("200,155,255", 0.32); SFX.levelUp && SFX.levelUp();
+        }
+        function takeRelic() {
+            const drop = G._relicPick; if (!drop) return;
+            if ((G.runMods || []).length >= RELIC_CAP) return;          // safety: bag full → must swap, not take
+            grantRunMod(drop.relic); drop.dead = true; G._relicPick = null;
+            spawnParticles(drop.x, drop.y, "#c89bff", 18, { speed: 150, life: 0.6, size: 2.6, grav: -20 });
+            const m = runModById(drop.relic); msgToast((m ? tf("runmod_" + drop.relic, m.nm) : "Relic") + " ✦");
+            tele("relic_take", { id: drop.relic, held: (G.runMods || []).length });
+            renderBoons(); hide("relicpick"); G.paused = tutCardUp();
+        }
+        function swapRelic(idx) {
+            const drop = G._relicPick; if (!drop) return;
+            if (idx >= 0 && idx < (G.runMods || []).length) G.runMods.splice(idx, 1);   // drop the chosen relic to make room
+            grantRunMod(drop.relic); drop.dead = true; G._relicPick = null;             // grantRunMod rebuilds + clamps health
+            spawnParticles(drop.x, drop.y, "#c89bff", 18, { speed: 150, life: 0.6, size: 2.6, grav: -20 });
+            const m = runModById(drop.relic); msgToast((m ? tf("runmod_" + drop.relic, m.nm) : "Relic") + " ✦");
+            tele("relic_swap", { id: drop.relic, held: (G.runMods || []).length });
+            renderBoons(); hide("relicpick"); G.paused = tutCardUp();
+        }
+        function leaveRelic() {
+            const drop = G._relicPick; if (!drop) return;
+            drop.dead = true; G._relicPick = null;                          // Leave = gone for good (no second chance)
+            tele("relic_leave", { id: drop.relic });
+            spawnParticles(drop.x, drop.y, "#6b5a86", 8, { speed: 80, life: 0.45, size: 2, grav: 40 });
+            hide("relicpick"); G.paused = tutCardUp();
+        }
+
         function fireCost() { return Math.round(18 * Math.pow(1.55, G.fireLevel - 1)); }
         function openFire() {
             if (!running || G.hero.dead) return;
@@ -6619,7 +6756,7 @@
             const bb = document.getElementById("boonsbox"); if (!bb) return;
             const h = G.hero, list = [];
             if (h.classPassive && h.classPassive.nm) list.push({ nm: tn(h.classPassive.nm), ds: desc(h.classPassive.nm, h.classPassive.ds || ""), col: "#ffd9a0" });   // class signature
-            for (const rm of (G.runMods || [])) { const k = rm.id.replace("runmod_", ""); list.push({ nm: tf("runmod_" + k, rm.nm), ds: tf("runmod_" + k + "_d", rm.ds), col: "#c89bff" }); }   // run modifiers (Phase 4), localized
+            for (const rm of (G.runMods || [])) { const k = rm.id.replace("runmod_", ""); list.push({ nm: tf("runmod_" + k, rm.nm), ds: runModDesc(rm), col: "#c89bff" }); }   // run modifiers — numeric, value-derived (never drifts)
             const fl = G.fireLevel - 1; if (fl > 0) list.push({ nm: tn("Campfire"), ds: "+" + (12 * fl) + " " + t("stat_maxHealth"), col: "#ff9a4a" });                 // the fire itself
             for (const b of (h.boons || [])) list.push({ nm: b.nm, ds: b.ds, rarCls: b.rarCls });                                          // boons picked at level-up (already localized at pick)
             // active set bonuses from worn gear
