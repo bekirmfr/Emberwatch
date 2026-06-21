@@ -1459,7 +1459,7 @@
 
         .cards {
             display: grid;
-            grid-template-columns: repeat(3,1fr);
+            grid-template-columns: repeat(3, minmax(0,1fr));
             gap: 14px;
             width: 100%
         }
@@ -1555,7 +1555,14 @@
         }
 
         body.mobile .cards {
-            gap: 9px
+            grid-template-columns: 1fr;
+            gap: 12px;
+            max-height: 72vh;
+            overflow-y: auto
+        }
+
+        body.mobile .card {
+            aspect-ratio: auto
         }
 
         body.mobile .card .nm {
