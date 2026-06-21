@@ -777,9 +777,9 @@
                 border-color: rgba(255,255,255,.32)
             }
 
-            #settingsbtn:hover {
-                transform: rotate(40deg)
-            }
+        #settingsbtn:hover {
+            transform: rotate(40deg)
+        }
 
         .settingsmodal, .langmodal {
             max-width: 360px
@@ -1009,23 +1009,126 @@
         }
 
         /* --- Leaderboard --- */
-        .lb-tabs { display: flex; gap: 8px; justify-content: center; margin-top: 12px }
-        .lb-tab { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 8px; padding: 5px 12px; cursor: pointer; font: inherit; font-size: 13px }
-        .lb-tab.on { color: var(--cream); border-color: var(--ember-hi) }
-        .lb-list { margin-top: 12px; display: flex; flex-direction: column; gap: 6px }
-        .lb-row { display: grid; grid-template-columns: 28px 1fr auto auto auto; align-items: center; gap: 10px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; background: rgba(255,255,255,.02) }
-        .lb-row.me { border-color: var(--ember-hi); background: rgba(255,200,120,.06) }
-        .lb-rank { color: var(--muted); font-weight: 700; text-align: center }
-        .lb-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: var(--cream) }
-        .lb-score { color: var(--ember-hi); font-weight: 700 }
-        .lb-cls { font-size: 13px }
-        .lb-meta { color: var(--muted); font-size: 11px; letter-spacing: .04em }
-        .lb-empty, .lb-note { color: var(--muted); text-align: center; padding: 16px 0; font-size: 13px }
+        .lb-tabs {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 12px
+        }
+
+        .lb-tab {
+            background: none;
+            border: 1px solid var(--line);
+            color: var(--muted);
+            border-radius: 8px;
+            padding: 5px 12px;
+            cursor: pointer;
+            font: inherit;
+            font-size: 13px
+        }
+
+            .lb-tab.on {
+                color: var(--cream);
+                border-color: var(--ember-hi)
+            }
+
+        .lb-list {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px
+        }
+
+        .lb-row {
+            display: grid;
+            grid-template-columns: 28px 1fr auto auto auto;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 10px;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            background: rgba(255,255,255,.02)
+        }
+
+            .lb-row.me {
+                border-color: var(--ember-hi);
+                background: rgba(255,200,120,.06)
+            }
+
+        .lb-rank {
+            color: var(--muted);
+            font-weight: 700;
+            text-align: center
+        }
+
+        .lb-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 13px;
+            color: var(--cream)
+        }
+
+        .lb-score {
+            color: var(--ember-hi);
+            font-weight: 700
+        }
+
+        .lb-cls {
+            font-size: 13px
+        }
+
+        .lb-meta {
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: .04em
+        }
+
+        .lb-empty, .lb-note {
+            color: var(--muted);
+            text-align: center;
+            padding: 16px 0;
+            font-size: 13px
+        }
         /* editable name field (welcome pane + settings) */
-        .namelabel { display: block; color: var(--muted); font-size: 12px; letter-spacing: .04em; margin: 10px 0 5px; text-align: center }
-        .namefield { display: block; width: 100%; max-width: 260px; margin: 0 auto; box-sizing: border-box; background: rgba(255,255,255,.03); border: 1px solid var(--line); color: var(--cream); border-radius: 9px; padding: 9px 12px; font: inherit; font-size: 14px; text-align: center }
-        .namefield:focus { outline: none; border-color: var(--ember-hi) }
-        .welcomesub { color: var(--muted); font-size: 13px; text-align: center; margin: 6px auto 4px; max-width: 320px; line-height: 1.5 }
+        .namelabel {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+            letter-spacing: .04em;
+            margin: 10px 0 5px;
+            text-align: center
+        }
+
+        .namefield {
+            display: block;
+            width: 100%;
+            max-width: 260px;
+            margin: 0 auto;
+            box-sizing: border-box;
+            background: rgba(255,255,255,.03);
+            border: 1px solid var(--line);
+            color: var(--cream);
+            border-radius: 9px;
+            padding: 9px 12px;
+            font: inherit;
+            font-size: 14px;
+            text-align: center
+        }
+
+            .namefield:focus {
+                outline: none;
+                border-color: var(--ember-hi)
+            }
+
+        .welcomesub {
+            color: var(--muted);
+            font-size: 13px;
+            text-align: center;
+            margin: 6px auto 4px;
+            max-width: 320px;
+            line-height: 1.5
+        }
         /* --- Supporter Pack modal --- */
         .supmodal {
             max-width: 430px
@@ -1589,13 +1692,13 @@
             aspect-ratio: auto
         }
 
-        body.mobile .card .nm {
-            font-size: 14px
-        }
+            body.mobile .card .nm {
+                font-size: 14px
+            }
 
-        body.mobile .card .ds {
-            font-size: 12px
-        }
+            body.mobile .card .ds {
+                font-size: 12px
+            }
 
         .inv {
             display: grid;
@@ -2686,6 +2789,7 @@
                 <div class="startbtns" id="startmenu">
                     <button class="btn" onclick="showStartPane('howto')" data-i18n="howToPlay">How to Play</button>
                     <button class="btn primary" onclick="showStartPane('choose')" data-i18n="play">Play</button>
+                    <button class="btn" onclick="startDaily()" data-i18n="dailyChallenge">Daily Challenge</button>
                     <button class="btn" onclick="openLeaderboard()" data-i18n="rankings">Rankings</button>
                 </div>
 
@@ -2741,7 +2845,6 @@
                 </div>
                 <div class="ovactions">
                     <button class="btn revive" id="ov-revive" onclick="revive()"><span data-i18n="revive">Revive</span> <span class="rc">⬥ 25</span></button>
-                    <button class="btn primary" onclick="toStart('choose')" data-i18n="restart">Restart</button>
                     <button class="btn" onclick="openLeaderboard()" data-i18n="rankings">Rankings</button>
                     <button class="btn" onclick="toStart('menu')" data-i18n="home">Home</button>
                 </div>
@@ -2808,6 +2911,7 @@
             <div class="lb-tabs" id="lb-tabs">
                 <button class="lb-tab on" data-scope="local" onclick="lbTab('local')" data-i18n="lbLocal">Your runs</button>
                 <button class="lb-tab" data-scope="global" onclick="lbTab('global')" data-i18n="lbGlobal" style="display:none">Global</button>
+                <button class="lb-tab" data-scope="daily" onclick="lbTab('daily')" style="display:none">Daily</button>
             </div>
             <div class="lb-list" id="lb-list"></div>
             <div class="lb-note" id="lb-note" style="display:none" data-i18n="lbFallback">Showing your runs — global board unavailable.</div>
@@ -2864,13 +2968,17 @@
         const Scores = (() => {
             const KEY = "ew.scores", CAP = 10;
             let _provider = null;                                   // null = local-only (today)
+            let _daily = null;                                      // separate provider for the daily challenge board
             function list() { const a = Store.get(KEY, []); return Array.isArray(a) ? a : []; }
-            function submit(run) {                                   // {score,wave,level,kills,days,cls}
-                const entry = {
+            function mkEntry(run) {
+                return {
                     score: run.score | 0, wave: run.wave | 0, level: run.level | 0,
                     kills: run.kills | 0, days: run.days | 0, cls: run.cls || "",
                     name: (typeof playerName === "function" ? playerName() : ""), ts: Date.now()
                 };
+            }
+            function submit(run) {                                   // {score,wave,level,kills,days,cls}
+                const entry = mkEntry(run);
                 const board = list().concat(entry).sort((a, b) => b.score - a.score).slice(0, CAP);
                 Store.set(KEY, board);                               // (1) local ALWAYS written first
                 if (_provider && _provider.submit) {                 // (2) remote best-effort, never blocks/throws
@@ -2878,21 +2986,33 @@
                 }
                 return board.indexOf(entry);                         // local rank, -1 if it didn't place
             }
-            function top(scope, n) {                                  // → {rows, source:"global"|"local"}
+            function submitDaily(run, date) {                        // daily runs go ONLY to the daily board, keyed by challenge date
+                const entry = mkEntry(run);
+                if (_daily && _daily.submit) Promise.resolve().then(() => _daily.submit(entry, date)).catch(() => { });
+            }
+            function top(scope, n) {                                  // → {rows, source}
                 n = n || CAP;
                 const local = list().slice(0, n);
+                if (scope === "daily" && _daily && _daily.top) {
+                    const date = (typeof dailySeed === "function") ? dailySeed() : 0;
+                    return Promise.resolve().then(() => _daily.top(n, date))
+                        .then(rows => ({ rows: Array.isArray(rows) ? rows : [], source: "daily" }))
+                        .catch(() => ({ rows: [], source: "daily" }));
+                }
                 if (scope === "global" && _provider && _provider.top) {
                     return Promise.resolve().then(() => _provider.top(n))
                         .then(rows => (Array.isArray(rows) && rows.length) ? { rows, source: "global" }
-                                                                            : { rows: local, source: "local" })
+                            : { rows: local, source: "local" })
                         .catch(() => ({ rows: local, source: "local" }));   // failure → local, silently
                 }
                 return Promise.resolve({ rows: local, source: "local" });
             }
             return {
-                list, submit, top,
+                list, submit, submitDaily, top,
                 setProvider(p) { _provider = p; },
+                setDailyProvider(p) { _daily = p; },
                 hasRemote() { return !!(_provider && _provider.top); },
+                hasDaily() { return !!(_daily && _daily.top); },
                 get best() { return (list()[0] || {}).score || 0; }
             };
         })();
@@ -2953,7 +3073,7 @@
                 // game over
                 kills: "Kills", days: "Days", best: "Best {n}", newBest: "★ New best!", earned: "earned",
                 embersLabel: "Embers:", watchAd: "Watch ad +30", supporterPack: "✦ Supporter Pack",
-                revive: "Revive", restart: "Restart", home: "Home",
+                revive: "Revive", restart: "Restart", dailyChallenge: "Daily Challenge", home: "Home",
                 // toasts
                 pickedUp: "Picked up", lvShort: "Lv",
                 supporterUnlocked: "Supporter Pack unlocked — thank you ✦",
@@ -3025,7 +3145,7 @@
                 blurb_knight: "Dayanıklı dövüşçü — yarıp geçen yakın vuruşlar ve mesafe kapatıcılar; cengin içinde ayakta kalır.",
                 kills: "Öldürme", days: "Gün", best: "En iyi {n}", newBest: "★ Yeni rekor!", earned: "kazanılan",
                 embersLabel: "Korlar:", watchAd: "Reklam izle +30", supporterPack: "✦ Destekçi Paketi",
-                revive: "Diril", restart: "Yeniden başlat", home: "Ana menü",
+                revive: "Diril", restart: "Yeniden başlat", dailyChallenge: "Günlük Görev", home: "Ana menü",
                 pickedUp: "Alındı", lvShort: "Sv",
                 supporterUnlocked: "Destekçi Paketi açıldı — teşekkürler ✦",
                 supporterAdReward: "Destekçiler reklamı atlar — işte ödülün ✦",
@@ -3092,7 +3212,7 @@
                 // game over
                 kills: "击杀", days: "天数", best: "最佳 {n}", newBest: "★ 新纪录！", earned: "获得",
                 embersLabel: "余烬：", watchAd: "看广告 +30", supporterPack: "✦ 支持者礼包",
-                revive: "复活", restart: "重新开始", home: "主菜单",
+                revive: "复活", restart: "重新开始", dailyChallenge: "每日挑战", home: "主菜单",
                 // toasts
                 pickedUp: "拾取", lvShort: "Lv",
                 supporterUnlocked: "支持者礼包已解锁——谢谢你 ✦",
@@ -3163,7 +3283,7 @@
                 stat_armorPen: "Penetración", stat_cleave: "Tajo", stat_chain: "Rayos extra",
                 kills: "Bajas", days: "Días", best: "Mejor {n}", newBest: "★ ¡Nuevo récord!", earned: "ganados",
                 embersLabel: "Brasas:", watchAd: "Ver anuncio +30", supporterPack: "✦ Pack de apoyo",
-                revive: "Revivir", restart: "Reiniciar", home: "Inicio", pickedUp: "Recogido", soundOff: "Silencio", soundOn: "Sonido",
+                revive: "Revivir", restart: "Reiniciar", dailyChallenge: "Desafío diario", home: "Inicio", pickedUp: "Recogido", soundOff: "Silencio", soundOn: "Sonido",
                 setOf: "conjunto", noBoons: "Aún sin bendiciones — supera oleadas para subir de nivel y elegir una.",
                 equip: "Equipar", salvage: "Reciclar", unequip: "Quitar", noSlot: "Tu clase no tiene ranura de {type} — solo reciclar", setWorn: "{n}/4 equipadas",
                 stat_critMultiplier: "Daño crítico", stat_evasion: "Evasión",
@@ -3229,7 +3349,7 @@
                 stat_armorPen: "Pénétration", stat_cleave: "Fendoir", stat_chain: "Éclairs sup.",
                 kills: "Éliminations", days: "Jours", best: "Record {n}", newBest: "★ Nouveau record !", earned: "gagnés",
                 embersLabel: "Braises :", watchAd: "Pub +30", supporterPack: "✦ Pack de soutien",
-                revive: "Réanimer", restart: "Recommencer", home: "Accueil", pickedUp: "Ramassé", soundOff: "Muet", soundOn: "Son",
+                revive: "Réanimer", restart: "Recommencer", dailyChallenge: "Défi quotidien", home: "Accueil", pickedUp: "Ramassé", soundOff: "Muet", soundOn: "Son",
                 setOf: "ensemble", noBoons: "Aucune faveur — termine des vagues pour monter de niveau et en choisir une.",
                 equip: "Équiper", salvage: "Recycler", unequip: "Retirer", noSlot: "Aucune case {type} pour ta classe — recyclage seulement", setWorn: "{n}/4 portées",
                 stat_critMultiplier: "Dégâts critiques", stat_evasion: "Esquive",
@@ -3295,7 +3415,7 @@
                 stat_armorPen: "Пробитие", stat_cleave: "Рассечение", stat_chain: "Доп. молнии",
                 kills: "Убийства", days: "Дни", best: "Рекорд {n}", newBest: "★ Новый рекорд!", earned: "получено",
                 embersLabel: "Угли:", watchAd: "Реклама +30", supporterPack: "✦ Набор поддержки",
-                revive: "Возродить", restart: "Заново", home: "Главная", pickedUp: "Подобрано", soundOff: "Звук выкл.", soundOn: "Звук вкл.",
+                revive: "Возродить", restart: "Заново", dailyChallenge: "Испытание дня", home: "Главная", pickedUp: "Подобрано", soundOff: "Звук выкл.", soundOn: "Звук вкл.",
                 setOf: "комплект", noBoons: "Пока нет благ — зачищайте волны, чтобы повысить уровень и выбрать.",
                 equip: "Надеть", salvage: "Разобрать", unequip: "Снять", noSlot: "У вашего класса нет слота {type} — только разбор", setWorn: "{n}/4 надето",
                 stat_critMultiplier: "Крит. урон", stat_evasion: "Уклонение",
@@ -3361,7 +3481,7 @@
                 stat_armorPen: "防御貫通", stat_cleave: "範囲斬り", stat_chain: "追加電撃",
                 kills: "撃破数", days: "日数", best: "ベスト {n}", newBest: "★ 新記録！", earned: "獲得",
                 embersLabel: "残火：", watchAd: "広告 +30", supporterPack: "✦ サポーターパック",
-                revive: "復活", restart: "リスタート", home: "ホーム", pickedUp: "入手", soundOff: "ミュート", soundOn: "サウンド",
+                revive: "復活", restart: "リスタート", dailyChallenge: "デイリーチャレンジ", home: "ホーム", pickedUp: "入手", soundOff: "ミュート", soundOn: "サウンド",
                 setOf: "セット", noBoons: "恩恵はまだありません — ウェーブをクリアしてレベルアップし選択。",
                 equip: "装備", salvage: "分解", unequip: "外す", noSlot: "あなたの職業に{type}スロットはありません——分解のみ", setWorn: "装備 {n}/4",
                 stat_critMultiplier: "クリダメ", stat_evasion: "回避",
@@ -3427,7 +3547,7 @@
                 stat_armorPen: "اختراق الدرع", stat_cleave: "تشطير", stat_chain: "صواعق إضافية",
                 kills: "القتلى", days: "الأيام", best: "الأفضل {n}", newBest: "★ رقم قياسي جديد!", earned: "مكتسب",
                 embersLabel: "الجمر:", watchAd: "إعلان +30", supporterPack: "✦ حزمة الداعم",
-                revive: "إحياء", restart: "إعادة", home: "الرئيسية", pickedUp: "التُقط", soundOff: "كتم", soundOn: "صوت",
+                revive: "إحياء", restart: "إعادة", dailyChallenge: "تحدٍ يومي", home: "الرئيسية", pickedUp: "التُقط", soundOff: "كتم", soundOn: "صوت",
                 setOf: "طقم", noBoons: "لا منح بعد — اجتَز الموجات للارتقاء واختر واحدة.",
                 equip: "تجهيز", salvage: "تفكيك", unequip: "نزع", noSlot: "لا توجد خانة {type} لفئتك — التفكيك فقط", setWorn: "{n}/4 مُرتداة",
                 stat_critMultiplier: "ضرر حرج", stat_evasion: "مراوغة",
@@ -3734,6 +3854,12 @@
                     paint(res.rows);
                     if (note) note.style.display = (res.source === "local") ? "" : "none";   // fell back → show note
                 });
+            } else if (_lbScope === "daily") {
+                box.innerHTML = `<div class="lb-empty">${t("lbEmpty")}</div>`;   // clear local rows; daily is its own board
+                Scores.top("daily").then(res => {
+                    if (_lbScope !== "daily") return;
+                    paint(res.rows);                                // empty until the proxy is live / others have played today
+                });
             }
         }
         function lbTab(scope) {
@@ -3745,6 +3871,8 @@
         function openLeaderboard() {
             const gt = document.querySelector('#lb-tabs .lb-tab[data-scope="global"]');
             if (gt) gt.style.display = Scores.hasRemote() ? "" : "none";   // Global tab appears only when a provider exists
+            const dt = document.querySelector('#lb-tabs .lb-tab[data-scope="daily"]');
+            if (dt) dt.style.display = Scores.hasDaily() ? "" : "none";     // Daily tab appears when the daily board is wired
             lbTab("local");
             show("leaderboard");
         }
@@ -3864,15 +3992,19 @@
            proxy, submit is a no-op and only the local board records the run.
            Any remote failure is swallowed → Scores falls back to the local board. */
         const LB = {
-            base:     "https://leaderboard-384f.vms.stackfi.tech",  // SaaS base URL (no trailing slash)
+            base: "https://leaderboard-384f.vms.stackfi.tech",  // SaaS base URL (no trailing slash)
             boardKey: "lb_ff5cd974a653adc0a9357535",                           // board key — safe to ship in client code
-            proxy:    "https://<your-backend>/lb/submit",  // YOUR server endpoint that holds the app_secret (secure path)
+            proxy: "https://<your-backend>/lb/submit",  // YOUR server endpoint that holds the app_secret (secure path)
             /* ⚠️ DEV-ONLY — app secret baked into client code. This file is served to
                browsers, so this secret is PUBLIC once shipped: anyone can read it and
                forge scores OR DELETE this board and its members. Accepted here only for
                a throwaway dev/cosmetic board. Before any real/public build: set this to
                null, stand up lb-proxy.js, and rotate this secret in the console. */
-            devSecret: "sk_ce28063ce8e7403c4460c183566cfbd54c3e0fd2a8288b86ca602849a3f292c4"
+            devSecret: "sk_ce28063ce8e7403c4460c183566cfbd54c3e0fd2a8288b86ca602849a3f292c4",
+            /* Daily board write token. Owner-accepted as a client-side write path (scoped
+               append-only server-side). Same exposure caveat as devSecret: public once shipped.
+               Rotate it (it was shared in plaintext) and move to LB.proxy for a hardened launch. */
+            dailyDevSecret: "sk_9996da41caf7a2f663352de0d2611a821e893563369362c0d5d070cca908f6c4"
         };
         const lbProxyReady = () => LB.proxy.indexOf("<") === -1;   // true once a real proxy URL is set
         const saasBoard = {
@@ -3904,14 +4036,59 @@
                 .then(r => r.ok ? r.json() : null)
                 .then(d => (d && Array.isArray(d.items)) ? d.items.map(it => {
                     let m = {}; try { m = JSON.parse(it.metadata || "{}"); } catch (e) { }
-                    return { score: it.score | 0, wave: m.w | 0, days: m.d | 0, cls: m.cls || "", name: sanitizeName(m.n),
-                             rank: it.rank, me: it.member_id === Telemetry.distinctId() };
+                    return {
+                        score: it.score | 0, wave: m.w | 0, days: m.d | 0, cls: m.cls || "", name: sanitizeName(m.n),
+                        rank: it.rank, me: it.member_id === Telemetry.distinctId()
+                    };
                 }) : null)
             // NOTE: per-item field names (it.score/member_id/rank/metadata) are assumed —
             // confirm against a real /list response and adjust this map if they differ.
         };
         // Read path is client-safe; global read + (dev) write both active now.
         Scores.setProvider(saasBoard);
+
+        /* === DAILY LEADERBOARD =====================================================
+           A SEPARATE board for the daily challenge. Each entry carries the challenge
+           date (the run's seed, YYYYMMDD) as metadata, so a given day's runs compare
+           only against each other. The board KEY is public and safe to ship. The daily
+           write token (LB.dailyDevSecret) is embedded as a client-side write path, same
+           as the main board's devSecret — see that caveat. WRITE prefers LB.proxy when set
+           (token stays server-side); otherwise it falls back to the embedded token. */
+        const DAILY_BOARD = "lb_5bf09b66efac629b40179d2c";   // daily board key — safe to ship
+        const dailyBoard = {
+            submit: (e, date) => {
+                const meta = JSON.stringify({ w: e.wave, d: e.days, cls: e.cls, n: e.name || "", date: date | 0 });   // challenge date as metadata
+                // Preferred: route through the proxy (token server-side), which targets the daily board.
+                if (lbProxyReady()) {
+                    return fetch(LB.proxy, {
+                        method: "POST", headers: { "content-type": "application/json" },
+                        body: JSON.stringify({ board: "daily", boardKey: DAILY_BOARD, member_id: Telemetry.distinctId(), score: e.score, metadata: meta })
+                    }).then(r => r.ok).catch(() => false);
+                }
+                // Client-side write fallback (mirrors LB.devSecret on the main board).
+                if (LB.dailyDevSecret) {
+                    return fetch(`${LB.base}/leaderboards/${DAILY_BOARD}/submit`, {
+                        method: "POST",
+                        headers: { "content-type": "application/json", "x-session-token": LB.dailyDevSecret },
+                        body: JSON.stringify({ member_id: Telemetry.distinctId(), score: e.score, metadata: meta })
+                    }).then(r => r.ok).catch(() => false);
+                }
+                return Promise.resolve(false);
+            },
+            top: (n, date) => fetch(`${LB.base}/leaderboards/${DAILY_BOARD}/list?count=${Math.max(n | 0, 100)}`)   // read is client-safe (board key only)
+                .then(r => r.ok ? r.json() : null)
+                .then(d => {
+                    if (!d || !Array.isArray(d.items)) return null;
+                    const rows = d.items.map(it => {
+                        let m = {}; try { m = JSON.parse(it.metadata || "{}"); } catch (e) { }
+                        return { score: it.score | 0, wave: m.w | 0, days: m.d | 0, cls: m.cls || "", name: sanitizeName(m.n), date: m.date | 0, me: it.member_id === Telemetry.distinctId() };
+                    }).filter(r => !date || r.date === (date | 0));         // keep only THIS challenge date
+                    rows.sort((a, b) => b.score - a.score);                 // re-rank within the day
+                    rows.forEach((r, i) => r.rank = i + 1);
+                    return rows.slice(0, n || 10);
+                })
+        };
+        Scores.setDailyProvider(dailyBoard);
 
 
         /* --- Supporter Pack ------------------------------------------------------
@@ -3936,25 +4113,46 @@
                 case "phase": return ctx.phase === c.phase;
                 case "selfHealthBelow": return self.currentHealth < resolveStat(self, "maxHealth", ctx) * c.pct;
                 case "targetHasTag": return !!(other && other.tags.includes(c.tag));
+                case "selfStatAtLeast": return resolveStat(self, c.stat, ctx) >= c.value;   // breakpoint gate (e.g. armor >= 100)
+                case "selfKillsAtLeast": return (self.killCount || 0) >= c.value;
+                case "targetEffectCount": return !!(other && other.activeEffects && other.activeEffects.length >= c.min);   // tag-gated: foe has N+ statuses
+                case "targetStacksAtLeast": { if (!other || !other.activeEffects) return false; let n = 0; for (const e of other.activeEffects) if (!c.source || e.source === c.source) n += (e.stacks || 1); return n >= c.min; }
                 default: return true;
             }
         }
+        /* runtime scalers — linear multiplier on a modifier's stacks; null = no directive.
+           perTag uses the rebuild() census; per:kill/second are actor counters; enemyNearby
+           is a spatial fact, so it lives on ctx (set each frame by the world loop). */
+        function scaleCount(m, actor, ctx) {
+            if (m.perTag) return (actor.tagCount && actor.tagCount[m.perTag]) || 0;
+            if (m.per === "kill") return actor.killCount || 0;
+            if (m.per === "second") return Math.floor(actor.combatTime || 0);
+            if (m.per === "enemyNearby") return (ctx && ctx.nearbyEnemies) || 0;
+            return null;
+        }
         function resolveStat(actor, stat, ctx) {
-            let flat = 0, inc = 0, more = 1;
+            let flat = 0, inc = 0, more = 1, hyp = 0;
             const fold = (m, stacks) => {
                 if (m.stat !== stat) return;
                 if (m.condition && !evalCondition(m.condition, actor, ctx)) return;
+                const sc = scaleCount(m, actor, ctx);
+                if (sc != null) stacks *= sc;                                   // perTag / per:kill|second|enemyNearby
                 if (m.op === "flat") flat += m.value * stacks;
                 else if (m.op === "increased") inc += m.value * stacks;
+                else if (m.op === "hyperbolic") hyp += m.value * stacks;        // pooled, asymptotic — for chance/reduction stats
                 else more *= Math.pow(1 + m.value, stacks);
             };
             for (const src of actor.sources) for (const m of src.modifiers) fold(m, 1);
             for (const e of actor.activeEffects) for (const m of e.modifiers) fold(m, e.stacks);
-            return (actor.baseStats[stat] + flat) * (1 + inc) * more;
+            let v = (actor.baseStats[stat] + flat) * (1 + inc) * more;
+            if (hyp > 0) v += (1 - v) * (1 - 1 / (1 + hyp));                     // approaches 1 (100%) but never reaches it
+            return v;
         }
         function collectTriggers(actor, on, ctx) {
             const out = [];
-            const take = t => { if (t.on === on && (!t.condition || evalCondition(t.condition, actor, ctx))) out.push(t); };
+            // Conditions are evaluated in dispatch(), where ev.other (the target) is available —
+            // collecting unconditionally here lets target-gated triggers (e.g. "if foe has 2+ statuses") fire.
+            const take = t => { if (t.on === on) out.push(t); };
             for (const src of actor.sources) for (const t of src.triggers) take(t);
             for (const e of actor.activeEffects) for (const t of e.triggers) take(t);
             return out;
@@ -3972,24 +4170,28 @@
         }
         /* A basic attack: the full-strength instance that lands on the primary target.
            canCrit + appliesOnHit + full lifesteal; physical, mitigated by armor. */
+        function actorConvert(att) { if (att.sources) for (const s of att.sources) if (s.convert) return s.convert; return null; }   // transform directive on any owned source
         function basicInstance(att, ctx, tags) {
-            return Object.assign(snapshot(att, ctx), {
+            const inst = Object.assign(snapshot(att, ctx), {
                 kind: "basic", damageType: "physical",
                 canCrit: true, appliesOnHit: true, lifestealMult: 1,
                 tags: ["basic", ...(tags || [])]
             });
+            const cv = actorConvert(att);                              // transform: rewrite damage type / add hit tags
+            if (cv) { if (cv.damageType) inst.damageType = cv.damageType; if (cv.addTags) inst.tags.push(...cv.addTags); }
+            return inst;
         }
         /* Crit roll. NOTE: this is honest RNG (mean == nominal crit chance). LoL uses
            a variance-smoothed pseudo-random distribution so streaks are rarer; a correct
            PRD needs a per-probability constant table, so that's left as future polish —
            a naive pity counter silently inflates the effective rate. */
-        function rollCrit(actor, chance) { return chance > 0 && Math.random() < chance; }
+        function rollCrit(actor, chance) { return chance > 0 && grng() < chance; }
         function resolveAttack(att, tgt, p, ctx) {
             if (tgt === G.hero && (G.hero.invulnT || 0) > 0) return false;   // revive shield — no damage while it lasts
             if (tgt !== G.hero && p.kind !== "proc" && !(p.tags && p.tags.includes("reflect"))) {   // enemy evasion — a chance to dodge your hit
                 const ev = resolveStat(tgt, "evasion", ctx);
-                if (ev > 0 && Math.random() < ev) {
-                    if (typeof G !== "undefined" && G && G.fx) G.fx.push({ x: tgt.x + ri(-4, 4), y: tgt.y - (tgt.r || 10) - 4, vy: -26, life: 0.65, t: 0, txt: "miss", col: "#bcd2e8" });
+                if (ev > 0 && grng() < ev) {
+                    if (typeof G !== "undefined" && G && G.fx) G.fx.push({ x: tgt.x + cri(-4, 4), y: tgt.y - (tgt.r || 10) - 4, vy: -26, life: 0.65, t: 0, txt: "miss", col: "#bcd2e8" });
                     return false;                                          // evaded — caller can whiff the projectile through
                 }
             }
@@ -4017,15 +4219,37 @@
             if (p.appliesOnHit) emit({ type: "onHitDealt", self: att, other: tgt, payload: p });   // gated: cleave splash won't proc on-hits
             if (p.kind === "basic" && !p.tags.includes("reflect"))                          // thorns reflects basic attacks only
                 emit({ type: "onHitTaken", self: tgt, other: att, payload: p, dealt });
-            if (tgt.currentHealth <= 0) emit({ type: "onKill", self: att, other: tgt });
+            if (tgt.currentHealth <= 0) { if (att) att.killCount = (att.killCount || 0) + 1; emit({ type: "onKill", self: att, other: tgt }); }   // killCount powers per:kill (direct kills; DoT kills excluded by design)
             return true;                                               // the hit landed
         }
         function emit(ev) { dispatch(ev); }                  // synchronous bus
+        /* Proc-chain safety (RoR2 ProcChainMask + StS depth cap).
+           A "chain" is one originating event's transitive closure:
+           spawnPayload -> resolveAttack -> emit -> dispatch -> (maybe) spawnPayload -> ...
+           Rules: every proc SOURCE fires freely on the originating event (depth 1, so stacked
+           same-name procs all still apply), but is MASKED from re-firing deeper in its own
+           chain — which makes proc->proc loops finite. _CHAIN_MAX is a hard backstop.
+           NOTE: DoTs are modeled as negative healthRegen drained in update(); they never enter
+           this bus, so they already cannot re-proc on-hit effects (no proc-coefficient needed). */
+        const _CHAIN_MAX = 16;
+        let _chainSeen = null, _chainDepth = 0;
         function dispatch(ev) {
-            for (const t of collectTriggers(ev.self, ev.type, ctx)) {
-                if (t.condition && !evalCondition(t.condition, ev.self, ctx, ev.other)) continue;
-                if (t.chance != null && Math.random() >= t.chance) continue;   // probabilistic procs (gear)
-                applyEffect(t.effect, ev);
+            const top = _chainSeen === null;
+            if (top) { _chainSeen = new Set(); _chainDepth = 0; }
+            _chainDepth++;
+            try {
+                if (_chainDepth > _CHAIN_MAX) return;                          // depth cap: abort runaway chains
+                for (const t of collectTriggers(ev.self, ev.type, ctx)) {
+                    if (t.condition && !evalCondition(t.condition, ev.self, ctx, ev.other)) continue;
+                    if (t.chance != null && grng() >= t.chance) continue;   // probabilistic procs (gear)
+                    const key = t.source || "?";
+                    if (_chainDepth > 1 && _chainSeen.has(key)) continue;       // mask: no recursive re-fire of the same proc
+                    _chainSeen.add(key);
+                    applyEffect(t.effect, ev);
+                }
+            } finally {
+                _chainDepth--;
+                if (top) _chainSeen = null;
             }
         }
         function applyEffect(eff, ev) {
@@ -4040,6 +4264,23 @@
                         appliesOnHit: false, lifesteal: 0, lifestealMult: 0, armorPen: 0,
                         kind: "proc", damageType: "true", tags: ["reflect"]
                     }, ctx);
+                    break;
+                }
+                case "detonate": {                                    // threshold payoff: consume a target's DoT stacks for a burst
+                    const tg = ev.other; if (!tg || !tg.activeEffects) break;
+                    let n = 0; for (const e of tg.activeEffects) if (e.source === eff.dotSource) n += (e.stacks || 1);
+                    if (n < eff.threshold) break;
+                    if (eff.consume) tg.activeEffects = tg.activeEffects.filter(e => e.source !== eff.dotSource);
+                    resolveAttack(ev.self, tg, {
+                        damage: (eff.perStack || 0) * n, critChance: 0, critMult: 1, canCrit: false,
+                        appliesOnHit: false, lifesteal: 0, lifestealMult: 0, armorPen: 0, kind: "proc", damageType: "true", tags: ["reflect"]
+                    }, ctx);
+                    break;
+                }
+                case "applyAoE": {                                    // transform-style spread: apply a template to nearby foes
+                    const c = ev.other || ev.self; if (!c || typeof G === "undefined" || !G.enemies) break;
+                    const r2 = (eff.radius || 80) * (eff.radius || 80);
+                    for (const e of G.enemies) { if (e.dead) continue; const dx = e.x - c.x, dy = e.y - c.y; if (dx * dx + dy * dy <= r2) applyEffectTemplate(e, eff.template); }
                     break;
                 }
             }
@@ -4175,9 +4416,15 @@
             { nm: "Battle Rhythm", flat: true, tiers: [.03, .05, .10], ds: v => `-${pct(v)} ability cooldowns.`, build: v => ({ modifiers: [{ stat: "cdr", op: "flat", value: v, source: "Battle Rhythm" }], triggers: [] }) },
             { nm: "Cleaving Blows", flat: true, tiers: [30, 45, 100], ds: v => `Attacks splash up to 50% to nearby foes — strongest at the hit, less toward the edge (+${v} radius).`, build: v => ({ modifiers: [{ stat: "cleave", op: "flat", value: v, source: "Cleaving Blows" }], triggers: [] }) },
             { nm: "Thornmail", flat: true, tiers: [3, 5, 8], ds: v => `+${v} armor; reflect 12% of damage taken.`, build: v => ({ modifiers: [{ stat: "armor", op: "flat", value: v, source: "Thornmail" }], triggers: [{ on: "onHitTaken", source: "Thornmail", effect: { kind: "spawnPayload", of: { mode: "reflect", pct: .12 } } }] }) },
-            { nm: "Frostbite", tiers: [.25, .35, .50], ds: v => `Attacks chill foes — ${pct(v)} slower for ${(1.25 + v * 2.5).toFixed(1)}s.`, build: v => ({ modifiers: [], triggers: [{ on: "onHitDealt", source: "Frostbite", effect: { kind: "applyEffect", to: "other", template: chillTpl(v) } }] }) },
-            { nm: "Ember Touch", tiers: [1.5, 3, 7], ds: v => `Attacks set foes alight — burns ${v}/sec (stacks).`, build: v => ({ modifiers: [], triggers: [{ on: "onHitDealt", source: "Ember Touch", effect: { kind: "applyEffect", to: "other", template: burnTpl(v) } }] }) },
-            { nm: "Venom Coating", tiers: [1, 2, 5], ds: v => `Attacks poison foes — ${v}/sec (stacks).`, build: v => ({ modifiers: [], triggers: [{ on: "onHitDealt", source: "Venom Coating", effect: { kind: "applyEffect", to: "other", template: poisonTpl(v) } }] }) },
+            { nm: "Frostbite", tiers: [.25, .35, .50], ds: v => `Attacks chill foes — ${pct(v)} slower for ${(1.25 + v * 2.5).toFixed(1)}s.`, build: v => ({ tags: ["frost"], modifiers: [], triggers: [{ on: "onHitDealt", source: "Frostbite", effect: { kind: "applyEffect", to: "other", template: chillTpl(v) } }] }) },
+            { nm: "Ember Touch", tiers: [1.5, 3, 7], ds: v => `Attacks set foes alight — burns ${v}/sec (stacks).`, build: v => ({ tags: ["fire"], modifiers: [], triggers: [{ on: "onHitDealt", source: "Ember Touch", effect: { kind: "applyEffect", to: "other", template: burnTpl(v) } }] }) },
+            { nm: "Venom Coating", tiers: [1, 2, 5], ds: v => `Attacks poison foes — ${v}/sec (stacks).`, build: v => ({ tags: ["poison"], modifiers: [], triggers: [{ on: "onHitDealt", source: "Venom Coating", effect: { kind: "applyEffect", to: "other", template: poisonTpl(v) } }] }) },
+            { nm: "Pyromancer", tiers: [.04, .07, .12], tags: ["fire"], ds: v => `+${pct(v)} increased attack damage per fire source you carry.`, build: v => ({ tags: ["fire"], modifiers: [{ stat: "attackDamage", op: "increased", value: v, perTag: "fire", source: "Pyromancer" }], triggers: [] }) },
+            // --- Phase 2 expressiveness primitives (threshold / tag-gated / transform) ---
+            { nm: "Rupture", tiers: [8, 12, 20], tags: ["poison"], ds: v => `On hit: if the foe has 5+ poison stacks, rupture them for ${v} true damage per stack.`, build: v => ({ tags: ["poison"], modifiers: [], triggers: [{ on: "onHitDealt", source: "Rupture", effect: { kind: "detonate", dotSource: "Poison", threshold: 5, perStack: v, consume: true } }] }) },
+            { nm: "Opportunist", tiers: [8, 14, 24], ds: v => `On hit: if the foe suffers 2+ status effects, deal +${v} true damage.`, build: v => ({ modifiers: [], triggers: [{ on: "onHitDealt", source: "Opportunist", condition: { kind: "targetEffectCount", min: 2 }, effect: { kind: "spawnPayload", of: { mode: "flat", amount: { type: "flat", value: v } } } }] }) },
+            { nm: "Wildfire", tags: ["fire"], ds: "Critical strikes spread burn to nearby foes.", src: { tags: ["fire"], modifiers: [], triggers: [{ on: "onCrit", source: "Wildfire", effect: { kind: "applyAoE", radius: 80, template: BURN } }] } },
+            { nm: "Annihilation", ds: "Your basic attacks ignore all armor.", src: { convert: { damageType: "true" }, modifiers: [], triggers: [] } },
             // binary perk — no tiers
             { nm: "Hurricane", ds: "+1 lightning bolt at another foe (scales with power; no on-hit effects).", src: { modifiers: [{ stat: "chain", op: "flat", value: 1, source: "Hurricane" }], triggers: [] } },
         ];
@@ -4185,7 +4432,7 @@
         function perkLuck() { return Math.min(0.9, (G.fireLevel - 1) * 0.035); }
         function rollPerkTier() {
             const luck = perkLuck();
-            const epic = 0.02 + luck * 0.30, rare = 0.16 + luck * 0.34, r = Math.random();
+            const epic = 0.02 + luck * 0.30, rare = 0.16 + luck * 0.34, r = grng();
             return r < epic ? 2 : (r < epic + rare ? 1 : 0);
         }
         const PERK_TIER_CLS = ["r-common", "r-magic", "r-rare"], PERK_TIER_NM = ["Common", "Rare", "Epic"];
@@ -4256,7 +4503,7 @@
             const bias = SLOT_AFFIX_BIAS[type] || [];
             let pool = AFFIXES.filter(a => !used.has(a.stat));
             if (!pool.length) pool = AFFIXES;
-            if (bias.length && Math.random() < 0.65) { const pref = pool.filter(a => bias.includes(a.stat)); if (pref.length) pool = pref; }
+            if (bias.length && grng() < 0.65) { const pref = pool.filter(a => bias.includes(a.stat)); if (pref.length) pool = pref; }
             return pick(pool).make();
         }
         const RARITY = [{ nm: "common", cls: "r-common", affixes: 1, val: 6 }, { nm: "magic", cls: "r-magic", affixes: 2, val: 16 }, { nm: "rare", cls: "r-rare", affixes: 3, val: 42 }];
@@ -4266,16 +4513,53 @@
            Each returns a trigger {on, chance?, effect} plus a name suffix + description.
            They reuse the same trigger bus the class perks use. */
         const PROC_AFFIXES = [
-            (d) => ({ suf: "of Embers", ds: "25% on hit: ignite (burn)", trig: { on: "onHitDealt", chance: 0.25, source: "of Embers", effect: { kind: "applyEffect", to: "other", template: BURN } } }),
-            (d) => ({ suf: "of Venom", ds: "30% on hit: stack poison", trig: { on: "onHitDealt", chance: 0.30, source: "of Venom", effect: { kind: "applyEffect", to: "other", template: POISON } } }),
+            (d) => ({ suf: "of Embers", tag: "fire", ds: "25% on hit: ignite (burn)", trig: { on: "onHitDealt", chance: 0.25, source: "of Embers", effect: { kind: "applyEffect", to: "other", template: BURN } } }),
+            (d) => ({ suf: "of Venom", tag: "poison", ds: "30% on hit: stack poison", trig: { on: "onHitDealt", chance: 0.30, source: "of Venom", effect: { kind: "applyEffect", to: "other", template: POISON } } }),
             (d) => ({ suf: "of the Leech", ds: `heal ${Math.round(6 * d)} on kill`, trig: { on: "onKill", source: "of the Leech", effect: { kind: "heal", amount: { type: "flat", value: Math.round(6 * d) } } } }),
             (d) => ({ suf: "of Ruin", ds: `crits deal +${Math.round(10 * d)} true damage`, trig: { on: "onCrit", source: "of Ruin", effect: { kind: "spawnPayload", of: { mode: "flat", amount: { type: "flat", value: Math.round(10 * d) } } } } }),
             (d) => ({ suf: "of Sparks", ds: `20% on hit: +${Math.round(7 * d)} true damage`, trig: { on: "onHitDealt", chance: 0.20, source: "of Sparks", effect: { kind: "spawnPayload", of: { mode: "flat", amount: { type: "flat", value: Math.round(7 * d) } } } } }),
         ];
 
-        const ri = (a, b) => Math.floor(a + Math.random() * (b - a + 1));
-        const rf = (a, b) => +(a + Math.random() * (b - a)).toFixed(3);
-        const pick = a => a[Math.floor(Math.random() * a.length)];
+        /* === DETERMINISTIC RNG (seeded dailies) =================================
+           Two streams, deliberately separated:
+             • grng()  — the GAMEPLAY stream. Seeded per run. Feeds ri/rf/pick and every
+               content roll (loot, affixes, set/proc, spawns, perks, storm hazards, combat
+               rolls). Seeding it makes a run's generated content reproducible.
+             • crand() — the COSMETIC stream (plain Math.random). Feeds particles, floating
+               text, lightning visuals, audio, ambient critters. NEVER perturbs grng, so
+               framerate-dependent visual draws can't desync a seeded run.
+           A daily seeds grng from the date; a normal run seeds it from a random value. */
+        let _gseed = (Date.now() ^ (Math.random() * 0x100000000)) >>> 0;
+        let _runSeed = _gseed;                              // the run's MASTER seed; sub-streams derive from it
+        function grng() {                                   // mulberry32 — the live gameplay stream
+            _gseed |= 0; _gseed = (_gseed + 0x6D2B79F5) | 0;
+            let t = Math.imul(_gseed ^ (_gseed >>> 15), 1 | _gseed);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        }
+        function seedRun(seed) { _runSeed = _gseed = (seed >>> 0) || 1; }      // reset master + live stream
+        function dailySeed(d) { d = d || new Date(); const s = d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate(); return s >>> 0; }
+        /* Per-domain sub-streams: a content roll keyed by a STABLE index (wave number, spawn
+           ordinal, level) draws from its own seed derived from the master — so it is identical
+           regardless of when/whether the player triggers it. This is what makes a seeded run's
+           content (waves, loot, perk offers) play-order-independent. Combat rolls stay on the
+           live stream (skill-based execution, legitimately play-dependent). */
+        const _DOMAIN = { wave: 0x9E37, spawn: 0x85EB, loot: 0xC2B2, perk: 0x27D4 };
+        function subSeed(domain, index) {
+            let h = (_runSeed ^ (_DOMAIN[domain] | 0)) >>> 0;
+            h = Math.imul(h ^ (index >>> 0), 0x9E3779B1) >>> 0;
+            h ^= h >>> 15; h = Math.imul(h, 0x85EBCA6B) >>> 0; h ^= h >>> 13;
+            return (h >>> 0) || 1;
+        }
+        function withSeed(seed, fn) { const s = _gseed; _gseed = (seed >>> 0) || 1; try { return fn(); } finally { _gseed = s; } }
+        const crand = Math.random;                          // cosmetic stream — explicit alias so intent is visible
+
+        // GAMEPLAY helpers (seeded). COSMETIC siblings (cri/crf/cpick) use crand and never touch grng.
+        const ri = (a, b) => Math.floor(a + grng() * (b - a + 1));
+        const rf = (a, b) => +(a + grng() * (b - a)).toFixed(3);
+        const pick = a => a[Math.floor(grng() * a.length)];
+        const cri = (a, b) => Math.floor(a + crand() * (b - a + 1));
+        const crf = (a, b) => +(a + crand() * (b - a)).toFixed(3);
 
         /* --- thematic equipment sets: themed affixes + escalating 2pc / 4pc bonuses (4 equip slots) --- */
         const SETS = {
@@ -4352,7 +4636,7 @@
             const diff = 1 + (level - 1) * 0.11;          // an item's power scales with its own level
             const base = pick(ITEM_BASES);
             // rarity odds drift toward magic/rare as level climbs, then clamp to the dropper's ceiling
-            const r = Math.random();
+            const r = grng();
             const magicCut = 0.55 - Math.min(0.22, (diff - 1) * 0.035);
             const rareCut = 0.86 - Math.min(0.28, (diff - 1) * 0.045);
             let rIdx = 0; if (r > magicCut) rIdx = 1; if (r > rareCut) rIdx = 2;
@@ -4361,7 +4645,7 @@
             const mods = base.mods.map(m => ({ ...m, source: base.nm }));
             const used = new Set(mods.map(m => m.stat));     // seed with the base item's stats so nothing duplicates them
             // set theme: ~60% of items belong to a set, leading with that set's signature affix
-            let setId = Math.random() < 0.6 ? pick(SET_IDS) : null;
+            let setId = grng() < 0.6 ? pick(SET_IDS) : null;
             let affixesLeft = rar.affixes;
             if (setId) {
                 const a = SETS[setId].affix();        // only add the themed affix if that stat isn't already on the item
@@ -4373,14 +4657,14 @@
                 used.add(a.stat); a.source = "affix"; mods.push(scaleAffix(a, diff));
             }
             // proc chance: rare 55%, magic 22%, common none
-            const triggers = []; let suffix = "", procDs = [];
+            const triggers = [], tags = []; let suffix = "", procDs = [];
             const procChance = rIdx === 2 ? 0.55 : rIdx === 1 ? 0.22 : 0;
-            if (Math.random() < procChance) { const p = pick(PROC_AFFIXES)(diff); triggers.push(p.trig); suffix = " " + p.suf; procDs.push(p.ds); }
+            if (grng() < procChance) { const p = pick(PROC_AFFIXES)(diff); triggers.push(p.trig); suffix = " " + p.suf; procDs.push(p.ds); if (p.tag) tags.push(p.tag); }
             const adj = setId ? SETS[setId].adj + " " : (rIdx ? pick(PREFIX) + " " : "");
             return {
                 id: "item" + (idSeq++), slot: base.slot, lvl: level, rarity: rar.nm, rarCls: rar.cls,
                 set: setId || "basic", setNm: setId ? SETS[setId].nm : null,
-                nm: adj + base.nm + suffix, modifiers: mods, triggers, procDs, value: rar.val + ri(0, 8) + Math.round((diff - 1) * 6)
+                nm: adj + base.nm + suffix, modifiers: mods, triggers, tags, procDs, value: rar.val + ri(0, 8) + Math.round((diff - 1) * 6)
             };
         }
         function salvageValue(it) { return Math.max(1, Math.round(it.value * SALVAGE_RATE)); }   // remains from salvaging gear
@@ -4492,6 +4776,9 @@
         function rebuild(h) {
             const items = []; for (const s of h.slots) if (h.equipment[s.id]) items.push(h.equipment[s.id]);
             h.sources = [h.classPassive, fireSource(), ...h.perks, ...items, ...setBonusSources(items)];
+            // theme census: how many of each tag the hero currently owns (drives perTag modifiers)
+            const tc = {}; for (const src of h.sources) for (const tag of (src.tags || [])) tc[tag] = (tc[tag] || 0) + 1;
+            h.tagCount = tc;
         }
         /* resolve every stat for an actor-like object (used for gear comparison) */
         function resolveAll(actorLike) { const o = {}; for (const s of STATS) o[s] = resolveStat(actorLike, s, ctx); return o; }
@@ -4540,26 +4827,28 @@
                 G._tutLoot = 0; SFX.waveStart(); return;
             }
             const q = [];
-            const isBoss = G.wave >= 8 && (G.wave - 8) % 6 === 0;   // first boss at wave 8, then every 6 waves (8, 14, 20...)
-            if (isBoss) {
-                // BOSS WAVE — the boss plus a small honor guard
-                q.push({ t: 0.4, key: "boss" });
-                const adds = 3 + Math.floor(G.wave / 6);
-                for (let i = 0; i < adds; i++) q.push({ t: 1.5 + 0.6 * i, key: Math.random() < 0.5 ? "grunt" : "spitter" });
-            } else {
-                const base = 2 + Math.floor((G.wave - 1) * 2);
-                const count = Math.round(base * (G.isNight ? 1.5 : 1));
-                for (let i = 0; i < count; i++) {
-                    const r = Math.random();
-                    let key;
-                    if (G.wave >= 3 && r < 0.18) key = "spitter";
-                    else if (G.wave >= 2 && r < 0.32) key = "bomber";
-                    else if (r < 0.78) key = "grunt";
-                    else if (r < 0.92) key = "swift";
-                    else key = "brute";
-                    q.push({ t: 0.25 * i + Math.random() * 0.4, key });
+            withSeed(subSeed("wave", G.wave), () => {       // wave composition is fixed by wave number, not by play
+                const isBoss = G.wave >= 8 && (G.wave - 8) % 6 === 0;   // first boss at wave 8, then every 6 waves (8, 14, 20...)
+                if (isBoss) {
+                    // BOSS WAVE — the boss plus a small honor guard
+                    q.push({ t: 0.4, key: "boss" });
+                    const adds = 3 + Math.floor(G.wave / 6);
+                    for (let i = 0; i < adds; i++) q.push({ t: 1.5 + 0.6 * i, key: grng() < 0.5 ? "grunt" : "spitter" });
+                } else {
+                    const base = 2 + Math.floor((G.wave - 1) * 2);
+                    const count = Math.round(base * (G.isNight ? 1.5 : 1));
+                    for (let i = 0; i < count; i++) {
+                        const r = grng();
+                        let key;
+                        if (G.wave >= 3 && r < 0.18) key = "spitter";
+                        else if (G.wave >= 2 && r < 0.32) key = "bomber";
+                        else if (r < 0.78) key = "grunt";
+                        else if (r < 0.92) key = "swift";
+                        else key = "brute";
+                        q.push({ t: 0.25 * i + grng() * 0.4, key });
+                    }
                 }
-            }
+            });
             q.sort((a, b) => a.t - b.t);
             G.spawnQueue = q;
             SFX.waveStart();
@@ -4572,17 +4861,35 @@
             G._healTick = 0; G._healTickT = 0;                // fresh heal-tick accounting for this intermission
             showIntermission();
         }
+        function rollEnemyLoot(e) {                              // deterministic per spawn ordinal — kill order can't change it
+            const out = [];
+            const L = (!e._tutDrop) && ENEMIES[e.tag] && ENEMIES[e.tag].loot;
+            if (!L) return out;
+            withSeed(subSeed("loot", e.spawnIdx || 0), () => {
+                if (grng() >= L.chance) return;
+                const cur = Math.max(1, e.spawnWave || 1);          // level basis = spawn wave (deterministic), not live player level
+                const n = ri(L.count[0], L.count[1]);
+                for (let i = 0; i < n; i++) out.push(rollItem(Math.max(1, cur + ri(L.lvl[0], L.lvl[1])), L.rar));
+            });
+            return out;
+        }
         function spawnEnemy(key, opts) {
             const a = ENEMIES[key]; if (!a) return;
             const d = diffMul(), h = G.hero;
-            const ang = Math.random() * Math.PI * 2;
-            const dist = Math.max(G.lightR + 70, 440) + ri(0, 120);
+            const sidx = (G.spawnIndex = (G.spawnIndex || 0) + 1);   // stable per-run spawn ordinal (deterministic order)
+            let ang, dist, atk0;
+            withSeed(subSeed("spawn", sidx), () => {                 // spawn position fixed by ordinal, not by play
+                ang = grng() * Math.PI * 2;
+                dist = Math.max(G.lightR + 70, 440) + ri(0, 120);
+                atk0 = grng() * 0.6;
+            });
             const e = {
                 id: "e" + (idSeq++), kind: "enemy", tag: a.tag, color: a.color, r: a.r,
+                spawnIdx: sidx, spawnWave: G.wave,                   // keys for deterministic loot
                 x: h.x + Math.cos(ang) * dist, y: h.y + Math.sin(ang) * dist, vx: 0, vy: 0,
                 baseStats: mkStats({ ...a.stats, maxHealth: Math.round(a.stats.maxHealth * d), attackDamage: Math.round(a.stats.attackDamage * d), armor: Math.round((a.stats.armor || 0) * (1 + (d - 1) * 0.4)), critMultiplier: 1.5 }),
                 sources: [{ id: "arch", modifiers: [], triggers: [] }, NIGHT_SWARM], activeEffects: [],
-                atkTimer: Math.random() * 0.6, castT: 1.2, xp: a.xp, gold: a.gold, flash: 0, dead: false, hitScale: 1,
+                atkTimer: atk0, castT: 1.2, xp: a.xp, gold: a.gold, flash: 0, dead: false, hitScale: 1,
                 windT: 0, windAim: 0, windTX: 0, windTY: 0, windup: ({ swift: 0.24, brute: 0.5, spitter: 0.42, boss: 0.5 }[key]) || 0.34,
                 ranged: !!a.ranged, keepDist: a.keepDist || 0, bomber: !!a.bomber, blast: a.blast || 0, boss: !!a.boss, fuse: 0
             };
@@ -5046,6 +5353,10 @@
             const h = G.hero;
             if (G.dying) { tickDeath(dt); return; }
 
+            // Phase-1 runtime scalers — keep the counters scaleCount() reads honest.
+            if (G.waveState === "active") h.combatTime = (h.combatTime || 0) + dt;                 // per:second
+            { let nb = 0; const R2 = 170 * 170; for (const e of G.enemies) if (!e.dead) { const dx = e.x - h.x, dy = e.y - h.y; if (dx * dx + dy * dy < R2) nb++; } ctx.nearbyEnemies = nb; }   // per:enemyNearby (spatial -> ctx)
+
             if (G.waveState === "active") {
                 G.time += dt; G.phaseTime += dt;
                 // day/night clock — advances only while a wave is being fought
@@ -5100,12 +5411,12 @@
             // ---- weather: storms roll in and out, with lightning + thunder ----
             const st = G.storm;
             st.t -= dt;
-            if (st.t <= 0) { st.on = !st.on; st.t = st.on ? ri(16, 30) : ri(30, 60); if (st.on) { st.strikeIn = 1 + Math.random() * 2.5; st.boltIn = 4 + Math.random() * 6; } }
+            if (st.t <= 0) { st.on = !st.on; st.t = st.on ? ri(16, 30) : ri(30, 60); if (st.on) { st.strikeIn = 1 + Math.random() * 2.5; st.boltIn = 4 + grng() * 6; } }
             st.intensity += ((st.on ? 1 : 0) - st.intensity) * Math.min(1, dt * 0.6);
             if (st.on && st.intensity > 0.35) { st.strikeIn -= dt; if (st.strikeIn <= 0) { triggerLightning(); st.strikeIn = 3.5 + Math.random() * 5; } }
             if (st.on && st.intensity > 0.4 && running && !G.dying && !G.hero.dead) {   // occasional damaging ground strike near the fire
-                if (st.boltIn == null) st.boltIn = 4 + Math.random() * 6;
-                st.boltIn -= dt; if (st.boltIn <= 0) { scheduleGroundStrike(); st.boltIn = 7 + Math.random() * 8; }
+                if (st.boltIn == null) st.boltIn = 4 + grng() * 6;
+                st.boltIn -= dt; if (st.boltIn <= 0) { scheduleGroundStrike(); st.boltIn = 7 + grng() * 8; }
             }
             if (st.intensity > 0.01) {                                    // drive the rain field (screen-space streaks)
                 if (G.rain.length < 280) { for (let i = G.rain.length; i < 280; i++) G.rain.push({ x: Math.random() * (W + 120) - 60, y: Math.random() * H, len: 12 + Math.random() * 12, spd: 760 + Math.random() * 420 }); }
@@ -5292,8 +5603,8 @@
                             if (Math.hypot(e.x - tg.x, e.y - tg.y) <= tg.r + e.r) { e.currentHealth -= inst.damage; onDamage(e, inst.damage, false, inst); }
                         }
                         if (!h.dead && (h.invulnT || 0) <= 0 && Math.hypot(h.x - tg.x, h.y - tg.y) <= tg.r + h.r) { h.currentHealth -= inst.damage; onDamage(h, inst.damage, false, inst); }
-                        const bp = []; let by = -560, bx = ri(-10, 10);             // jagged bolt path (screen-offset, lands on the point)
-                        for (; by < 0; by += ri(26, 46)) { bx += ri(-22, 22); bp.push([bx, by]); } bp.push([0, 0]);
+                        const bp = []; let by = -560, bx = cri(-10, 10);             // jagged bolt path (screen-offset, lands on the point)
+                        for (; by < 0; by += cri(26, 46)) { bx += cri(-22, 22); bp.push([bx, by]); } bp.push([0, 0]);
                         G.fx.push({ strike: true, x: tg.x, y: tg.y, r: tg.r, bolt: bp, life: 0.55, max: 0.55 });
                         spawnParticles(tg.x, tg.y, "#cfe0ff", 22, { speed: tg.r * 3, life: 0.5, size: 3, grav: 40 });
                         G.lightningFlash = 1.0; screenFlash("210,235,255", 0.5); SFX.thunder(true);   // bright blaze (kept lighter so the bolt reads)
@@ -5447,7 +5758,7 @@
                     G.fireFeed = Math.min(1.5, (G.fireFeed || 0) + 0.5);                              // fire flares up
                     spawnParticles(0, 0, "#ffd98a", 7, { speed: 130, life: 0.5, size: 2.6, dir: -Math.PI / 2, spread: 0.95, grav: -80 });  // embers gush up
                     spawnParticles(0, -6, "#fff0c0", 6, { speed: 215, life: 0.3, size: 1.7, dir: -Math.PI / 2, spread: 2.7, grav: 70 });   // crackling sparks snap outward
-                    G.fx.push({ x: ri(-13, 13), y: -18, vy: -48, life: 0.7, t: 0, txt: "+" + dep, col: "#ffce6a" });                 // rising tally at the flames
+                    G.fx.push({ x: cri(-13, 13), y: -18, vy: -48, life: 0.7, t: 0, txt: "+" + dep, col: "#ffce6a" });                 // rising tally at the flames
                     if (G.carry < 1) {
                         G.carry = 0; G.fireFeed = 1.6; SFX.fire(); shake(2.2);          // the last of it goes in — a warm whoomp
                         G.rings.push({ from: 24, to: 96, life: 0.5, max: 0.5 });
@@ -5676,15 +5987,7 @@
                 });
                 G._tutLoot = 1;
             }
-            const L = (!e._tutDrop) && ENEMIES[e.tag] && ENEMIES[e.tag].loot;            // per-enemy loot table (count / level range / rarity cap)
-            if (L && Math.random() < L.chance) {
-                const cur = G.level;                                      // "current level" = your level (the fire's level)
-                const n = ri(L.count[0], L.count[1]);
-                for (let i = 0; i < n; i++) {
-                    const lvl = Math.max(1, cur + ri(L.lvl[0], L.lvl[1]));   // rolls within [cur+lo, cur+hi]
-                    G.drops.push({ x: e.x + ri(-18, 18), y: e.y + ri(-18, 18), bob: Math.random() * 6, item: rollItem(lvl, L.rar), dead: false });
-                }
-            }
+            for (const item of rollEnemyLoot(e)) G.drops.push({ x: e.x + cri(-18, 18), y: e.y + cri(-18, 18), bob: crand() * 6, item, dead: false });
         }
         function spawnOrb(x, y, type, val, opts) {
             opts = opts || {};
@@ -5693,11 +5996,11 @@
             // distribute the spray in three tiers: a dense near-cluster, mid scattered bits, and a far fine spray
             const roll = Math.random(); let a, s, scatT;
             if (roll < 0.45) {            // near cluster — clusters at the kill, along the throw
-                a = dir + (Math.random() - 0.5) * (0.45 + 0.3 * pw); s = ri(40, 160) * pw; scatT = 0.16 + pw * 0.10;
+                a = dir + (Math.random() - 0.5) * (0.45 + 0.3 * pw); s = cri(40, 160) * pw; scatT = 0.16 + pw * 0.10;
             } else if (roll < 0.78) {     // scattered bits — wider spread, medium throw
-                a = dir + (Math.random() - 0.5) * (1.25 + 0.5 * pw); s = ri(170, 360) * pw; scatT = 0.22 + pw * 0.13;
+                a = dir + (Math.random() - 0.5) * (1.25 + 0.5 * pw); s = cri(170, 360) * pw; scatT = 0.22 + pw * 0.13;
             } else {                  // fine spray — flung furthest, fairly forward
-                a = dir + (Math.random() - 0.5) * (0.8 + 0.4 * pw); s = ri(360, 560) * pw; scatT = 0.30 + pw * 0.16;
+                a = dir + (Math.random() - 0.5) * (0.8 + 0.4 * pw); s = cri(360, 560) * pw; scatT = 0.30 + pw * 0.16;
             }
             G.orbs.push({
                 x: x + Math.cos(a) * 6, y: y + Math.sin(a) * 6, vx: 0, vy: 0, type, val, bob: Math.random() * 6, dead: false, life: REMAINS_TTL,
@@ -5733,8 +6036,8 @@
         /* schedule a telegraphed lightning ground strike at a random point around the campfire */
         function scheduleGroundStrike() {
             if (!G) return;
-            const ang = Math.random() * Math.PI * 2, near = 70, far = Math.max(140, G.lightR * 0.85);
-            const dist = near + Math.random() * (far - near), tx = Math.cos(ang) * dist, ty = Math.sin(ang) * dist;
+            const ang = grng() * Math.PI * 2, near = 70, far = Math.max(140, G.lightR * 0.85);
+            const dist = near + grng() * (far - near), tx = Math.cos(ang) * dist, ty = Math.sin(ang) * dist;
             const dmg = Math.round(38 * diffMul());                       // lightning damage scales with wave difficulty (tunable)
             G.telegraphs.push({
                 x: tx, y: ty, r: 64, t: 1.0, maxT: 1.0, faction: "hazard",
@@ -5901,7 +6204,7 @@
                 });
             }
             // a couple of slow motes that settle like dust
-            for (let i = 0; i < Math.max(1, n >> 2); i++) G.parts.push({ x: x + ri(-5, 5), y: y + ri(-3, 6), vx: ri(-12, 12), vy: ri(-6, 10), life: 1.0 + Math.random() * 0.6, max: 1.6, color: "#6f6658", size: 3 + Math.random() * 3, grav: 120 });
+            for (let i = 0; i < Math.max(1, n >> 2); i++) G.parts.push({ x: x + cri(-5, 5), y: y + cri(-3, 6), vx: cri(-12, 12), vy: cri(-6, 10), life: 1.0 + Math.random() * 0.6, max: 1.6, color: "#6f6658", size: 3 + Math.random() * 3, grav: 120 });
         }
         /* damage-over-time / drain feedback — a rising count of HP lost plus a small mote, tinted by the effect */
         function dotFeedback(actor, amount) {
@@ -5911,8 +6214,8 @@
             if (ae.some(e => e.key.indexOf("poison") === 0)) { numCol = "#a6e85f"; dripCol = "#5fb53a"; }   // venom → green
             else if (ae.some(e => e.key.indexOf("burn") === 0)) { numCol = "#ffb24a"; dripCol = "#ff7a2c"; } // burn → ember
             const r = actor.r || 12;
-            G.fx.push({ x: actor.x + ri(-5, 5), y: actor.y - r - 4, vy: -24, life: 0.85, t: 0, txt: "-" + Math.round(amount), col: numCol });
-            spawnParticles(actor.x + ri(-r * 0.4 | 0, r * 0.4 | 0), actor.y + r * 0.35, dripCol, 3, { speed: 28, life: 0.55, size: 2.4, grav: 240, dir: Math.PI / 2, spread: 1.5 });
+            G.fx.push({ x: actor.x + cri(-5, 5), y: actor.y - r - 4, vy: -24, life: 0.85, t: 0, txt: "-" + Math.round(amount), col: numCol });
+            spawnParticles(actor.x + cri(-r * 0.4 | 0, r * 0.4 | 0), actor.y + r * 0.35, dripCol, 3, { speed: 28, life: 0.55, size: 2.4, grav: 240, dir: Math.PI / 2, spread: 1.5 });
         }
         function onDamage(tgt, dealt, crit, p) {
             tgt.flash = 0.12; tgt.hitScale = crit ? 1.55 : 1.32;            // squash-pop on hit
@@ -5923,8 +6226,8 @@
             const isMelee = p && p.tags && p.tags.includes("melee");
             tgt._killPower = (crit ? 1.8 : 1) * (p && p.kind === "ability" ? 1.35 : 1);   // drives how hard the remains splash on death
             if (!splash && !isBolt && !(isMelee && !crit)) { crit ? SFX.crit() : SFX.hit(G.combo); }   // combo raises the hit pitch
-            if (splash) G.fx.push({ x: tgt.x + ri(-6, 6), y: tgt.y - tgt.r, vy: -30, life: 0.8, t: 0, txt: "-" + Math.round(dealt), col: "#ffcf8a" });  // cleave damage — shown like burn/poison ticks
-            else G.fx.push({ x: tgt.x + ri(-6, 6), y: tgt.y - tgt.r, vy: -34, life: 0.7, txt: Math.round(dealt), crit, t: 0 });
+            if (splash) G.fx.push({ x: tgt.x + cri(-6, 6), y: tgt.y - tgt.r, vy: -30, life: 0.8, t: 0, txt: "-" + Math.round(dealt), col: "#ffcf8a" });  // cleave damage — shown like burn/poison ticks
+            else G.fx.push({ x: tgt.x + cri(-6, 6), y: tgt.y - tgt.r, vy: -34, life: 0.7, txt: Math.round(dealt), crit, t: 0 });
             // sparks fly from the contact edge along the hit direction — transferred force, not a generic puff
             const dir = G.hero ? Math.atan2(tgt.y - G.hero.y, tgt.x - G.hero.x) : null;
             const cxx = dir != null ? tgt.x - Math.cos(dir) * tgt.r * 0.6 : tgt.x, cyy = dir != null ? tgt.y - Math.sin(dir) * tgt.r * 0.6 : tgt.y;
@@ -5960,6 +6263,7 @@
             if (unlocked.length) sub.innerHTML = `<span class="unlockline">${t("newAbility")} <b>${unlocked.map(a => a.label + " · " + a.name).join(" &nbsp; ")}</b></span><br>${t("chooseBoon")}`;
             else sub.textContent = t("chooseBoon");
             // unified pool: generic perks (rarity-rolled) + the next upgrade on each unlocked ability's ladder
+            const _perkSeedSave = _gseed; _gseed = subSeed("perk", G.level);   // daily: offers at a given level are fixed (for identical prior choices)
             const pool = [];
             for (const p of PERKS) {
                 if (p.tiers) {
@@ -5996,7 +6300,8 @@
                     apply: h => { const cur = h.basicMod?.rank || 0; if (rank > cur) h.basicMod = { kind: sig.kind, rank }; }
                 });
             }
-            const choices = []; while (choices.length < 3 && pool.length) choices.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+            const choices = []; while (choices.length < 3 && pool.length) choices.push(pool.splice(Math.floor(grng() * pool.length), 1)[0]);
+            _gseed = _perkSeedSave;                                            // restore live (combat) stream
             if (G._tut0) {                                              // Level 0: one card only — unlock the dash (E)
                 const eAb = ABILITIES.find(a => a.key === "e");
                 choices.length = 0;
@@ -6036,9 +6341,9 @@
             const luck = perkLuck(), rareOdds = Math.round((0.02 + luck * 0.30 + 0.16 + luck * 0.34) * 100), epicOdds = Math.round((0.02 + luck * 0.30) * 100);
             document.getElementById("fireinfo").innerHTML =
                 `<div class="item"><div class="nm">Fire level ${G.fireLevel}</div>
-              <div class="mods">Light radius ${Math.round(G.lightR)} · +${12 * (G.fireLevel - 1)} max health · +${5 * (G.fireLevel - 1)}% gold · mends ${(FIRE_REGEN_PER_LEVEL * G.fireLevel).toFixed(1)} hp/sec between waves</div>
-              <div class="mods">Perk luck — ${rareOdds}% rare, ${epicOdds}% epic on level-up cards</div></div>
-             <div style="color:var(--muted);font-size:12.5px">Next level reclaims another 46 of ground from the dark, steels you, and sharpens your perk luck.</div>`;
+                      <div class="mods">Light radius ${Math.round(G.lightR)} · +${12 * (G.fireLevel - 1)} max health · +${5 * (G.fireLevel - 1)}% gold · mends ${(FIRE_REGEN_PER_LEVEL * G.fireLevel).toFixed(1)} hp/sec between waves</div>
+                      <div class="mods">Perk luck — ${rareOdds}% rare, ${epicOdds}% epic on level-up cards</div></div>
+                     <div style="color:var(--muted);font-size:12.5px">Next level reclaims another 46 of ground from the dark, steels you, and sharpens your perk luck.</div>`;
             const ub = document.getElementById("upgradebtn");
             ub.textContent = `Feed fire — ◈ ${cost}`;
             ub.disabled = G.gold < cost;
@@ -6118,13 +6423,13 @@
                 let n = 0; for (const s of G.hero.slots) { const eq = G.hero.equipment[s.id]; if (eq && eq.set === it.set) n++; }
                 const line = (mods, active, label) => `<div class="dsetb ${active ? "on" : ""}"><b>${label}</b> ${mods.map(modText).join(", ")}</div>`;
                 setInfo = `<div class="dset" style="--sc:${S.col}">
-              <div class="dsetn">${tn(S.nm)} ${t("setOf")} · ${t("setWorn", { n })}</div>
-              ${S.b2 ? line(S.b2.mods, n >= 2, "2pc") : ""}
-              ${S.b4 ? line(S.b4.mods, n >= 4, "4pc") : ""}</div>`;
+                      <div class="dsetn">${tn(S.nm)} ${t("setOf")} · ${t("setWorn", { n })}</div>
+                      ${S.b2 ? line(S.b2.mods, n >= 2, "2pc") : ""}
+                      ${S.b4 ? line(S.b4.mods, n >= 4, "4pc") : ""}</div>`;
             }
             dd.innerHTML = `<div class="dn ${it.rarCls}">${it.nm} <span style="color:var(--muted);font-weight:400;font-size:10px">· ${t("lvShort")} ${it.lvl || 1} · ${tf("nm_" + (it.rarity || ""), it.rarity || "")} ${tf("type_" + it.slot, TYPE_LABEL[it.slot] || it.slot)}</span></div>
-            <div class="dm">${it.modifiers.map(modText).join(" · ")}</div>${proc}${setInfo}${cmp}
-            <div class="acts">${acts}</div>`;
+                    <div class="dm">${it.modifiers.map(modText).join(" · ")}</div>${proc}${setInfo}${cmp}
+                    <div class="acts">${acts}</div>`;
             const eqb = document.getElementById("d-eq"); if (eqb) eqb.onclick = () => { const i = invSel.idx; invSel = null; equip(i); };
             const svb = document.getElementById("d-sv"); if (svb) svb.onclick = () => { const i = invSel.idx; invSel = null; if (G.satchel[i] && G.satchel[i].id === "item_tut") G._tutLoot = 3; G.xp += salvageValue(G.satchel[i]); SFX.pickup(); G.satchel.splice(i, 1); renderInventory(); syncHUD(); };
             const unb = document.getElementById("d-un"); if (unb) unb.onclick = () => { const s = invSel.slotId; invSel = null; unequip(s); };
@@ -6487,7 +6792,7 @@
                 const chilled = e.activeEffects.some(ae => ae.key === "chill");
                 if (chilled) {
                     g.strokeStyle = "rgba(120,200,255,.85)"; g.lineWidth = 2; g.beginPath(); g.arc(x, y, e.r + 3, 0, 7); g.stroke();
-                    if (Math.random() < 0.25) spawnParticles(e.x + ri(-e.r, e.r), e.y + ri(-e.r, e.r), "#bfe8ff", 1, { speed: 30, life: 0.5, size: 1.6, grav: 30 });
+                    if (Math.random() < 0.25) spawnParticles(e.x + cri(-e.r, e.r), e.y + cri(-e.r, e.r), "#bfe8ff", 1, { speed: 30, life: 0.5, size: 1.6, grav: 30 });
                 }
                 if (poisoned) { g.strokeStyle = "rgba(120,220,90,.9)"; g.lineWidth = 2; g.beginPath(); g.arc(x, y, e.r + (chilled ? 6 : 3), 0, 7); g.stroke(); }
                 if (burning) {                                   // campfire-style flames: glowing rising ellipse cluster
@@ -7290,6 +7595,11 @@
         }
         function cyclePick(dir) { pickIdx = (pickIdx + dir + PICK_ORDER.length) % PICK_ORDER.length; renderHeroPick(); SFX.cast && SFX.cast(); }
         function beginPick() { startGame(PICK_ORDER[pickIdx]); }
+        function startDaily() {                                    // today's shared challenge: seed + class fixed by the date
+            const seed = dailySeed();
+            _dailyPending = seed;                                  // startGame consumes this to seed the run
+            startGame(PICK_ORDER[seed % PICK_ORDER.length]);       // class fixed by the day's seed (same for everyone)
+        }
         addEventListener("keydown", (e) => {                          // arrow keys cycle heroes while choosing
             if (isTyping(e)) return;                                  // same boundary — don't hijack typing
             const st = document.getElementById("start"), cp = document.getElementById("choosepane");
@@ -7299,12 +7609,18 @@
             else if (e.key === "Enter") { beginPick(); e.preventDefault(); }
         });
         let _sessionStarted = false;
+        let _dailyPending = null;                          // set by beginDaily(); consumed by the next startGame
+        function beginDaily(date) { _dailyPending = dailySeed(date); }   // call before startGame to play today's seed
         function startGame(classId) {
             SFX.resume();
             hide("start"); hide("over"); hide("levelup"); hide("inventory"); hide("firepanel"); hide("supporter");
             if (!_sessionStarted) { _sessionStarted = true; tele("session_start", {}); }
             runsThisSession++;
+            // seed the gameplay stream for this run: daily seed if requested, else a fresh random seed.
+            const runSeed = (_dailyPending != null) ? _dailyPending : ((Date.now() ^ (Math.random() * 0x100000000)) >>> 0);
+            seedRun(runSeed);
             newGame(classId || "ranger"); running = true; G.paused = false; last = performance.now(); acc = 0;
+            G.runSeed = runSeed; G.isDaily = (_dailyPending != null); _dailyPending = null;
             G._firstBankDone = false; G._runStartMs = performance.now();   // for time-to-first-bank
             tele("run_start", { cls: G.classId, runNo: Telemetry.runCount, sessRun: runsThisSession });
             G.cam.x = G.hero.x - W / 2; G.cam.y = G.hero.y - H / 2;     // snap camera onto the hero (the fire sits just above for the reveal)
@@ -7524,7 +7840,7 @@
             if (G.flash > 0) G.flash = Math.max(0, G.flash - dt * 2.2);
             G.cam.x += ((G.hero.x - W / 2) - G.cam.x) * Math.min(1, dt * 3.5);   // slow drift onto the fallen hero
             G.cam.y += ((G.hero.y - H / 2) - G.cam.y) * Math.min(1, dt * 3.5);
-            if (Math.random() < 0.12) spawnParticles(G.hero.x + ri(-10, 10), G.hero.y + ri(-4, 6), "#6f6658", 1, { speed: 20, life: 0.7, size: 2, grav: 110 });
+            if (Math.random() < 0.12) spawnParticles(G.hero.x + cri(-10, 10), G.hero.y + cri(-4, 6), "#6f6658", 1, { speed: 20, life: 0.7, size: 2, grav: 110 });
             if (G.deathT <= 0) gameOver();
         }
         function runScore() { return G.wave * 100 + G.level * 40 + G.kills * 8 + G.dayNum * 60 + G.fireLevel * 20; }
@@ -7541,7 +7857,11 @@
             const gain = Math.max(0, deserved - (G.embersAwarded || 0)); G.embersAwarded = deserved;
             if (gain > 0) addEmbers(gain);
             const isBest = score > bestScore; if (isBest) { bestScore = score; Store.set("ew.best", bestScore); }
-            const lbRank = Scores.submit({ score, wave: G.wave, level: G.level, kills: G.kills, days: G.dayNum, cls: G.classId });
+            if (G.isDaily) { const dk = "ew.daily." + G.runSeed; if (score > Store.get(dk, 0)) Store.set(dk, score); }   // local best for today's seed
+            const reviveBtn = document.getElementById("ov-revive"); if (reviveBtn) reviveBtn.style.display = G.isDaily ? "none" : "";   // daily = one life
+            const lbRank = G.isDaily
+                ? (Scores.submitDaily({ score, wave: G.wave, level: G.level, kills: G.kills, days: G.dayNum, cls: G.classId }, G.runSeed), -1)   // daily → daily board only
+                : Scores.submit({ score, wave: G.wave, level: G.level, kills: G.kills, days: G.dayNum, cls: G.classId });
             tele("run_end", {
                 score, wave: G.wave, level: G.level, kills: G.kills, days: G.dayNum,
                 fireLevel: G.fireLevel, cls: G.classId, revives: G.reviveCount || 0,
@@ -7581,6 +7901,7 @@
         }
         /* revive: spend embers, restore the hero mid-wave with a brief shield + a clearing nova */
         function revive() {
+            if (G && G.isDaily) return;                              // daily challenge = one life, same for everyone (fairness)
             const cost = reviveCost();
             if (embers < cost) { const b = document.getElementById("ov-revive"); if (b) { b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake"); } return; }
             addEmbers(-cost); G.reviveCount = (G.reviveCount || 0) + 1;
