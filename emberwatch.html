@@ -984,6 +984,30 @@
             justify-content: center;
             flex-wrap: wrap
         }
+
+        /* draw the eye to the embers-earning buttons when a revive is unaffordable */
+        @keyframes emberNudge {
+            0%, 100% {
+                box-shadow: 0 0 4px 0 rgba(255,170,80,.25)
+            }
+
+            50% {
+                box-shadow: 0 0 14px 3px rgba(255,170,80,.55)
+            }
+        }
+
+        .btn.tiny.nudge {
+            border-color: var(--ember-hi);
+            animation: emberNudge 1.4s ease-in-out infinite
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .btn.tiny.nudge {
+                animation: none;
+                box-shadow: 0 0 12px 2px rgba(255,170,80,.5)
+            }
+        }
+
         /* --- Leaderboard --- */
         .lb-tabs { display: flex; gap: 8px; justify-content: center; margin-top: 12px }
         .lb-tab { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 8px; padding: 5px 12px; cursor: pointer; font: inherit; font-size: 13px }
@@ -7584,7 +7608,10 @@
         function reviveLabel() {
             const b = document.getElementById("ov-revive"); if (!b) return;
             const c = reviveCost(); b.querySelector(".rc").textContent = "⬥ " + c;
-            b.classList.toggle("disabled", embers < c);
+            const short = embers < c;                              // can't afford a revive → point at the ways to earn embers
+            b.classList.toggle("disabled", short);
+            const ad = document.getElementById("ov-ad"); if (ad) ad.classList.toggle("nudge", short);
+            const buy = document.getElementById("ov-buy"); if (buy) buy.classList.toggle("nudge", short && !isSupporter());
         }
         function updateEmberUI() {
             const e = document.getElementById("ov-embers"); if (e) e.textContent = embers.toLocaleString();
