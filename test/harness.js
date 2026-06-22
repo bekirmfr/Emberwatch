@@ -428,6 +428,16 @@ const test = [
   'assert(G.runMods.length === _rpN1 && _rpDrop2.dead === true && G._relicPick === null, "Leave removes the relic without granting it");',
   'console.log("relic consent ok: Take grants+removes, Leave removes only");',
 
+  // ===== double-collect guard: a collected (dead) drop must not re-open the card =====
+  'startGame("ranger"); G.runMods=[]; G._relicPick=null; rebuild(G.hero);',
+  'var _ddrop = { relic:"glasscannon", x:0, y:0, dead:false }; openRelicPick(_ddrop); takeRelic(); var _afterTake = G.runMods.length;',
+  'assert(_ddrop.dead === true && G._relicPick === null, "after Take the drop is dead and the prompt is cleared");',
+  'openRelicPick(_ddrop);',   // simulate the next frame re-touching the still-in-list dead drop (the bug path)
+  'assert(G._relicPick === null && G.runMods.length === _afterTake, "a dead drop does not re-open the card or grant again (no double-collect)");',
+  'var _o1 = { relic:"zealot", x:0,y:0,dead:false }; openRelicPick(_o1); var _o2 = { relic:"harvest", x:0,y:0,dead:false }; openRelicPick(_o2);',
+  'assert(G._relicPick === _o1, "a second relic cannot open a prompt while one is already up"); leaveRelic();',
+  'console.log("relic double-collect guard ok: dead/duplicate prompts ignored");',
+
   // ===== relic slot cap + swap-or-leave =====
   'startGame("ranger"); G.runMods=[]; rebuild(G.hero); for (var i=0;i<RELIC_CAP;i++) grantRunMod("zealot");',
   'G._relicPick = { relic:"glasscannon", x:0, y:0, dead:false }; takeRelic();',

@@ -1704,25 +1704,101 @@
             line-height: 1.6
         }
 
-        .relic-card { border-color: rgba(200, 155, 255, 0.5); }
-        .relic-card .ds { color: #d7c6ef; min-height: 34px; }
-        .relicbtns { display: flex; gap: 10px; margin-top: 14px; }
-        .rbtn {
-            flex: 1; padding: 11px 8px; border-radius: 9px; font: inherit; font-weight: 700;
-            font-size: 14px; cursor: pointer; border: 1px solid transparent; transition: filter .12s, transform .06s;
+        .relic-card {
+            border-color: rgba(200, 155, 255, 0.5);
         }
-        .rbtn:active { transform: translateY(1px); }
-        .rbtn.take { background: linear-gradient(180deg, #8a5fd0, #6a3fb0); color: #fff; border-color: #a880e8; }
-        .rbtn.take:hover { filter: brightness(1.12); }
-        .rbtn.leave { background: rgba(255, 255, 255, 0.05); color: var(--muted); border-color: rgba(255, 255, 255, 0.14); }
-        .rbtn.leave:hover { filter: brightness(1.3); }
-        .swaplbl { margin-top: 14px; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
-        .swaplist { display: flex; flex-direction: column; gap: 7px; margin-top: 8px; max-height: 240px; overflow-y: auto; }
-        .rbtn.swap { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; padding: 8px 11px;
-            background: rgba(200, 155, 255, 0.07); border-color: rgba(200, 155, 255, 0.22); color: #e7dcff; }
-        .rbtn.swap:hover { filter: brightness(1.2); border-color: rgba(200, 155, 255, 0.5); }
-        .rbtn.swap .swnm { font-weight: 700; font-size: 13px; }
-        .rbtn.swap .swds { font-weight: 400; font-size: 11px; color: #b9a8d8; }
+
+            .relic-card .ds {
+                color: #d7c6ef;
+                min-height: 34px;
+            }
+
+        .relicbtns {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .rbtn {
+            flex: 1;
+            padding: 11px 8px;
+            border-radius: 9px;
+            font: inherit;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: filter .12s, transform .06s;
+        }
+
+            .rbtn:active {
+                transform: translateY(1px);
+            }
+
+            .rbtn.take {
+                background: linear-gradient(180deg, #8a5fd0, #6a3fb0);
+                color: #fff;
+                border-color: #a880e8;
+            }
+
+                .rbtn.take:hover {
+                    filter: brightness(1.12);
+                }
+
+            .rbtn.leave {
+                background: rgba(255, 255, 255, 0.05);
+                color: var(--muted);
+                border-color: rgba(255, 255, 255, 0.14);
+            }
+
+                .rbtn.leave:hover {
+                    filter: brightness(1.3);
+                }
+
+        .swaplbl {
+            margin-top: 14px;
+            font-size: 12px;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .swaplist {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            margin-top: 8px;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        .rbtn.swap {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+            text-align: left;
+            padding: 8px 11px;
+            background: rgba(200, 155, 255, 0.07);
+            border-color: rgba(200, 155, 255, 0.22);
+            color: #e7dcff;
+        }
+
+            .rbtn.swap:hover {
+                filter: brightness(1.2);
+                border-color: rgba(200, 155, 255, 0.5);
+            }
+
+            .rbtn.swap .swnm {
+                font-weight: 700;
+                font-size: 13px;
+            }
+
+            .rbtn.swap .swds {
+                font-weight: 400;
+                font-size: 11px;
+                color: #b9a8d8;
+            }
 
         body.mobile .card {
             padding: 14px 11px
@@ -4993,14 +5069,19 @@
 
         const INTERMISSION = 13;   // seconds of safe planning between waves
         /* --- remains gather-and-bank loop --- */
-        const MAGNET_R = 100;    // hero sweeps up loose remains within this radius
+        const MAGNET_R = 60;    // hero sweeps up loose remains within this radius
         const BANK_R = 46;     // must come right up to the fire origin to unload (not the whole light radius)
         const BANK_IN_LIGHT = true;// carried remains pour into the fire while you stand on it
         const DEATH_SPILL = 0.5;   // fraction of UN-banked (carried) remains lost on death
         const REMAINS_TTL = 30;    // seconds a loose remain lingers on the ground before fading
+        const REMAINS_FADE = 1.5;  // final seconds of that life — the orb dims AND crackles like a dying ember (one shared "about to fade" window)
         // --- carry burden: the more remains you carry, the slower you move (greed has weight) ---
-        const CARRY_SLOW_PER = 0.006;  // move-speed penalty per remain carried
-        const CARRY_SLOW_MAX = 0.40;   // cap — a full hoard slows you at most this much (still mobile = risk, not doom)
+        // Gated to the fire's appetite: a full level-up's worth of remains (G.xpNext) maxes the slow.
+        // As the fire levels, xpNext grows — so a stronger watcher hauls more remains before feeling the weight.
+        const CARRY_SLOW_MAX = 0.40;   // cap — a full level's worth of remains slows you at most this much (still mobile = risk, not doom)
+        // Single source of truth: fraction of move speed lost to the satchel, 0..CARRY_SLOW_MAX,
+        // ramping linearly to the cap at one full level's fuel. (max(1,..) is a divide-by-zero guard, not a gameplay floor.)
+        const carrySlowFrac = () => CARRY_SLOW_MAX * Math.min(1, (G.carry || 0) / Math.max(1, G.xpNext));
         // --- pour ramp: banking starts SLOW and accelerates the longer you commit (cashing a hoard demands a window) ---
         const POUR_BASE = 4;    // remains/sec at the instant the pour begins
         const POUR_ACCEL = 16;   // additional remains/sec added per second of continuous pouring
@@ -5666,7 +5747,7 @@
             if (MOBILE && touchState.joy) { mx = touchState.joy.dx; my = touchState.joy.dy; hasMoveInput = true; }   // analog stick vector
             else if (mouseDown) { mx = (mouse.x + G.cam.x) - h.x; my = (mouse.y + G.cam.y) - h.y; hasMoveInput = true; }
             let ml = Math.hypot(mx, my);
-            const carryBurden = 1 - Math.min(CARRY_SLOW_MAX, (G.carry || 0) * CARRY_SLOW_PER);   // heavy satchel = slower, capped
+            const carryBurden = 1 - carrySlowFrac();   // heavy satchel = slower; maxes at one full level's worth of remains
             const sp = resolveStat(h, "moveSpeed", ctx) * woundMS * carryBurden;
             const DEAD = 6;                                    // don't jitter when the cursor sits on the hero
             if (MOBILE && touchState.joy) moveScale = Math.min(JOY_TOP, ml / JOY_MAXR);   // partial deflection = walk; capped at JOY_TOP (1x)
@@ -5929,12 +6010,17 @@
             // remains: scatter, then a magnet sweep into your satchel; you bank them at the fire
             for (const o of G.orbs) {
                 o.age = (o.age || 0) + dt; o.life = (o.life == null ? REMAINS_TTL : o.life) - dt; o.bob += dt * 8; o.spin = (o.spin || 0) + (o.vs || 0) * dt;
+                // burning out: through the final fade window (the same one the orb visibly dims over), it crackles like a dying ember — "grab me before I'm gone"
+                if (o.life < REMAINS_FADE) {
+                    o.crackT = (o.crackT || 0) - dt;
+                    if (o.crackT <= 0) { o.crackT = 0.16 + Math.random() * 0.12; spawnParticles(o.x, o.y, "#ffce6a", 2, { speed: 60, life: 0.4, size: 1.8, dir: -Math.PI / 2, spread: 1.5, grav: -55 }); }   // warm embers lift off
+                }
                 const dx = h.x - o.x, dy = h.y - o.y, d = Math.hypot(dx, dy) || 1;
                 if (o.age < (o.scatT || 0.22)) { o.x += o._sx * dt; o.y += o._sy * dt; o._sx *= 0.87; o._sy *= 0.87; o.vs *= 0.93; }   // splash outward, tumbling
                 else if (d < MAGNET_R) { o.spd = (o.spd || 120) + 1300 * dt; const s = Math.min(o.spd, 1000); o.x += dx / d * s * dt; o.y += dy / d * s * dt; }  // swept toward you
                 else { o.spd = 120; }                                                                 // out of reach — rests on the ground
                 if (d < h.r + 9) { collect(o); o.dead = true; }               // scooped into the satchel
-                else if (o.life <= 0) { o.dead = true; }                                                  // lingered too long — fades away
+                else if (o.life <= 0) { o.dead = true; spawnParticles(o.x, o.y, "#fff0c0", 4, { speed: 130, life: 0.3, size: 1.7, grav: 40 }); }   // lingered too long — a last spark snaps off as it burns out
             }
             G.orbs = G.orbs.filter(o => !o.dead);
             if (G._tut0 && G.carry > 0 && G.orbs.length === 0) tutBeat("bank");   // Level 0: all gathered → prompt the bank directly
@@ -5971,6 +6057,7 @@
 
             // ground item pickup
             for (const it of G.drops) {
+                if (it.dead) continue;                           // already collected/decided this frame — don't re-trigger (fixes relic double-collect)
                 const d = Math.hypot(h.x - it.x, h.y - it.y); it.bob += dt * 3; if (d < h.r + 16) {
                     if (it.relic) {                                  // relic → ask Take / Leave instead of auto-applying
                         if (!G._relicPick) openRelicPick(it);        // one prompt at a time; pauses the game
@@ -6548,7 +6635,7 @@
         // Relic pickup is a choice, not an auto-grab: walking onto a relic pauses and asks
         // Take (stack it for the run) or Leave (it's gone). Relics shape build direction, so consent matters.
         function openRelicPick(drop) {
-            if (!drop || !drop.relic) return;
+            if (!drop || !drop.relic || drop.dead || G._relicPick) return;   // ignore dead drops / a prompt already open (no double-collect)
             G._relicPick = drop;
             const m = runModById(drop.relic);
             const nm = m ? tf("runmod_" + drop.relic, m.nm) : "Relic";
@@ -6616,9 +6703,9 @@
             const luck = perkLuck(), rareOdds = Math.round((0.02 + luck * 0.30 + 0.16 + luck * 0.34) * 100), epicOdds = Math.round((0.02 + luck * 0.30) * 100);
             document.getElementById("fireinfo").innerHTML =
                 `<div class="item"><div class="nm">Fire level ${G.fireLevel}</div>
-                      <div class="mods">Light radius ${Math.round(G.lightR)} · +${12 * (G.fireLevel - 1)} max health · +${5 * (G.fireLevel - 1)}% gold · mends ${(FIRE_REGEN_PER_LEVEL * G.fireLevel).toFixed(1)} hp/sec between waves</div>
-                      <div class="mods">Perk luck — ${rareOdds}% rare, ${epicOdds}% epic on level-up cards</div></div>
-                     <div style="color:var(--muted);font-size:12.5px">Next level reclaims another 46 of ground from the dark, steels you, and sharpens your perk luck.</div>`;
+                          <div class="mods">Light radius ${Math.round(G.lightR)} · +${12 * (G.fireLevel - 1)} max health · +${5 * (G.fireLevel - 1)}% gold · mends ${(FIRE_REGEN_PER_LEVEL * G.fireLevel).toFixed(1)} hp/sec between waves</div>
+                          <div class="mods">Perk luck — ${rareOdds}% rare, ${epicOdds}% epic on level-up cards</div></div>
+                         <div style="color:var(--muted);font-size:12.5px">Next level reclaims another 46 of ground from the dark, steels you, and sharpens your perk luck.</div>`;
             const ub = document.getElementById("upgradebtn");
             ub.textContent = `Feed fire — ◈ ${cost}`;
             ub.disabled = G.gold < cost;
@@ -6698,13 +6785,13 @@
                 let n = 0; for (const s of G.hero.slots) { const eq = G.hero.equipment[s.id]; if (eq && eq.set === it.set) n++; }
                 const line = (mods, active, label) => `<div class="dsetb ${active ? "on" : ""}"><b>${label}</b> ${mods.map(modText).join(", ")}</div>`;
                 setInfo = `<div class="dset" style="--sc:${S.col}">
-                      <div class="dsetn">${tn(S.nm)} ${t("setOf")} · ${t("setWorn", { n })}</div>
-                      ${S.b2 ? line(S.b2.mods, n >= 2, "2pc") : ""}
-                      ${S.b4 ? line(S.b4.mods, n >= 4, "4pc") : ""}</div>`;
+                          <div class="dsetn">${tn(S.nm)} ${t("setOf")} · ${t("setWorn", { n })}</div>
+                          ${S.b2 ? line(S.b2.mods, n >= 2, "2pc") : ""}
+                          ${S.b4 ? line(S.b4.mods, n >= 4, "4pc") : ""}</div>`;
             }
             dd.innerHTML = `<div class="dn ${it.rarCls}">${it.nm} <span style="color:var(--muted);font-weight:400;font-size:10px">· ${t("lvShort")} ${it.lvl || 1} · ${tf("nm_" + (it.rarity || ""), it.rarity || "")} ${tf("type_" + it.slot, TYPE_LABEL[it.slot] || it.slot)}</span></div>
-                    <div class="dm">${it.modifiers.map(modText).join(" · ")}</div>${proc}${setInfo}${cmp}
-                    <div class="acts">${acts}</div>`;
+                        <div class="dm">${it.modifiers.map(modText).join(" · ")}</div>${proc}${setInfo}${cmp}
+                        <div class="acts">${acts}</div>`;
             const eqb = document.getElementById("d-eq"); if (eqb) eqb.onclick = () => { const i = invSel.idx; invSel = null; equip(i); };
             const svb = document.getElementById("d-sv"); if (svb) svb.onclick = () => { const i = invSel.idx; invSel = null; if (G.satchel[i] && G.satchel[i].id === "item_tut") G._tutLoot = 3; G.xp += salvageValue(G.satchel[i]); SFX.pickup(); G.satchel.splice(i, 1); renderInventory(); syncHUD(); };
             const unb = document.getElementById("d-un"); if (unb) unb.onclick = () => { const s = invSel.slotId; invSel = null; unequip(s); };
@@ -6959,7 +7046,7 @@
             // orbs — remains: glowing embers resting on the ground until you sweep them up
             for (const o of G.orbs) {
                 const gx = sx(o.x), gy = sy(o.y), s = o.sz || 4;
-                const fade = o.life != null ? Math.max(0.15, Math.min(1, o.life / 1.5)) : 1;   // dim as it's about to fade away
+                const fade = o.life != null ? Math.max(0.15, Math.min(1, o.life / REMAINS_FADE)) : 1;   // dim as it's about to fade away (same window as the crackle)
                 const c = o.color || "#ffce6a";
                 // fire-cast shadow on the ground — points away from the flame, stronger at night / nearer the fire
                 const dist = Math.hypot(o.x, o.y), litN = Math.max(0, 1 - dist / lr), strength = night * litN * 0.5 + a * 0.10;
@@ -6980,7 +7067,7 @@
             // Tints from ember-gold → hot red as the burden grows, so "I'm heavy & slow" reads at a glance.
             if (G.carry >= 1 && !G.dying) {
                 const hx = sx(G.hero.x), hy = sy(G.hero.y) - G.hero.r - 15;
-                const burdenF = Math.min(1, (G.carry || 0) * CARRY_SLOW_PER / CARRY_SLOW_MAX);   // 0 = light, 1 = at the slow cap
+                const burdenF = carrySlowFrac() / CARRY_SLOW_MAX;   // 0 = light, 1 = at the slow cap (a full level's worth carried)
                 g.save(); g.textAlign = "center"; g.font = "700 " + (12 + burdenF * 2).toFixed(0) + "px ui-sans-serif,system-ui";
                 const label = "⬥ " + Math.floor(G.carry);
                 g.lineWidth = 3; g.strokeStyle = "rgba(0,0,0,.7)"; g.strokeText(label, hx, hy);
