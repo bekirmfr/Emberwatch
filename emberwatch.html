@@ -1613,9 +1613,13 @@
 
         .cards {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0,1fr));
+            grid-template-columns: repeat(4, minmax(0,1fr));
             gap: 14px;
             width: 100%
+        }
+
+        @media (max-width: 860px) {                        /* narrow viewport: fall to a 2x2 grid */
+            .cards { grid-template-columns: repeat(2, minmax(0,1fr)); }
         }
 
         .card {
@@ -1674,6 +1678,47 @@
             --edge: rgba(255,210,74,.85);
             --tint: rgba(255,210,74,.10);
             --glow: rgba(255,210,74,.22)
+        }
+
+        .card.firecard {                                   /* "Feed the Fire" — the investment-in-the-fire option, not a rarity */
+            --col: #ff8c3a;
+            --edge: rgba(255,140,58,.85);
+            --tint: rgba(255,120,40,.12);
+            --glow: rgba(255,120,40,.28);
+            position: relative;
+            overflow: hidden
+        }
+
+        .card.firecard .rtag,
+        .card.firecard .nm,
+        .card.firecard .ds { position: relative; z-index: 2 }   /* text rides above the embers */
+
+        .card.firecard .embers { position: absolute; inset: 0; z-index: 1; pointer-events: none }
+
+        .card.firecard .embers i {
+            position: absolute;
+            bottom: -8px;
+            left: var(--x, 50%);
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: #ffd08a;
+            box-shadow: 0 0 6px 1px rgba(255,150,60,.9);
+            opacity: 0;
+            animation: emberRise var(--dur, 3s) ease-in var(--delay, 0s) infinite
+        }
+
+        @keyframes emberRise {
+            0%   { transform: translateY(0) scale(.5);  opacity: 0 }
+            12%  { opacity: 1 }
+            35%  { opacity: .5 }                            /* crackle flicker */
+            55%  { opacity: 1 }
+            80%  { opacity: .6 }
+            100% { transform: translateY(calc(-1 * var(--rise, 220px))) translateX(var(--drift, 0)) scale(1.15); opacity: 0 }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .card.firecard .embers i { animation: none; opacity: .5 }
         }
 
         .card .rtag {
@@ -1805,7 +1850,7 @@
         }
 
         body.mobile .cards {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, minmax(0,1fr));
             gap: 12px;
             max-height: 72vh;
             overflow-y: auto
@@ -6553,11 +6598,8 @@
            ========================================================================= */
         function levelUp() {
             G.xp -= G.xpNext; G.level++; G.xpNext = Math.floor(16 * Math.pow(1.28, G.level - 1));
-            G.fireLevel = G.level;                                            // the fire IS your level
-            const fromR = G.lightR; G.lightR = Math.min(460, 250 + (G.level - 1) * 8);  // the blaze pushes the dark back as you grow
-            G.rings.push({ from: fromR, to: G.lightR, life: 0.9, max: 0.9 });
-            rebuild(G.hero);                                                // fire passives (max health) scale up
-            SFX.fire(); spawnParticles(0, 0, "#ffb347", 22, { speed: 160, life: 0.8, size: 3, grav: -30 });
+            // fireLevel is no longer welded to level — it rises only when you spend a level on the "Feed the Fire" card below.
+            // Abilities still unlock on TOTAL levels (G.level), so a fire-heavy build still gets its full kit on schedule.
             const unlocked = ABILITIES.filter(a => (a.unlock == null ? 1 : a.unlock) === G.level);
             const sub = document.querySelector("#levelup .sub");
             if (unlocked.length) sub.innerHTML = `<span class="unlockline">${t("newAbility")} <b>${unlocked.map(a => a.label + " · " + a.name).join(" &nbsp; ")}</b></span><br>${t("chooseBoon")}`;
@@ -6601,6 +6643,17 @@
                 });
             }
             const choices = []; while (choices.length < 3 && pool.length) choices.push(pool.splice(Math.floor(grng() * pool.length), 1)[0]);
+            if (!G._tut0) choices.push({                                       // 4th option: invest this level in the FIRE instead of the watcher
+                nm: "Feed the Fire", key: "feed_fire", fire: true,
+                ds: `Push back the dark — brighter light, +12 health, stronger mending, and luckier cards from here on.`,
+                apply: h => {
+                    const fromR = G.lightR; G.fireLevel++;
+                    G.lightR = Math.min(460, 250 + (G.fireLevel - 1) * 8);    // radius now rides fireLevel, not level
+                    G.rings.push({ from: fromR, to: G.lightR, life: 0.9, max: 0.9 });
+                    rebuild(h);                                               // fireSource() max-health passive scales with fireLevel
+                    SFX.fire(); spawnParticles(0, 0, "#ffb347", 22, { speed: 160, life: 0.8, size: 3, grav: -30 });
+                }
+            });
             _gseed = _perkSeedSave;                                            // restore live (combat) stream
             if (G._tut0) {                                              // Level 0: one card only — unlock the dash (E)
                 const eAb = ABILITIES.find(a => a.key === "e");
@@ -6615,9 +6668,22 @@
             if (G._tut0) { box.style.gridTemplateColumns = "minmax(0,300px)"; box.style.justifyContent = "center"; }   // single card, centered
             else { box.style.gridTemplateColumns = ""; box.style.justifyContent = ""; }
             for (const card of choices) {
-                const c = document.createElement("div"); c.className = "card" + (card.rarCls ? (" " + card.rarCls) : "") + (card.up ? " upg" : "");
+                const c = document.createElement("div"); c.className = "card" + (card.rarCls ? (" " + card.rarCls) : "") + (card.up ? " upg" : "") + (card.fire ? " firecard" : "");
                 const rtag = card.rar ? `<div class="rtag">${tn(card.rar)}</div>` : "";
                 c.innerHTML = `${rtag}<div class="nm">${card.nm}</div><div class="ds">${card.ds}</div>`;
+                if (card.fire) {                                              // ember crackle, scoped to the Feed the Fire card
+                    const em = document.createElement("div"); em.className = "embers";
+                    for (let i = 0; i < 14; i++) {
+                        const sp = document.createElement("i");
+                        sp.style.setProperty("--x", (4 + Math.random() * 92).toFixed(1) + "%");
+                        sp.style.setProperty("--dur", (2.2 + Math.random() * 2.6).toFixed(2) + "s");
+                        sp.style.setProperty("--delay", (Math.random() * 3).toFixed(2) + "s");
+                        sp.style.setProperty("--rise", (150 + Math.random() * 170).toFixed(0) + "px");
+                        sp.style.setProperty("--drift", ((Math.random() * 2 - 1) * 22).toFixed(0) + "px");
+                        em.appendChild(sp);
+                    }
+                    c.appendChild(em);
+                }
                 c.onclick = () => {
                     card.apply(G.hero);
                     tele("level_up", { level: G.level, choice: card.key || card.nm, rar: card.rar || "", up: card.up ? 1 : 0 });
