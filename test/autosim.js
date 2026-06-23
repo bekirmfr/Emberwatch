@@ -100,15 +100,11 @@ const loadouts = [
   { name: "AD stack", cls: "ranger", perks: [{ nm: "Sharpened Edge" }], items: rolledItems(4, hasStat("attackDamage")) },
   { name: "attack-speed stack", cls: "ranger", perks: [{ nm: "Rapid Loosing" }], items: rolledItems(4, hasStat("attackSpeed")) },
   { name: "crit stack", cls: "ranger", perks: [{ nm: "Deadeye" }, { nm: "Executioner" }], items: rolledItems(4, hasStat("critChance")) },
-  { name: "fire DoT (Ember Touch + of Embers)", cls: "ranger", perks: [{ nm: "Ember Touch" }], items: rolledItems(4, hasTag("fire")) },
-  { name: "fire STACK (Ember + Pyromancer + fire gear)", cls: "ranger", perks: [{ nm: "Ember Touch" }, { nm: "Pyromancer" }], items: rolledItems(5, hasTag("fire")) },
+  { name: "fire STACK (Pyromancer + fire gear)", cls: "ranger", perks: [{ nm: "Pyromancer" }], items: rolledItems(5, hasTag("fire")) },
   { name: "frenzy (more-mult, low HP)", cls: "ranger", perks: [{ nm: "Frenzy" }, { nm: "Sharpened Edge" }], items: rolledItems(3, hasStat("attackDamage")) },
   { name: "tank (EHP)", cls: "knight", perks: [{ nm: "Ironhide" }], items: rolledItems(4, hasStat("armor")) },
-  // --- Phase 2 emergent archetypes ---
-  { name: "poison detonation (Venom + Rupture)", cls: "ranger", perks: [{ nm: "Venom Coating" }, { nm: "Rupture" }], items: rolledItems(4, hasTag("poison")) },
+  // (fire/poison/detonate/wildfire/opportunist builds ABSORBED into the composer — profiled by test/orderfuzz.js)
   { name: "armor-pen (AD + pen gear)", cls: "ranger", perks: [{ nm: "Sharpened Edge" }], items: rolledItems(4, hasStat("armorPen")) },
-  { name: "wildfire crit (crit + Wildfire)", cls: "ranger", perks: [{ nm: "Deadeye" }, { nm: "Executioner" }, { nm: "Wildfire" }], items: rolledItems(4, hasStat("critChance")) },
-  { name: "opportunist multi-status", cls: "ranger", perks: [{ nm: "Ember Touch" }, { nm: "Venom Coating" }, { nm: "Opportunist" }], items: rolledItems(3) },
 ];
 for (let i = 0; i < 24; i++) {
   loadouts.push({ name: "random #" + (i + 1), cls: "ranger", perks: [], items: rolledItems(4) });

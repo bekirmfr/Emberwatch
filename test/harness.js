@@ -110,10 +110,10 @@ const test = [
 
   // --- CENSUS: rebuild tallies perk tags onto hero.tagCount ---
   'startGame("ranger");',
-  'var et = PERKS.find(p => p.nm === "Ember Touch"), py = PERKS.find(p => p.nm === "Pyromancer");',
-  'G.hero.perks = [et.build(7), py.build(py.tiers[2])]; G.runMods = [];',   // clear the random start modifier — this test asserts an absolute tag count
+  'var py = PERKS.find(p => p.nm === "Pyromancer");',
+  'G.hero.perks = [py.build(py.tiers[2]), { tags:["fire"], modifiers:[], triggers:[] }];',   // Pyromancer + a synthetic fire source -> fire=2 (Ember Touch absorbed into a composer atom)
   'rebuild(G.hero);',
-  'assert(G.hero.tagCount && G.hero.tagCount.fire === 2, "census: Ember Touch + Pyromancer -> fire=2 (got " + JSON.stringify(G.hero.tagCount) + ")");',
+  'assert(G.hero.tagCount && G.hero.tagCount.fire === 2, "census: Pyromancer + fire source -> fire=2 (got " + JSON.stringify(G.hero.tagCount) + ")");',
   'console.log("census ok");',
 
   // --- ITEM WIRING: rolled elemental-proc items carry their theme tag ---
@@ -129,7 +129,7 @@ const test = [
 
   // --- INTEGRATION: a fire item raises the census, which raises Pyromancer damage ---
   'startGame("ranger");',
-  'G.hero.perks = [PERKS.find(p=>p.nm==="Pyromancer").build(0.12)]; G.runMods = [];',
+  'G.hero.perks = [PERKS.find(p=>p.nm==="Pyromancer").build(0.12)];',
   'rebuild(G.hero); var adBefore = resolveStat(G.hero, "attackDamage", ctx); var fireBefore = (G.hero.tagCount.fire||0);',
   'var fireItem = { id:"t_fire", slot:"ring", tags:["fire"], modifiers:[], triggers:[], procDs:[] };',
   'G.hero.sources.push(fireItem);',                                  // simulate an equipped fire source in the resolved list
@@ -198,7 +198,7 @@ const test = [
   'var dD = dummy(); for (var i=0;i<6;i++) applyEffectTemplate(dD, POISON);',
   'var ps=0; for (var e of dD.activeEffects) if (e.source==="Poison") ps+=(e.stacks||1);',
   'assert(ps>=5, "poison reached 5 stacks (got "+ps+")");',
-  'G.hero.sources.push(PERKS.find(p=>p.nm==="Rupture").build(10));',
+  'G.hero.sources.push({ modifiers:[], triggers:[{ on:"onHitDealt", source:"Rupture", effect:{ kind:"detonate", dotSource:"Poison", threshold:5, perStack:10, consume:true } }] });',
   'var hpD=dD.currentHealth; emit({ type:"onHitDealt", self:G.hero, other:dD, payload:{} });',
   'assert(dD.currentHealth < hpD, "detonate dealt burst damage");',
   'assert(!dD.activeEffects.some(e=>e.source==="Poison"), "detonate consumed the poison stacks");',
@@ -207,7 +207,7 @@ const test = [
 
   // (b) tag-gated trigger: Opportunist fires only at 2+ statuses
   'startGame("ranger");',
-  'var dO = dummy(); G.hero.sources.push(PERKS.find(p=>p.nm==="Opportunist").build(24));',
+  'var dO = dummy(); G.hero.sources.push({ modifiers:[], triggers:[{ on:"onHitDealt", source:"Opportunist", condition:{ kind:"targetEffectCount", min:2 }, effect:{ kind:"spawnPayload", of:{ mode:"flat", amount:{ type:"flat", value:24 } } } }] });',
   'applyEffectTemplate(dO, BURN); var o1=dO.currentHealth; emit({type:"onHitDealt", self:G.hero, other:dO, payload:{}});',
   'assert(dO.currentHealth === o1, "opportunist OFF with 1 status");',
   'applyEffectTemplate(dO, POISON); var o2=dO.currentHealth; emit({type:"onHitDealt", self:G.hero, other:dO, payload:{}});',
@@ -228,7 +228,7 @@ const test = [
 
   // (d) applyAoE: Wildfire spreads burn within radius, not beyond
   'startGame("ranger");',
-  'G.hero.sources.push(PERKS.find(p=>p.nm==="Wildfire").src);',
+  'G.hero.sources.push({ tags:["fire"], modifiers:[], triggers:[{ on:"onCrit", source:"Wildfire", effect:{ kind:"applyAoE", radius:80, template:BURN } }] });',
   'var center=dummy(), nearF=dummy({maxHealth:100}), farF=dummy({maxHealth:100});',
   'center.x=0; nearF.x=20; farF.x=400;',
   'G.enemies=[center, nearF, farF];',
@@ -237,6 +237,43 @@ const test = [
   'assert(!farF.activeEffects.some(e=>e.source==="Burn"), "wildfire respects radius (far foe unburned)");',
   'G.hero.sources.pop();',
   'console.log("phase2 aoe-spread ok");',
+
+  // --- COMPOSER: the chain interpreter runs on basic attacks; ORDER is load-bearing ---
+  'startGame("ranger");',
+  'function chainDmg(chain){ var d=dummy({armor:5,maxHealth:1e9}); G.enemies=[d]; G.hero.chain=chain; G.hero._chainAtk=0; var st=d.currentHealth; for(var k=0;k<3;k++) runChain(G.hero, d); for(var k=0;k<180;k++) tickActor(d, 1/60); return st-d.currentHealth; }',
+  'assert(chainDmg([]) === 0, "empty chain deals nothing (interpreter off)");',
+  'assert(chainDmg(["ember"]) > 0, "a producer (ember) applies a damaging DoT");',
+  'var amped=chainDmg(["overcharge","ember"]), plain=chainDmg(["ember","overcharge"]);',
+  'assert(amped > plain*1.2, "ORDER matters: Overcharge BEFORE Ember ("+amped.toFixed(0)+") beats after ("+plain.toFixed(0)+")");',
+  'assert(chainSlotCount({fireSlots:0})===3 && chainSlotCount({fireSlots:6})===9 && chainSlotCount({fireSlots:40})===12, "slot formula: base 3, +1/2 fire levels, cap 12");',
+  // arrange primitives (what the workbench drives)
+  'var hh=G.hero; hh.fireSlots=0; hh.atoms=["ember","venom","overcharge"]; hh.chain=["ember","venom","overcharge"];',
+  'assert(chainMove(hh,2,-1) && hh.chain[1]==="overcharge", "chainMove swaps neighbors (reorder)");',
+  'assert(chainUnslot(hh,0) && hh.chain.length===2 && hh.atoms.length===3, "chainUnslot benches an atom (stays owned)");',
+  'assert(chainSlot(hh, hh.atoms.find(a=>!hh.chain.includes(a))) && hh.chain.length===3, "chainSlot re-adds an owned bench atom");',
+  'assert(chainSlot(hh,"focus")===false, "chainSlot refuses a non-owned atom");',
+  // drag-and-drop: swap on an atom, move-insert between atoms
+  'var dh={chain:["A","B","C","D"]}; chainDrop(dh,0,"swap",2); assert(dh.chain.join("")==="CBAD", "drag onto an atom swaps positions");',
+  'dh={chain:["A","B","C","D"]}; chainDrop(dh,0,"insert",2); assert(dh.chain.join("")==="BACD", "drag between atoms moves-inserts there (rightward)");',
+  'dh={chain:["A","B","C","D"]}; chainDrop(dh,3,"insert",1); assert(dh.chain.join("")==="ADBC", "drag between atoms moves-inserts there (leftward)");',
+  'dh={chain:["A","B","C"]}; chainDrop(dh,0,"insert",3); assert(dh.chain.join("")==="BCA", "drag to the end appends");',
+  'dh={chain:["A","B","C"]}; assert(chainDrop(dh,1,"swap",1)===false && dh.chain.join("")==="ABC", "dropping onto itself is a no-op");',
+  // on-hit gating: the chain fires only when a basic attack actually LANDS, once per attack (arm is consumed)
+  'startGame("ranger"); G.hero.chain=["ember"]; G.hero._chainAtk=0;',
+  'var _bi = basicInstance(G.hero, ctx, ["melee"]); _bi._chain = true;',
+  'var _t1 = dummy({maxHealth:1e9, evasion:0}); resolveAttack(G.hero, _t1, _bi, ctx);',
+  'assert(_t1.activeEffects.some(function(e){return e.source==="Burn";}), "chain runs when the basic attack lands (on-hit, not at launch)");',
+  'assert(_bi._chain === false, "chain arm is consumed on the first landed hit (fires once per attack)");',
+  'var _t2 = dummy({maxHealth:1e9, evasion:0}); resolveAttack(G.hero, _t2, _bi, ctx);',
+  'assert(!_t2.activeEffects.some(function(e){return e.source==="Burn";}), "a spent instance does not re-run the chain (no launch-time / double fire)");',
+  // buildability: every producer is reachable, and a producer is offered until owned (no producer-less runs)
+  'assert(ATOM_PRODUCERS.every(function(p){return ATOM_CARD_POOL.indexOf(p)>=0;}), "every producer is reachable via the card pool");',
+  'var _bh = {atoms:[]}; for (var i=0;i<8;i++){ var _o = atomOfferFor(_bh); assert(_o && ATOM_PRODUCERS.indexOf(_o)>=0, "with no producer owned, the offer is always a producer"); }',
+  // emergence floor: after a producer, the next offer is an amp/finisher so order & combination matter early
+  'assert(ATOM_CARD_POOL.indexOf("overcharge")>=0 && ATOM_CARD_POOL.indexOf("detonate")>=0, "the punchy emergence atoms (overcharge, detonate) are reachable via cards");',
+  'var _eh = {atoms:["ember"]}; for (var i=0;i<8;i++){ var _eo = atomOfferFor(_eh); assert(_eo && (ATOMS[_eo].role==="amp"||ATOMS[_eo].role==="fin"), "with a producer but no amp/finisher, the offer is an amp or finisher (emergence floor)"); }',
+  'var _ph = {atoms:["ember","overcharge"]}; var _seen=false; for (var i=0;i<40;i++){ var _o2 = atomOfferFor(_ph); if(_o2!==null) _seen=true; } assert(_seen, "once a producer+amp are owned, atom cards still surface");',
+  'console.log("composer ok: order-matters amped="+amped.toFixed(0)+" vs plain="+plain.toFixed(0));',
 
   // (e) regression: self-conditioned triggers still gate after the collectTriggers refactor
   'startGame("ranger");',
@@ -359,93 +396,21 @@ const test = [
   // on-hit affix is a real trigger source on the enemy
   'var _ven = ENEMY_AFFIXES.find(a=>a.id==="venomous").build(); assert(_ven.triggers[0].on === "onHitDealt", "Venomous is an onHitDealt trigger (fires on enemy hits)");',
 
-  // ===== PHASE 4: run modifiers =====
-  'startGame("ranger");',
-  'assert(Array.isArray(G.runMods) && G.runMods.length === 1, "exactly one run modifier assigned at start");',
-  'assert(G.hero.sources.some(s=>s.id && s.id.indexOf("runmod_")===0), "run modifier folded into hero sources via rebuild");',
-  'var _n0 = G.runMods.length; grantRunMod("juggernaut");',
-  'assert(G.runMods.length === _n0+1, "grantRunMod stacks another modifier");',
-  'assert(G.hero.sources.filter(s=>s.id&&s.id.indexOf("runmod_")===0).length === _n0+1, "stacked modifier present in sources after rebuild");',
-  // daily run modifier is deterministic for the day
-  '_dailyPending = dailySeed(); startGame("mage"); var _dm1 = G.runMods[0].id;',
-  '_dailyPending = dailySeed(); startGame("mage"); var _dm2 = G.runMods[0].id;',
-  'assert(_dm1 === _dm2, "daily run modifier is deterministic for the day");',
-  'console.log("phase4 ok: affixes deterministic+folded, run mods assigned/stacked/daily-deterministic");',
-  // relic drops deterministic per spawn ordinal (daily-safe) + always a valid mod or null
-  'seedRun(2024); var _re={spawnIdx:9}; var _r1=rollEliteRelic(_re); for (var i=0;i<300;i++) grng(); var _r2=rollEliteRelic(_re);',
-  'assert(_r1===_r2, "elite relic identical per spawn ordinal regardless of live churn");',
-  'assert(_r1===null || runModById(_r1), "relic grants a valid run modifier (or none)");',
-  'console.log("phase4 relics ok: deterministic elite relic drops -> run mods");',
-  // run-mod values: relics are capped at RELIC_CAP, so per-unit values can be meatier — but bounded scalers
-  // (perMax) and count-scaled (per:relic) totals must still stay sane so no single relic runs away.
-  '(function(){ var bad=[]; for (var i=0;i<RUN_MODS.length;i++){ var b=RUN_MODS[i].build(); for (var j=0;j<b.modifiers.length;j++){ var m=b.modifiers[j]; var lim = m.op==="more" ? (m.condition?0.30:0.15) : (m.op==="increased"?0.25 : (FRAC.has(m.stat)?0.06:8)); if (Math.abs(m.value) > lim+1e-9) bad.push(RUN_MODS[i].id+"."+m.stat+"("+m.op+(m.condition?",cond":"")+")="+m.value+">"+lim); if (m.perMax!=null){ var tot=Math.abs(m.value*m.perMax); var tl=(m.op==="flat")?(FRAC.has(m.stat)?0.6:80):1.0; if (tot>tl+1e-9) bad.push(RUN_MODS[i].id+"."+m.stat+" perMax-total="+tot+">"+tl); } if (m.per==="relic"){ var ct=Math.abs(m.value*RELIC_CAP); var cl=(m.op==="flat")?80:0.5; if (ct>cl+1e-9) bad.push(RUN_MODS[i].id+"."+m.stat+" per:relic@cap="+ct+">"+cl); } } } assert(bad.length===0, "run-mod values within capped-regime bounds; offenders: "+bad.join(", ")); })();',
-  // stacking stays controlled even at the relic cap: 10x Glass Cannon survivable, 10x Zealot not guaranteed-crit
-  'startGame("ranger"); G.runMods=[]; rebuild(G.hero); var _baseHp = resolveStat(G.hero,"maxHealth",ctx);',
-  'for (var i=0;i<10;i++) grantRunMod("glasscannon"); assert(resolveStat(G.hero,"maxHealth",ctx) > _baseHp*0.45, "10x Glass Cannon stays survivable");',
-  'G.runMods=[]; rebuild(G.hero); for (var i=0;i<10;i++) grantRunMod("zealot"); assert(resolveStat(G.hero,"critChance",ctx) < 0.75, "10x Zealot crit stays controlled (not guaranteed-crit even at the relic cap)");',
-  // Bloodthirst per:kill is bounded by perMax — a million kills cannot keep scaling it
-  'startGame("ranger"); G.runMods=[]; G.hero.killCount=0; rebuild(G.hero); grantRunMod("bloodthirst"); var _adK0 = resolveStat(G.hero,"attackDamage",ctx);',
-  'G.hero.killCount = 1000000; var _adK1 = resolveStat(G.hero,"attackDamage",ctx); G.hero.killCount = 50; var _adK50 = resolveStat(G.hero,"attackDamage",ctx);',
-  'assert(_adK1 > _adK0 && Math.abs(_adK1 - _adK50) < 1e-6, "Bloodthirst per:kill is capped at perMax (no kill-driven runaway)");',
-  'console.log("run-mod balance ok: values bounded, stacking gentle, per:kill capped");',
-
-  // ===== interacting relics =====
-  // Resonance scales with how many relics you hold (relic-to-relic interaction)
-  'startGame("ranger"); G.runMods=[]; rebuild(G.hero); var _adB = resolveStat(G.hero,"attackDamage",ctx);',
-  'grantRunMod("resonance"); var _ad1 = resolveStat(G.hero,"attackDamage",ctx);',
-  'grantRunMod("resonance"); grantRunMod("resonance"); grantRunMod("resonance"); var _ad4 = resolveStat(G.hero,"attackDamage",ctx);',
-  'assert(_ad1 > _adB && _ad4 > _ad1 * 1.2, "Resonance scales with relic count (per:relic)");',
-  // Last Stand is conditional — only applies below the health threshold
-  'G.runMods=[]; rebuild(G.hero); grantRunMod("laststand");',
-  'G.hero.currentHealth = resolveStat(G.hero,"maxHealth",ctx); var _full = resolveStat(G.hero,"attackDamage",ctx);',
-  'G.hero.currentHealth = resolveStat(G.hero,"maxHealth",ctx) * 0.2; var _low = resolveStat(G.hero,"attackDamage",ctx);',
-  'assert(_low > _full, "Last Stand: damage rises only when wounded (conditional fold)");',
-  // Annihilation is gone
-  'assert(!PERKS.find(function(p){return p.nm==="Annihilation";}), "Annihilation perk removed");',
-  'console.log("interacting relics ok: per-relic scaling + conditional threshold; annihilation removed");',
-
-  // ===== relic descriptions are numeric (value-derived, never drift) =====
-  'startGame("ranger"); G.runMods=[];',
-  'var _rmGc = runModDesc(runModById("glasscannon"));',
-  'assert(/\\+10% .*Damage/.test(_rmGc) && /Health/.test(_rmGc) && !/More/i.test(_rmGc), "runModDesc is numeric, not qualitative (glasscannon: "+_rmGc+")");',
-  'var _rmBp = runModDesc(runModById("bloodpact"));',
-  'assert(/-0\\.5 /.test(_rmBp) && /heal/i.test(_rmBp) && /on kill/i.test(_rmBp), "runModDesc keeps small decimals + shows triggers (bloodpact: "+_rmBp+")");',
-  'var _rmRs = runModDesc(runModById("resonance"));',
-  'assert(/\\/ relic/.test(_rmRs), "runModDesc shows per-relic scaling (resonance: "+_rmRs+")");',
-  'var _rmBt = runModDesc(runModById("bloodthirst"));',
-  'assert(/60% .*Damage/.test(_rmBt) && /ramps/.test(_rmBt) && !/\\/ kill/.test(_rmBt), "runModDesc shows bounded per:kill as a capped total (bloodthirst: "+_rmBt+")");',
-  'var _rmLs = runModDesc(runModById("laststand"));',
-  'assert(/while <35% HP/.test(_rmLs), "runModDesc shows conditions (laststand: "+_rmLs+")");',
-  'console.log("relic desc ok: numeric values, decimals, per-scaling, conditions");',
-
-  // ===== relic pickup consent: Take grants+removes, Leave removes without granting =====
-  'startGame("ranger"); G.runMods=[]; rebuild(G.hero);',
-  'var _rpDrop = { relic:"juggernaut", x:0, y:0, dead:false }; G._relicPick = _rpDrop; var _rpN0 = G.runMods.length;',
-  'takeRelic();',
-  'assert(G.runMods.length === _rpN0+1 && _rpDrop.dead === true && G._relicPick === null, "Take grants the relic and removes the drop");',
-  'var _rpDrop2 = { relic:"zealot", x:0, y:0, dead:false }; G._relicPick = _rpDrop2; var _rpN1 = G.runMods.length;',
-  'leaveRelic();',
-  'assert(G.runMods.length === _rpN1 && _rpDrop2.dead === true && G._relicPick === null, "Leave removes the relic without granting it");',
-  'console.log("relic consent ok: Take grants+removes, Leave removes only");',
-
-  // ===== double-collect guard: a collected (dead) drop must not re-open the card =====
-  'startGame("ranger"); G.runMods=[]; G._relicPick=null; rebuild(G.hero);',
-  'var _ddrop = { relic:"glasscannon", x:0, y:0, dead:false }; openRelicPick(_ddrop); takeRelic(); var _afterTake = G.runMods.length;',
-  'assert(_ddrop.dead === true && G._relicPick === null, "after Take the drop is dead and the prompt is cleared");',
-  'openRelicPick(_ddrop);',   // simulate the next frame re-touching the still-in-list dead drop (the bug path)
-  'assert(G._relicPick === null && G.runMods.length === _afterTake, "a dead drop does not re-open the card or grant again (no double-collect)");',
-  'var _o1 = { relic:"zealot", x:0,y:0,dead:false }; openRelicPick(_o1); var _o2 = { relic:"harvest", x:0,y:0,dead:false }; openRelicPick(_o2);',
-  'assert(G._relicPick === _o1, "a second relic cannot open a prompt while one is already up"); leaveRelic();',
-  'console.log("relic double-collect guard ok: dead/duplicate prompts ignored");',
-
-  // ===== relic slot cap + swap-or-leave =====
-  'startGame("ranger"); G.runMods=[]; rebuild(G.hero); for (var i=0;i<RELIC_CAP;i++) grantRunMod("zealot");',
-  'G._relicPick = { relic:"glasscannon", x:0, y:0, dead:false }; takeRelic();',
-  'assert(G.runMods.length === RELIC_CAP, "takeRelic refuses past the cap (bag full must swap)");',
-  'G._relicPick = { relic:"juggernaut", x:0, y:0, dead:false }; swapRelic(0);',
-  'assert(G.runMods.length === RELIC_CAP && G.runMods.some(function(r){return r.id==="runmod_juggernaut";}), "swapRelic holds at cap and inserts the new relic");',
-  'assert(RELIC_CAP >= 6 && RELIC_CAP <= 16, "relic cap is in the intended band");',
-  'console.log("relic cap ok: bag bounded at "+RELIC_CAP+", swap-or-leave when full");',
+  // ===== run modifiers as one-time trade-off perks (composite stat mods through the perk pool) =====
+  'startGame("ranger"); var _rmGc = PERKS.find(p=>p.nm==="Glass Cannon");',
+  'assert(_rmGc && _rmGc.once === true && _rmGc.src && _rmGc.src.modifiers.length === 2, "Glass Cannon is a once-only binary perk (composite trade-off)");',
+  'var _rmAdB = resolveStat(G.hero,"attackDamage",ctx), _rmHpB = resolveStat(G.hero,"maxHealth",ctx);',
+  'G.hero.perks.push(_rmGc.src); rebuild(G.hero);',
+  'assert(resolveStat(G.hero,"attackDamage",ctx) > _rmAdB && resolveStat(G.hero,"maxHealth",ctx) < _rmHpB, "Glass Cannon trades damage up, max health down");',
+  'assert(G.hero.perks.includes(_rmGc.src), "owned once-perk is detected for de-dup (pool skips re-offering)");',
+  // conditional trade-off still gates: Last Stand only bites below 35% HP
+  'startGame("ranger"); var _rmLs = PERKS.find(p=>p.nm==="Last Stand"); G.hero.perks.push(_rmLs.src); rebuild(G.hero);',
+  'G.hero.currentHealth = resolveStat(G.hero,"maxHealth",ctx); var _rmAdFull = resolveStat(G.hero,"attackDamage",ctx);',
+  'G.hero.currentHealth = resolveStat(G.hero,"maxHealth",ctx)*0.2; var _rmAdLow = resolveStat(G.hero,"attackDamage",ctx);',
+  'assert(_rmAdLow > _rmAdFull, "Last Stand fires only while badly wounded (conditional more)");',
+  // values stay in the capped-regime bounds (once-only, so they cannot stack away)
+  '(function(){ var bad=[]; for (var p of PERKS){ if(!p.once||!p.src) continue; for (var m of p.src.modifiers){ var lim = m.op==="more" ? (m.condition?0.30:0.15) : (m.op==="increased"? (m.perMax?1.0:0.25) : (FRAC.has(m.stat)?0.5:8)); if (Math.abs(m.value*(m.perMax||1)) > lim+1e-9) bad.push(p.nm+"."+m.stat+"="+m.value); } } assert(bad.length===0, "run-mod perk values within bounds; offenders: "+bad.join(", ")); })();',
+  'console.log("run-mod perks ok: composite trade-offs through the perk pool, once-only, conditional-gated, bounded");',
 
   // ===== crit-storm slow-mo fix: per-hit hitstop bounded + rate-limited =====
   'startGame("ranger"); var _dh = dummy({maxHealth:200}); _dh.x=0; _dh.y=0; _dh.r=12; G._hitHsLast=-1; G.hitStop=0;',

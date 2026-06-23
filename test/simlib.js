@@ -69,7 +69,7 @@ function loadGame(htmlPath) {
   const api = {};
   // The appended snippet runs in this scope, so it can see both `api` and the game's
   // eval-scoped functions; G and ctx are exposed via getters so callers see live state.
-  const grab = '\n;Object.assign(api, { startGame, buildHotbar, resolveStat, resolveAttack, basicInstance, tickActor, rebuild, rollItem, PERKS, mkStats, ITEM_BASES, ENEMIES, ENEMY_AFFIXES, RUN_MODS, seedRun, grng, dailySeed, startWave, spawnEnemy, rollEnemyLoot, grantRunMod, rollEliteRelic, resolveAll, sourcesWith, RELIC_CAP, BURN, POISON, chillTpl, applyEffectTemplate, getG: () => G, getCtx: () => ctx });';
+  const grab = '\n;Object.assign(api, { startGame, buildHotbar, resolveStat, resolveAttack, basicInstance, tickActor, rebuild, rollItem, PERKS, mkStats, ITEM_BASES, ENEMIES, ENEMY_AFFIXES, seedRun, grng, dailySeed, startWave, spawnEnemy, rollEnemyLoot, resolveAll, sourcesWith, BURN, POISON, chillTpl, burnTpl, poisonTpl, applyEffectTemplate, runChain, ATOMS, chainSlotCount, autoFillChain, grantChainAtom, atomOfferFor, ATOM_PRODUCERS, chainMove, chainUnslot, chainSlot, chainDrop, ATOM_CARD_POOL, ATOM_BOSS_POOL, killEnemy, getG: () => G, getCtx: () => ctx });';
   eval(code + grab);
   return api;
 }

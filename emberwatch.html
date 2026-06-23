@@ -54,6 +54,23 @@
             touch-action: none
         }
 
+        .sbpanel { display: none; position: fixed; left: 12px; bottom: 12px; z-index: 15; width: 236px; padding: 11px 12px; border-radius: 12px; background: rgba(14,18,28,.92); border: 1px solid #2c3346; box-shadow: 0 8px 30px rgba(0,0,0,.5); font: 13px ui-sans-serif, system-ui; }
+        .sbpanel.on { display: block; }
+        .sbpanel .sbttl { font-weight: 800; letter-spacing: .08em; color: #ff8a2b; font-size: 12px; margin-bottom: 8px; }
+        .sbpanel .sbrow { display: flex; gap: 7px; align-items: center; margin-bottom: 7px; }
+        .sbpanel select, .sbpanel button { background: #1a1f2c; color: #e7ecf5; border: 1px solid #2c3346; border-radius: 7px; padding: 5px 9px; font: inherit; cursor: pointer; flex: 1; }
+        .sbpanel label { display: inline-flex; align-items: center; gap: 5px; color: #aab2c4; font-size: 12px; flex: 1; }
+        .sbpanel .sbhint { font-size: 11px; color: #6a7080; line-height: 1.4; margin-top: 2px; }
+        .sbpanel .sbsub { display: none; margin: 3px 0 7px; padding: 7px 8px; border: 1px solid #222838; border-radius: 8px; background: rgba(0,0,0,.25); }
+        .sbpanel .sbsub.on { display: block; }
+        .sbpanel .sbsubttl { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: #ff8a2b; opacity: .8; margin: 2px 0 5px; }
+        .sbpanel .statrow { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 12px; }
+        .sbpanel .statrow label { flex: 1; color: #aab2c4; }
+        .sbpanel .statrow input { width: 60px; background: #1a1f2c; color: #e7ecf5; border: 1px solid #2c3346; border-radius: 5px; padding: 3px 5px; font: inherit; }
+        .sbpanel .statrow .rv { width: 46px; text-align: right; color: #7fd6a0; font-size: 11px; }
+        .sbpanel button.act { border-color: #ff8a2b; color: #ffce9a; background: #2a2114; }
+        .sbplacebanner { display: none; position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 16; padding: 8px 16px; border-radius: 20px; background: rgba(255,138,43,.16); border: 1px solid #ff8a2b; color: #ffce9a; font: 13px ui-sans-serif, system-ui; box-shadow: 0 6px 24px rgba(0,0,0,.5); }
+        .sbplacebanner.on { display: block; }
         .hud {
             position: absolute;
             pointer-events: none;
@@ -1528,6 +1545,46 @@
             display: flex
         }
 
+        /* --- composer workbench: ordered slots + a bench of owned atoms --- */
+        .modal.cmp { width: min(760px,95vw); }
+        .chainrow { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px }
+        .cslot {
+            position: relative; flex: 0 0 auto; width: 134px; min-height: 80px;
+            border: 1px solid var(--rc, var(--line)); border-left: 3px solid var(--rc, var(--line));
+            border-radius: 10px; padding: 8px 9px 6px;
+            background: linear-gradient(180deg, rgba(255,170,80,.05), rgba(8,11,18,.5)), var(--panel);
+            display: flex; flex-direction: column; gap: 2px
+        }
+        .cslot.empty { border-style: dashed; opacity: .5; align-items: center; justify-content: center }
+        .cidx { position: absolute; top: 5px; right: 8px; font-size: 10px; color: var(--ember); opacity: .7 }
+        .cslot .cnm { font-size: 13px; color: var(--ember-hi); font-weight: 600 }
+        .cslot .crole, .catom .crole { font-size: 9px; letter-spacing: .18em; text-transform: uppercase; color: var(--rc, #aaa); opacity: .85 }
+        .cslot .cempty { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: #6a7080 }
+        .cbtns { display: flex; gap: 4px; margin-top: auto; padding-top: 5px }
+        .cbtns button { flex: 1; font-size: 12px; line-height: 1; padding: 4px 0; border-radius: 6px; border: 1px solid var(--line); background: rgba(255,255,255,.04); color: var(--ember-hi); cursor: pointer }
+        .cbtns button:disabled { opacity: .25; cursor: default }
+        .cbtns .crm { color: #ff8a8a; flex: 0 0 26px }
+        .cbench { display: flex; flex-wrap: wrap; gap: 7px; margin: 8px 0 4px }
+        .catom { border: 1px solid var(--rc, var(--line)); border-radius: 9px; padding: 7px 11px; background: rgba(8,11,18,.5); cursor: pointer; display: flex; flex-direction: column; gap: 1px; text-align: left }
+        .catom .cnm { font-size: 12px; color: var(--ember-hi) }
+        .catom:disabled { opacity: .4; cursor: default }
+        .cbnone { font-size: 12px; color: #8a90a0; padding: 6px 2px }
+        .cinsp { cursor: pointer; display: flex; flex-direction: column; gap: 2px }
+        .cslot.sel, .catom.sel { box-shadow: 0 0 0 2px var(--rc, var(--ember)); border-color: var(--rc, var(--ember)) }
+        .catomdetail { margin: 10px 0 2px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); border-left: 3px solid var(--rc, var(--line)); background: rgba(8,11,18,.5); min-height: 52px }
+        .catomdetail .dhead { display: flex; align-items: baseline; gap: 9px }
+        .catomdetail .dnm { font-size: 14px; font-weight: 700; color: var(--rc, var(--ember-hi)) }
+        .catomdetail .drole { font-size: 9px; letter-spacing: .18em; text-transform: uppercase; color: var(--rc, #aaa); opacity: .85 }
+        .catomdetail .dds { font-size: 13px; color: #cdd3df; margin-top: 4px; line-height: 1.45 }
+        .catomdetail .dhint { font-size: 12px; color: #6a7080 }
+        .cslotit { margin-top: 9px; font-size: 12px; padding: 5px 13px; border-radius: 7px; border: 1px solid var(--rc, var(--line)); background: rgba(255,255,255,.05); color: var(--rc, var(--ember-hi)); cursor: pointer }
+        .cslotit:disabled { opacity: .4; cursor: default }
+        .cinsp { touch-action: none }
+        .cghost { position: fixed; z-index: 9999; pointer-events: none; width: 134px; min-height: 80px; padding: 8px 9px 6px; border-radius: 10px; border: 1px solid var(--rc, var(--line)); border-left: 3px solid var(--rc, var(--line)); background: linear-gradient(180deg, rgba(255,170,80,.08), rgba(8,11,18,.85)); transform: translate(-50%,-50%) scale(.96) rotate(-2deg); opacity: .92; box-shadow: 0 12px 30px rgba(0,0,0,.6) }
+        .cslot.dragging { opacity: .3 }
+        .cslot.cdrop-swap { box-shadow: 0 0 0 2px var(--ember-hi) inset, 0 0 16px var(--rc, var(--ember)) }
+        .cslot.cdrop-before { box-shadow: inset 4px 0 0 var(--ember) }
+        .cslot.cdrop-after { box-shadow: inset -4px 0 0 var(--ember) }
         .modal {
             width: min(680px,94vw);
             max-height: 88vh;
@@ -1680,6 +1737,13 @@
             --glow: rgba(255,210,74,.22)
         }
 
+        .card.atomcard {                                   /* composer atom — a special card type, NOT a rarity tier */
+            --col: #54dcd0;
+            --edge: rgba(84,220,208,.82);
+            --tint: rgba(84,220,208,.08);
+            --glow: rgba(84,220,208,.20)
+        }
+
         .card.firecard {                                   /* "Feed the Fire" — the investment-in-the-fire option, not a rarity */
             --col: #ff8c3a;
             --edge: rgba(255,140,58,.85);
@@ -1717,8 +1781,40 @@
             100% { transform: translateY(calc(-1 * var(--rise, 220px))) translateX(var(--drift, 0)) scale(1.15); opacity: 0 }
         }
 
+        .card.firecard::after {                            /* faint flame glow pulsing at the bottom edge */
+            content: "";
+            position: absolute;
+            left: 0; right: 0; bottom: 0;
+            height: 46%;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(120% 82% at 50% 100%, rgba(255,140,50,.40), rgba(255,110,40,.12) 46%, transparent 72%);
+            animation: fireGlowPulse 2.6s ease-in-out infinite
+        }
+
+        @keyframes fireGlowPulse {
+            0%, 100% { opacity: .5; transform: translateY(2px) scaleX(.98) }
+            50%      { opacity: 1;  transform: translateY(0)   scaleX(1.04) }
+        }
+
+        .burstember {                                      /* one-shot ember pop spawned on click (lives on <body>) */
+            position: fixed;
+            width: 4px; height: 4px;
+            margin: -2px 0 0 -2px;
+            border-radius: 50%;
+            background: #ffd08a;
+            box-shadow: 0 0 7px 1px rgba(255,150,60,.95);
+            animation: emberBurst var(--bd, .7s) ease-out forwards
+        }
+
+        @keyframes emberBurst {
+            0%   { transform: translate(0,0) scale(1);                       opacity: 1 }
+            100% { transform: translate(var(--dx,0), var(--dy,0)) scale(.4); opacity: 0 }
+        }
+
         @media (prefers-reduced-motion: reduce) {
             .card.firecard .embers i { animation: none; opacity: .5 }
+            .card.firecard::after { animation: none }
         }
 
         .card .rtag {
@@ -1748,102 +1844,6 @@
             color: var(--muted);
             line-height: 1.6
         }
-
-        .relic-card {
-            border-color: rgba(200, 155, 255, 0.5);
-        }
-
-            .relic-card .ds {
-                color: #d7c6ef;
-                min-height: 34px;
-            }
-
-        .relicbtns {
-            display: flex;
-            gap: 10px;
-            margin-top: 14px;
-        }
-
-        .rbtn {
-            flex: 1;
-            padding: 11px 8px;
-            border-radius: 9px;
-            font: inherit;
-            font-weight: 700;
-            font-size: 14px;
-            cursor: pointer;
-            border: 1px solid transparent;
-            transition: filter .12s, transform .06s;
-        }
-
-            .rbtn:active {
-                transform: translateY(1px);
-            }
-
-            .rbtn.take {
-                background: linear-gradient(180deg, #8a5fd0, #6a3fb0);
-                color: #fff;
-                border-color: #a880e8;
-            }
-
-                .rbtn.take:hover {
-                    filter: brightness(1.12);
-                }
-
-            .rbtn.leave {
-                background: rgba(255, 255, 255, 0.05);
-                color: var(--muted);
-                border-color: rgba(255, 255, 255, 0.14);
-            }
-
-                .rbtn.leave:hover {
-                    filter: brightness(1.3);
-                }
-
-        .swaplbl {
-            margin-top: 14px;
-            font-size: 12px;
-            letter-spacing: .04em;
-            text-transform: uppercase;
-            color: var(--muted);
-        }
-
-        .swaplist {
-            display: flex;
-            flex-direction: column;
-            gap: 7px;
-            margin-top: 8px;
-            max-height: 240px;
-            overflow-y: auto;
-        }
-
-        .rbtn.swap {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 2px;
-            text-align: left;
-            padding: 8px 11px;
-            background: rgba(200, 155, 255, 0.07);
-            border-color: rgba(200, 155, 255, 0.22);
-            color: #e7dcff;
-        }
-
-            .rbtn.swap:hover {
-                filter: brightness(1.2);
-                border-color: rgba(200, 155, 255, 0.5);
-            }
-
-            .rbtn.swap .swnm {
-                font-weight: 700;
-                font-size: 13px;
-            }
-
-            .rbtn.swap .swds {
-                font-weight: 400;
-                font-size: 11px;
-                color: #b9a8d8;
-            }
 
         body.mobile .card {
             padding: 14px 11px
@@ -2877,12 +2877,68 @@
 
         <div class="hud" id="expwarn"><span id="expdots"></span> <span data-i18n="exposedPre">Exposed</span> <b id="expn"></b> <span data-i18n="exposedPost">— return to the firelight</span></div>
 
+        <div class="sbpanel" id="sbpanel">
+            <div class="sbttl">⚗ CHAIN SANDBOX</div>
+            <div class="sbrow"><button id="sbpausebtn" onclick="sbPause()">⏸ Pause</button></div>
+            <div class="sbrow">
+                <select id="sbclass" onchange="sbSwapClass(this.value)">
+                    <option value="ranger">Ranger</option><option value="mage">Mage</option><option value="knight">Knight</option>
+                </select>
+            </div>
+            <div class="sbrow">
+                <select id="sbtype" onchange="G._sbType=this.value">
+                    <option value="grunt">Grunt</option><option value="swift">Swift</option><option value="brute">Brute</option>
+                    <option value="spitter">Spitter</option><option value="bomber">Bomber</option><option value="boss">Boss</option>
+                </select>
+                <button onclick="sbSpawn(document.getElementById('sbtype').value)">+ Spawn</button>
+            </div>
+            <div class="sbrow">
+                <button id="sbplacebtn" onclick="sbPlaceMode()">◉ Place</button>
+                <label><input type="checkbox" id="sbauto" onchange="G._sbAuto=this.checked"> Auto-spawn</label>
+            </div>
+            <div class="sbrow">
+                <button onclick="sbClear()">Clear</button>
+                <button onclick="sbReset()">Reset</button>
+            </div>
+            <div class="sbrow">
+                <button onclick="openComposer()">Compose ⌨C</button>
+                <button onclick="sbLevelUp()">Level Up</button>
+            </div>
+            <div class="sbrow">
+                <button onclick="sbToggle('sbstats')">Stats ▾</button>
+                <button onclick="sbToggle('sbenv')">Environment ▾</button>
+            </div>
+            <div class="sbrow">
+                <button onclick="sbToggle('sbbehav')">Enemy behaviour ▾</button>
+            </div>
+            <div class="sbsub" id="sbstats"></div>
+            <div class="sbsub" id="sbenv">
+                <div class="sbsubttl">Time</div>
+                <div class="sbrow"><button data-env="day" onclick="sbEnv('day')">Day</button><button data-env="night" onclick="sbEnv('night')">Night</button><button data-env="auto" onclick="sbEnv('auto')">Auto</button></div>
+                <div class="sbsubttl">Rain</div>
+                <div class="sbrow"><button data-rain="off" onclick="sbRain('off')">Off</button><button data-rain="on" onclick="sbRain('on')">On</button><button data-rain="auto" onclick="sbRain('auto')">Auto</button></div>
+            </div>
+            <div class="sbsub" id="sbbehav">
+                <div class="sbsubttl">Enemy behaviour</div>
+                <div class="sbrow">
+                    <label><input type="checkbox" id="sbmove" checked onchange="G._sbNoMove=!this.checked"> Movement</label>
+                    <label><input type="checkbox" id="sbatk" checked onchange="G._sbNoAtk=!this.checked"> Attack</label>
+                </div>
+                <div class="sbrow">
+                    <label><input type="checkbox" id="sbdmg" checked onchange="G._sbNoDmg=!this.checked"> Take damage</label>
+                </div>
+            </div>
+            <div class="sbhint">Move toward a foe — let go and your watcher strikes, firing the chain. ◉ Place pauses to drop foes by click.</div>
+        </div>
+        <div class="sbplacebanner" id="sbplacebanner">◉ Click the arena to place foes · click <b>◉ Place</b> again to finish</div>
+
         <div class="hud" id="loottoast"></div>
 
         <div class="hud" id="intermission">
             <div class="ititle" id="ititle"></div>
             <div class="isub" id="isub"></div>
             <button class="big" id="beginwave" onclick="startWave()" data-i18n="beginWave">Begin wave</button>
+            <div style="margin-top:10px"><button class="btn" id="composebtn" onclick="openComposer()"><span data-i18n="composeChain">Compose chain</span><span class="k">C</span></button></div>
         </div>
 
         <div id="bottombar">
@@ -2914,14 +2970,6 @@
             </div>
         </div>
 
-        <div class="overlay" id="relicpick">
-            <div class="luwrap">
-                <h2 class="lutitle" data-i18n="relicFound">Relic Found</h2>
-                <div class="sub" data-i18n="relicChoose">Take it to stack its power for the rest of the run — or leave it behind for good.</div>
-                <div class="cards" id="reliccard"></div>
-            </div>
-        </div>
-
         <div class="overlay" id="inventory">
             <div class="modal lh">
                 <div class="lh-head"><h2 data-i18n="pack">Watcher's Pack</h2><span class="lh-lvl" id="invlvl"></span></div>
@@ -2938,16 +2986,19 @@
             </div>
         </div>
 
-        <div class="overlay" id="firepanel">
-            <div class="modal">
-                <h2 data-i18n="campfire">The Campfire</h2><div class="sub" id="firesub"></div>
-                <div id="fireinfo"></div>
-                <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
-                    <button class="big" id="upgradebtn"></button>
-                    <button class="btn" onclick="closePanels()" data-i18n="close">Close</button>
-                </div>
+        <div class="overlay" id="composer">
+            <div class="modal cmp">
+                <div class="lh-head"><h2 data-i18n="compose">Compose</h2><span class="lh-lvl" id="cmpslots"></span></div>
+                <div class="sub" data-i18n="composeHint">Order is power. Each atom acts on the charge in turn — amplifiers boost only what comes after them, finishers spend what came before.</div>
+                <div class="lh-sec" data-i18n="chain">Chain</div>
+                <div class="chainrow" id="chainrow"></div>
+                <div class="lh-sec" data-i18n="bench">Bench — owned atoms</div>
+                <div class="cbench" id="cbench"></div>
+                <div class="catomdetail" id="catomdetail"></div>
+                <div style="text-align:right;margin-top:16px"><button class="btn" onclick="closeComposer()"><span data-i18n="close">Close</span><span class="k">C / Esc</span></button></div>
             </div>
         </div>
+
 
         <div class="overlay on" id="start">
             <div class="topctl">
@@ -2988,6 +3039,7 @@
                     </div>
                     <div class="pickdots" id="pickdots"></div>
                     <button class="btn primary" id="pickbegin" onclick="beginPick()" data-i18n="begin">Begin</button>
+                    <button class="btn" id="picksandbox" onclick="startSandbox()" style="margin-top:8px">⚗ Chain Sandbox</button>
                     <div class="paneback"><button class="btn" onclick="showStartPane('menu')" data-i18n="back">← Back</button></div>
                 </div>
 
@@ -3208,6 +3260,8 @@
                 languageTitle: "Language", level: "Level", waveLabel: "Wave", dayLabel: "Day", phaseDay: "Day", phaseNight: "Night",
                 exposedPre: "Exposed", exposedPost: "— return to the firelight",
                 beginWave: "Begin wave", pack: "Watcher's Pack", skip: "Skip", gotIt: "Got it",
+                compose: "Compose", composeChain: "Compose chain", chain: "Chain", bench: "Bench — owned atoms", composeHint: "Order is power. Each atom acts on the charge in turn — amplifiers boost only what comes after them, finishers spend what came before.",
+                inspectHint: "Tap any atom — chained or benched — to see what it does.", slotIt: "Slot it →", chainFull: "Chain full",
                 equipment: "Equipment", satchel: "Satchel", stats: "Stats", close: "Close", back: "\u2190 Back",
                 // start menu + flow
                 campfire: "The Campfire", howToPlay: "How to Play", play: "Play",
@@ -3251,7 +3305,7 @@
                 // game over
                 kills: "Kills", days: "Days", best: "Best {n}", newBest: "★ New best!", dailyRecording: "Recording daily…", dailyRecorded: "Daily recorded · rank {n}", dailyAlready: "Daily already recorded · rank {n}", dailySavedLocal: "Daily saved locally", earned: "earned",
                 embersLabel: "Embers:", watchAd: "Watch ad +30", supporterPack: "✦ Supporter Pack",
-                revive: "Revive", restart: "Restart", dailyChallenge: "Daily Challenge", relicFound: "Relic Found", relicChoose: "Take it to stack its power for the rest of the run — or leave it behind for good.", relicFull: "Bag full — swap a relic out, or leave this one behind.", relicSwap: "Replace which relic?", takeRelic: "Take", leaveRelic: "Leave", relicTag: "RELIC", runmod_glasscannon: "Glass Cannon", runmod_glasscannon_d: "More damage, less max health", runmod_juggernaut: "Juggernaut", runmod_juggernaut_d: "More max health, slower", runmod_bloodpact: "Blood Pact", runmod_bloodpact_d: "Heal on kill, but health slowly drains", runmod_zealot: "Zealot", runmod_zealot_d: "More attack speed & crit, less armor", runmod_harvest: "Harvest", runmod_harvest_d: "More harvest, less damage", affix_vigorous: "Vigorous", affix_armored: "Armored", affix_swift: "Swift", affix_brutal: "Brutal", affix_venomous: "Venomous", affix_searing: "Searing", affix_numbing: "Numbing", home: "Home",
+                revive: "Revive", restart: "Restart", dailyChallenge: "Daily Challenge", affix_vigorous: "Vigorous", affix_armored: "Armored", affix_swift: "Swift", affix_brutal: "Brutal", affix_venomous: "Venomous", affix_searing: "Searing", affix_numbing: "Numbing", home: "Home",
                 // toasts
                 pickedUp: "Picked up", lvShort: "Lv",
                 supporterUnlocked: "Supporter Pack unlocked — thank you ✦",
@@ -4308,8 +4362,7 @@
             else if (m.per === "kill") c = actor.killCount || 0;
             else if (m.per === "second") c = Math.floor(actor.combatTime || 0);
             else if (m.per === "enemyNearby") c = (ctx && ctx.nearbyEnemies) || 0;
-            else if (m.per === "relic") c = (typeof G !== "undefined" && G && G.runMods) ? G.runMods.length : 0;   // relic-to-relic synergy
-            if (c != null && m.perMax != null) c = Math.min(c, m.perMax);   // bound unbounded scalers (kills, seconds) so a single relic can't run away
+            if (c != null && m.perMax != null) c = Math.min(c, m.perMax);   // bound unbounded scalers (kills, seconds) so they can't run away
             return c;
         }
         function resolveStat(actor, stat, ctx) {
@@ -4399,6 +4452,7 @@
             }
             if (crit) emit({ type: "onCrit", self: att, other: tgt, payload: p });
             if (p.appliesOnHit) emit({ type: "onHitDealt", self: att, other: tgt, payload: p });   // gated: cleave splash won't proc on-hits
+            if (p._chain) { p._chain = false; runChain(att, tgt, p); }                          // composer: walk the chain only when the basic attack actually lands, once per attack
             if (p.kind === "basic" && !p.tags.includes("reflect"))                          // thorns reflects basic attacks only
                 emit({ type: "onHitTaken", self: tgt, other: att, payload: p, dealt });
             if (tgt.currentHealth <= 0) { if (att) att.killCount = (att.killCount || 0) + 1; emit({ type: "onKill", self: att, other: tgt }); }   // killCount powers per:kill (direct kills; DoT kills excluded by design)
@@ -4537,6 +4591,221 @@
             };
         }
 
+        /* =========================================================================
+           COMPOSER — a player-authored CHAIN of atoms, walked left-to-right on each
+           basic attack. A signal {crit,power,mark,targets,primary,tags,alive} flows the
+           chain: PRODUCERS load damage/DoTs, AMPLIFIERS transform it, GATES can stop it,
+           FINISHERS spend it. Atoms are UNIQUE (one each) — which caps amplifier stacking.
+           Order is load-bearing: an amp scales only what comes after it; a finisher needs
+           a producer upstream. Proven bounded by test/orderfuzz.js (ordering multiplier
+           <= the unique-amp ceiling; single-pass, so no re-entrancy). All magnitudes are
+           fractions of attackDamage, so the chain scales with the hero and stays relevant.
+           ========================================================================= */
+        const CHAIN_BASE_SLOTS = 3, CHAIN_SLOT_CAP = 12;     // base 3, +1 per 2 fire levels, cap 12 (progression-sim tuned)
+        const ATOM_V = { EMBER: 0.40, VENOM: 0.30, FROST: 0.5, SEARING: 0.7, ARC: 0.45, DET: 0.20, RUP: 0.30, MARK: 1.25, MOMMAX: 5, OC: 1.5, FOCUS: 2 };
+        function chainTrueHit(att, tgt, dmg) {
+            resolveAttack(att, tgt, { damage: dmg, critChance: 0, critMult: 1, canCrit: false, appliesOnHit: false, lifesteal: 0, lifestealMult: 0, armorPen: 0, kind: "proc", damageType: "true", tags: ["chain"] }, ctx);
+        }
+        function chainNearby(c, n, r) {                       // up to n live foes within r of c (excludes c)
+            const out = []; const r2 = r * r;
+            for (const e of G.enemies) { if (e.dead || e === c) continue; const dx = e.x - c.x, dy = e.y - c.y; if (dx * dx + dy * dy <= r2) { out.push(e); if (out.length >= n) break; } }
+            return out;
+        }
+        function chainPierce(primary, dir, n, range, width) { // a single STRAIGHT ray from the struck foe along the attack heading — hit every foe it clips, in order, up to n, stopping at an armored foe
+            if (resolveStat(primary, "armor", ctx) >= RICOCHET_ARMOR) return [];   // the strike is stuck in the armored target — nothing passes through
+            const ux = Math.cos(dir), uy = Math.sin(dir), cand = [];
+            for (const e of G.enemies) {
+                if (e.dead || e === primary) continue;
+                const ex = e.x - primary.x, ey = e.y - primary.y;
+                const along = ex * ux + ey * uy, perp = Math.abs(ex * uy - ey * ux);   // distance along the ray / sideways offset from the line
+                if (along > 0 && along <= range && perp <= width + (e.r || 0)) cand.push({ e, along });
+            }
+            cand.sort((a, b) => a.along - b.along);            // in the order the ray reaches them
+            const hits = [];
+            for (const c of cand) {
+                hits.push(c.e);
+                if (resolveStat(c.e, "armor", ctx) >= RICOCHET_ARMOR) break;   // an armored foe stops the strike — it's the resolve point
+                if (hits.length >= n) break;
+            }
+            return hits;
+        }
+        function chainBurst(att, s, sources, per) {           // finisher: consume the primary's DoT stacks for a burst
+            const t = s.primary; if (!t.activeEffects) return; let n = 0;
+            for (const e of t.activeEffects) if (sources.includes(e.source)) n += (e.stacks || 1);
+            if (n < 5) return;                                // threshold (matches Rupture)
+            t.activeEffects = t.activeEffects.filter(e => !sources.includes(e.source));
+            chainTrueHit(att, t, per * resolveStat(att, "attackDamage", ctx) * n * s.power * s.mark);
+            s._burst = n;                                     // record stacks spent → finisher VFX scales to the payoff
+        }
+        function heroImpactFx(h, tgt, dir) {                  // replay the watcher's own basic-hit flourish on a foe (used at the soft end of a pierce line)
+            const ux = Math.cos(dir), uy = Math.sin(dir);
+            if (h.attackType === "ranged") {                  // an arrow buries itself in the foe (same as a terminal arrow hit)
+                if (typeof stickArrow === "function") stickArrow(tgt, { x: tgt.x - ux * tgt.r, y: tgt.y - uy * tgt.r, vx: ux, vy: uy });
+                spawnParticles(tgt.x, tgt.y, "#fff0d2", 6, { speed: 150, life: 0.22, size: 2, dir, spread: 0.5 });
+            } else if (h.attackType === "magic") {            // arcane lance impact
+                G.fx.push({ zap: true, x1: tgt.x - ux * 38, y1: tgt.y - uy * 38, x2: tgt.x, y2: tgt.y, life: 0.13, max: 0.13 });
+                spawnParticles(tgt.x, tgt.y, "#c9a3ff", 8, { speed: 150, life: 0.3, size: 2.5 });
+            } else {                                          // melee follow-through
+                tgt.flash = Math.max(tgt.flash || 0, 0.08); tgt.hitScale = Math.max(tgt.hitScale || 1, 1.3);
+                spawnParticles(tgt.x, tgt.y, "#ffe7b0", 8, { speed: 150, life: 0.28, size: 2.3, dir, spread: 0.7 });
+            }
+        }
+        const ATOMS = {
+            // producers — load the charge
+            ember:      { role: "prod", nm: "Ember",          ds: "Sets the target alight (burns, scales with attack).", act: (h, s) => { const b = resolveStat(h, "attackDamage", ctx); for (const t of s.targets) applyEffectTemplate(t, burnTpl(ATOM_V.EMBER * b * s.power * s.mark)); s.tags.add("fire"); s.dot = true; } },
+            venom:      { role: "prod", nm: "Venom",          ds: "Poisons the target (stacks, scales with attack).", act: (h, s) => { const b = resolveStat(h, "attackDamage", ctx); for (const t of s.targets) applyEffectTemplate(t, poisonTpl(ATOM_V.VENOM * b * s.power * s.mark)); s.tags.add("poison"); s.dot = true; } },
+            frostNail:  { role: "prod", nm: "Frost Nail",     ds: "Chills the target — slows it.", act: (h, s) => { for (const t of s.targets) applyEffectTemplate(t, chillTpl(ATOM_V.FROST)); s.tags.add("frost"); } },
+            searing:    { role: "prod", nm: "Searing Strike", ds: "A bonus fire hit.", act: (h, s) => { const b = resolveStat(h, "attackDamage", ctx); for (const t of s.targets) chainTrueHit(h, t, ATOM_V.SEARING * b * s.power * s.mark); s.tags.add("fire"); } },
+            arc:        { role: "prod", nm: "Arc",            ds: "Lightning leaps to nearby foes.", act: (h, s) => { const b = resolveStat(h, "attackDamage", ctx); for (const t of chainNearby(s.primary, 2, 90)) chainTrueHit(h, t, ATOM_V.ARC * b * s.power * s.mark); } },
+            // amplifiers — transform the live charge (want to sit upstream)
+            overcharge: { role: "amp",  nm: "Overcharge",     ds: "Everything downstream hits 50% harder.", act: (h, s) => { s.power *= ATOM_V.OC; } },
+            focus:      { role: "amp",  nm: "Focus",          ds: "Double power, but single-target only.", act: (h, s) => { s.power *= ATOM_V.FOCUS; s.targets = [s.primary]; } },
+            fork:       { role: "amp",  nm: "Fork",           ds: "Downstream producers hit 2 extra foes.", act: (h, s) => { s.targets = [s.primary, ...chainNearby(s.primary, 2, 90)]; } },
+            pierce:     { role: "amp",  nm: "Pierce",         ds: "The strike punches through, hitting up to 3 foes in a line.", act: (h, s) => { if (h.attackType !== "melee") return; const dir = (s.basic && s.basic._dir != null) ? s.basic._dir : Math.atan2(s.primary.y - h.y, s.primary.x - h.x); const b = chainPierce(s.primary, dir, 2, resolveStat(h, "attackRange", ctx), 18); s.pierceHits = b; s.pierceDir = dir; s.targets = [s.primary, ...b]; } },
+            momentum:   { role: "amp",  nm: "Momentum",       ds: "+10% power per status type built up the chain.", act: (h, s) => { s.power *= 1 + 0.1 * Math.min(s.tags.size, ATOM_V.MOMMAX); } },
+            spread:     { role: "amp",  nm: "Spread",         ds: "Copies your burn to nearby foes.", act: (h, s) => { if (s.dot) { const b = resolveStat(h, "attackDamage", ctx); for (const t of chainNearby(s.primary, 3, 90)) applyEffectTemplate(t, burnTpl(ATOM_V.EMBER * b * s.power * s.mark)); } } },
+            // gates — a failed gate stops the rest of the chain
+            onCrit:     { role: "gate", nm: "On Crit",        ds: "Continue only on a critical hit.", act: (h, s) => { if (!s.crit) s.alive = false; } },
+            execute:    { role: "gate", nm: "Execute",        ds: "Continue only if the foe is below 30% health.", act: (h, s) => { if (s.primary.currentHealth > 0.30 * resolveStat(s.primary, "maxHealth", ctx)) s.alive = false; } },
+            kindling:   { role: "gate", nm: "Kindling",       ds: "Continue only if the foe is burning.", act: (h, s) => { if (!s.primary.activeEffects.some(e => e.source === "Burn")) s.alive = false; } },
+            everyThird: { role: "gate", nm: "Every Third",    ds: "Fires only on every third attack.", act: (h, s) => { if ((h._chainAtk || 0) % 3 !== 0) s.alive = false; } },
+            exploit:    { role: "gate", nm: "Exploit",        ds: "Continue only if the foe has 2+ status effects.", act: (h, s) => { if ((s.primary.activeEffects || []).length < 2) s.alive = false; } },
+            stun:       { role: "gate", nm: "Stun",           ds: "Briefly stuns the target.", act: (h, s) => { if (!s.primary.dead && typeof stunEnemy === "function") stunEnemy(s.primary, 0.5); } },
+            // finishers — spend the loaded charge
+            detonate:   { role: "fin",  nm: "Detonate",       ds: "Consumes burn/poison stacks for a burst.", act: (h, s) => { chainBurst(h, s, ["Burn", "Poison"], ATOM_V.DET); } },
+            rupture:    { role: "fin",  nm: "Rupture",        ds: "Consumes poison stacks for true damage.", act: (h, s) => { chainBurst(h, s, ["Poison"], ATOM_V.RUP); } },
+            // utility
+            leech:      { role: "util", nm: "Leech",          ds: "Heals you a little on each chain.", act: (h, s) => { h.currentHealth = Math.min(resolveStat(h, "maxHealth", ctx), h.currentHealth + 2 * s.power); } },
+            mark:       { role: "util", nm: "Mark",           ds: "Downstream producers deal +25%.", act: (h, s) => { s.mark *= ATOM_V.MARK; } },
+        };
+        /* --- per-atom VFX (kept separate from act() so visuals never touch damage logic).
+           Each runs right after its atom resolves, reading post-act state (final power, whether a gate just failed). --- */
+        function chainFizzle(t) { if (t) spawnParticles(t.x, t.y, "#9aa0ac", 8, { speed: 60, life: 0.4, size: 2, grav: -28 }); }   // the chain snapped here — a grey puff of smoke
+        const ATOM_FX = {
+            // producers — an impact on the target in its element colour (the lingering status aura is already rendered)
+            ember:      (h, s) => { for (const t of s.targets) { spawnParticles(t.x, t.y, "#ff8a2b", 9, { speed: 90, life: 0.4, size: 2.2, grav: -10 }); t.flash = Math.max(t.flash || 0, 0.05); } },
+            venom:      (h, s) => { for (const t of s.targets) spawnParticles(t.x, t.y, "#86e07a", 9, { speed: 80, life: 0.45, size: 2.1, grav: 70 }); },
+            frostNail:  (h, s) => { for (const t of s.targets) spawnParticles(t.x, t.y, "#9ad8ff", 9, { speed: 110, life: 0.35, size: 2 }); },
+            searing:    (h, s) => { for (const t of s.targets) { t.flash = Math.max(t.flash || 0, 0.09); t.hitScale = Math.max(t.hitScale || 1, 1.4); spawnParticles(t.x, t.y, "#ffd9a8", 14, { speed: 160, life: 0.4, size: 2.5 }); G.fx.push({ cleave: true, x: t.x, y: t.y, r: t.r + 14, life: 0.24, max: 0.24 }); } },
+            arc:        (h, s) => { for (const t of chainNearby(s.primary, 2, 90)) { G.fx.push({ bolt: true, x1: s.primary.x, y1: s.primary.y, x2: t.x, y2: t.y, life: 0.18, max: 0.18, col: "#6fe9f0", glow: "#22c4d6" }); spawnParticles(t.x, t.y, "#9af2ee", 6, { speed: 120, life: 0.25, size: 2 }); } },
+            // amplifiers — a tell on the watcher (consequences also scale the producers downstream)
+            overcharge: (h, s) => { spawnParticles(h.x, h.y, "#ff5a4a", 14, { speed: 80, life: 0.45, size: 2.6, grav: -22 }); },
+            focus:      (h, s) => { spawnParticles(h.x, h.y, "#7fb0ff", 8, { speed: 60, life: 0.4, size: 2.2, grav: -20 }); spawnParticles(s.primary.x, s.primary.y, "#7fb0ff", 16, { speed: 36, life: 0.5, size: 2.4 }); },
+            fork:       (h, s) => { for (const t of chainNearby(s.primary, 2, 90)) G.fx.push({ bolt: true, x1: s.primary.x, y1: s.primary.y, x2: t.x, y2: t.y, life: 0.16, max: 0.16, col: "#ffc46b", glow: "#ffd98a" }); },
+            pierce:     (h, s) => { if (!s.pierceHits || !s.pierceHits.length) return; const last = s.pierceHits[s.pierceHits.length - 1]; const dx = last.x - s.primary.x, dy = last.y - s.primary.y, d = Math.hypot(dx, dy) || 1; G.fx.push({ lance: true, x1: s.primary.x, y1: s.primary.y, x2: last.x + dx / d * 22, y2: last.y + dy / d * 22, life: 0.18, max: 0.18, col: "#ffe6b0", glow: "#ffd9a0", w: 3.5 }); for (const t of s.pierceHits) spawnParticles(t.x, t.y, "#ffe0b0", 5, { speed: 90, life: 0.26, size: 2 }); },
+            momentum:   (h, s) => { const n = Math.min(s.tags.size, 5); spawnParticles(h.x, h.y, "#ffd08a", 4 + n * 3, { speed: 60 + n * 18, life: 0.42, size: 2.4, grav: -20 }); },
+            spread:     (h, s) => { if (!s.dot) return; spawnParticles(s.primary.x, s.primary.y, "#ff8a2b", 14, { speed: 150, life: 0.45, size: 2 }); for (const t of chainNearby(s.primary, 3, 90)) spawnParticles(t.x, t.y, "#ff8a2b", 6, { speed: 60, life: 0.4, size: 2, grav: -10 }); },
+            // gates — confirm on a pass, snap on a fail (the fizzle teaches you why the chain stopped)
+            onCrit:     (h, s) => { s.alive ? spawnParticles(s.primary.x, s.primary.y, "#ffd24a", 12, { speed: 130, life: 0.38, size: 2.3 }) : chainFizzle(s.primary); },
+            execute:    (h, s) => { s.alive ? spawnParticles(s.primary.x, s.primary.y, "#ff6b6b", 10, { speed: 120, life: 0.35, size: 2.2 }) : chainFizzle(s.primary); },
+            kindling:   (h, s) => { s.alive ? spawnParticles(s.primary.x, s.primary.y, "#ffb24a", 9, { speed: 100, life: 0.35, size: 2.1 }) : chainFizzle(s.primary); },
+            everyThird: (h, s) => { s.alive ? spawnParticles(s.primary.x, s.primary.y, "#8ad0ff", 11, { speed: 130, life: 0.4, size: 2.3 }) : chainFizzle(s.primary); },
+            exploit:    (h, s) => { s.alive ? spawnParticles(s.primary.x, s.primary.y, "#c89aff", 10, { speed: 110, life: 0.38, size: 2.2 }) : chainFizzle(s.primary); },
+            stun:       (h, s) => { spawnParticles(s.primary.x, s.primary.y - s.primary.r, "#fff0a0", 9, { speed: 55, life: 0.55, size: 2.4, grav: -8 }); },
+            // finishers — a burst scaled to the stacks actually spent (s._burst, set by chainBurst)
+            detonate:   (h, s) => { if (!s._burst) return; const n = s._burst; s._burst = 0; G.fx.push({ cleave: true, enemy: true, x: s.primary.x, y: s.primary.y, r: s.primary.r + 18 + Math.min(40, n * 3), life: 0.32, max: 0.32 }); spawnParticles(s.primary.x, s.primary.y, "#ff8a2b", 16 + Math.min(20, n * 2), { speed: 210, life: 0.5, size: 3 }); spawnParticles(s.primary.x, s.primary.y, "#86e07a", 8, { speed: 150, life: 0.45, size: 2.4 }); if (typeof shake === "function") shake(2 + Math.min(5, n * 0.4)); },
+            rupture:    (h, s) => { if (!s._burst) return; const n = s._burst; s._burst = 0; spawnParticles(s.primary.x, s.primary.y, "#6fdc5a", 14 + Math.min(18, n * 2), { speed: 190, life: 0.5, size: 2.8 }); if (typeof shake === "function") shake(2 + Math.min(4, n * 0.3)); },
+            // utility
+            leech:      (h, s) => { spawnParticles(h.x, h.y, "#86e07a", 8, { speed: 50, life: 0.5, size: 2, grav: -30 }); },
+            mark:       (h, s) => { spawnParticles(s.primary.x, s.primary.y, "#ffe08a", 10, { speed: 80, life: 0.3, size: 2 }); s.primary.hitScale = Math.max(s.primary.hitScale || 1, 1.15); },
+        };
+        // per-atom glow carried on the basic projectile while that atom sits in the chain — a flight-time tell, distinct from the ATOM_FX impact burst above.
+        // Add an entry here to give any atom its own projectile aura; multiple active atoms layer their halos.
+        const ATOM_PROJ_GLOW = { overcharge: "#ff5a4a" };
+        function shotGlows(h) { return (h.chain || []).map(id => ATOM_PROJ_GLOW[id]).filter(Boolean); }
+        function chainSlotCount(h) { return Math.min(CHAIN_SLOT_CAP, CHAIN_BASE_SLOTS + Math.floor(h.fireSlots || 0)); }
+        function runChain(h, primary, basic) {                // ONE left-to-right pass per basic attack (single-pass: no re-entry)
+            if (!h.chain || !h.chain.length || !primary || primary.dead) return;
+            h._chainAtk = (h._chainAtk || 0) + 1;
+            const s = { crit: Math.random() < resolveStat(h, "critChance", ctx), power: 1, mark: 1, targets: [primary], primary, tags: new Set(), alive: true, dot: false, basic, pierceHits: null, pierceConsumed: false };
+            for (const id of h.chain) { if (!s.alive) break; const a = ATOMS[id]; if (!a) continue; a.act(h, s); if (a.role === "prod") { s.prodFired = true; if (s.pierceHits) s.pierceConsumed = true; } const fx = ATOM_FX[id]; if (fx) fx(h, s); }
+            if (s.alive && s.basic && !s.prodFired && !s._burst) {   // no producer or finisher consumed the charge → the basic attack carries it: amps boost (and re-target) the basic strike itself
+                const scale = s.power * s.mark;
+                for (const t of s.targets) {
+                    if (!t || t.dead) continue;
+                    if (t === s.primary) {                            // fold the boost into the strike's single number (don't roll a separate crit)
+                        const mul = scale - 1; if (mul <= 0.0001) continue;
+                        resolveAttack(h, t, Object.assign({}, s.basic, { damage: s.basic.damage * mul, appliesOnHit: false, _chain: false, canCrit: false, _fold: true }), ctx);
+                    } else {                                          // fork/pierce-added foes took nothing yet — a full scaled strike of their own
+                        resolveAttack(h, t, Object.assign({}, s.basic, { damage: s.basic.damage * scale, appliesOnHit: false, _chain: false }), ctx);
+                        t.flash = Math.max(t.flash || 0, 0.06); t.hitScale = Math.max(t.hitScale || 1, 1.2);
+                    }
+                }
+            }
+            if (s.pierceHits && s.pierceHits.length) {            // hit every foe along the line; the terminal flourish lands on the 3rd foe (or the last, if fewer)
+                const hits = s.pierceHits, last = hits[hits.length - 1], ux = Math.cos(s.pierceDir), uy = Math.sin(s.pierceDir);
+                const lastArmored = resolveStat(last, "armor", ctx) >= RICOCHET_ARMOR;
+                const resolveFoe = lastArmored ? last : hits[Math.min(1, hits.length - 1)];   // 3rd foe overall (primary + 2), unless an armored foe stopped the strike
+                G.fx.push({ lance: true, x1: primary.x, y1: primary.y, x2: last.x, y2: last.y, life: 0.18, max: 0.18, col: "#ffe6b0", glow: "#ffd9a0", w: 3 });
+                if (lastArmored) {                                // deflect off the armored foe that stopped the strike
+                    const ix = resolveFoe.x - ux * resolveFoe.r, iy = resolveFoe.y - uy * resolveFoe.r, ba = s.pierceDir + Math.PI + (Math.random() < 0.5 ? 0.5 : -0.5);
+                    spawnParticles(ix, iy, "#ffe3a0", 9, { speed: 190, life: 0.3, size: 2.2, dir: ba, spread: 0.6 });
+                    G.fx.push({ lance: true, x1: ix, y1: iy, x2: ix + Math.cos(ba) * 34, y2: iy + Math.sin(ba) * 34, life: 0.15, max: 0.15, col: "#ffce8a", glow: "#ffae5a", w: 2.5 });
+                    if (typeof shake === "function") shake(1.2);
+                } else {
+                    heroImpactFx(h, resolveFoe, s.pierceDir);     // the watcher's own hit fx (arrow sticks, arcane impact, etc.) lands on the resolve foe
+                }
+            }
+        }
+        // --- acquisition: basic atoms arrive as rare level-up cards; the rare grammar drops from bosses ---
+        const ATOM_CARD_POOL = ["ember", "venom", "frostNail", "searing", "arc", "overcharge", "detonate", "spread", "rupture", "exploit", "stun", "pierce", "leech", "mark"];
+        const ATOM_BOSS_POOL = ["focus", "fork", "momentum", "onCrit", "execute", "kindling", "everyThird"];
+        const ATOM_PRODUCERS = Object.keys(ATOMS).filter(id => ATOMS[id].role === "prod");   // derived — the atoms that load the charge (a chain needs at least one)
+        function atomOfferFor(h) {                            // which atom (if any) the next level-up offers as a card
+            const owned = h.atoms || [];
+            const unowned = ATOM_CARD_POOL.filter(id => !owned.includes(id));
+            if (!unowned.length) return null;
+            const ownsRole = role => owned.some(id => ATOMS[id] && ATOMS[id].role === role);
+            const pick = list => list[Math.floor(grng() * list.length)];
+            // floor 1 — a producer first: a chain does nothing without one
+            if (!ownsRole("prod")) return pick(unowned.filter(id => ATOMS[id].role === "prod"));
+            // floor 2 — then an amplifier or finisher: so order & combination (emergence) are possible, not a lone producer
+            if (!ownsRole("amp") && !ownsRole("fin")) {
+                const e = unowned.filter(id => ATOMS[id].role === "amp" || ATOMS[id].role === "fin");
+                if (e.length) return pick(e);
+            }
+            return grng() < 0.55 ? pick(unowned) : null;       // afterwards, atom cards surface ~55% of level-ups from the full pool
+        }
+        function autoFillChain(h) {                           // append owned-but-unslotted atoms up to the slot count (player reorders later)
+            const cap = chainSlotCount(h);
+            for (const id of (h.atoms || [])) { if (h.chain.length >= cap) break; if (!h.chain.includes(id)) h.chain.push(id); }
+        }
+        function grantChainAtom(h, pool) {                    // add a random unowned atom from the pool to the owned set
+            const avail = pool.filter(id => !(h.atoms || []).includes(id));
+            if (!avail.length) return null;
+            const id = avail[Math.floor(Math.random() * avail.length)];
+            (h.atoms || (h.atoms = [])).push(id); autoFillChain(h);
+            return id;
+        }
+        // --- arrange primitives (pure data ops the workbench UI drives; order is the whole point) ---
+        function chainMove(h, i, dir) {                       // swap slot i with a neighbor — reorder the sequence
+            const j = i + dir;
+            if (i < 0 || i >= h.chain.length || j < 0 || j >= h.chain.length) return false;
+            const t = h.chain[i]; h.chain[i] = h.chain[j]; h.chain[j] = t; return true;
+        }
+        function chainUnslot(h, i) {                           // pull a slotted atom back to the bench (it stays owned)
+            if (i < 0 || i >= h.chain.length) return false; h.chain.splice(i, 1); return true;
+        }
+        function chainSlot(h, id) {                            // place an owned bench atom into the next free slot
+            if (h.chain.length >= chainSlotCount(h)) return false;
+            if (h.chain.includes(id) || !(h.atoms || []).includes(id)) return false;
+            h.chain.push(id); return true;
+        }
+        function chainDrop(h, from, type, at) {                // drag-and-drop: drop ON an atom = swap; drop BETWEEN atoms = move-insert
+            const c = h.chain;
+            if (from < 0 || from >= c.length) return false;
+            if (type === "swap") {
+                if (at < 0 || at >= c.length || at === from) return false;
+                const t = c[from]; c[from] = c[at]; c[at] = t; return true;
+            }
+            let to = at;                                       // insert: pull `from` out, then splice it in at `to`
+            const [atom] = c.splice(from, 1);
+            if (from < to) to--;                               // removal shifted everything after `from` left by one
+            to = Math.max(0, Math.min(to, c.length));
+            if (to === from) { c.splice(from, 0, atom); return false; }   // landed back where it started — no change
+            c.splice(to, 0, atom); return true;
+        }
+
         /* --- shadow exposure (the dark beyond the firelight) ---------------------
            Reuses the stacking ActiveEffect lifecycle, but its stacks are driven by
            the world loop (manageExposure) because "am I in the light" is a spatial
@@ -4596,18 +4865,20 @@
             { nm: "Ironhide", flat: true, tiers: [3, 5, 10], ds: v => `+${v} armor.`, build: v => ({ modifiers: [{ stat: "armor", op: "flat", value: v, source: "Ironhide" }], triggers: [] }) },
             { nm: "Sunder", flat: true, tiers: [5, 8, 15], ds: v => `+${v} armor penetration.`, build: v => ({ modifiers: [{ stat: "armorPen", op: "flat", value: v, source: "Sunder" }], triggers: [] }) },
             { nm: "Battle Rhythm", flat: true, tiers: [.03, .05, .10], ds: v => `-${pct(v)} ability cooldowns.`, build: v => ({ modifiers: [{ stat: "cdr", op: "flat", value: v, source: "Battle Rhythm" }], triggers: [] }) },
-            { nm: "Cleaving Blows", flat: true, tiers: [30, 45, 100], ds: v => `Attacks splash up to 50% to nearby foes — strongest at the hit, less toward the edge (+${v} radius).`, build: v => ({ modifiers: [{ stat: "cleave", op: "flat", value: v, source: "Cleaving Blows" }], triggers: [] }) },
             { nm: "Thornmail", flat: true, tiers: [3, 5, 8], ds: v => `+${v} armor; reflect 12% of damage taken.`, build: v => ({ modifiers: [{ stat: "armor", op: "flat", value: v, source: "Thornmail" }], triggers: [{ on: "onHitTaken", source: "Thornmail", effect: { kind: "spawnPayload", of: { mode: "reflect", pct: .12 } } }] }) },
-            { nm: "Frostbite", tiers: [.25, .35, .50], ds: v => `Attacks chill foes — ${pct(v)} slower for ${(1.25 + v * 2.5).toFixed(1)}s.`, build: v => ({ tags: ["frost"], modifiers: [], triggers: [{ on: "onHitDealt", source: "Frostbite", effect: { kind: "applyEffect", to: "other", template: chillTpl(v) } }] }) },
-            { nm: "Ember Touch", tiers: [1.5, 3, 7], ds: v => `Attacks set foes alight — burns ${v}/sec (stacks).`, build: v => ({ tags: ["fire"], modifiers: [], triggers: [{ on: "onHitDealt", source: "Ember Touch", effect: { kind: "applyEffect", to: "other", template: burnTpl(v) } }] }) },
-            { nm: "Venom Coating", tiers: [1, 2, 5], ds: v => `Attacks poison foes — ${v}/sec (stacks).`, build: v => ({ tags: ["poison"], modifiers: [], triggers: [{ on: "onHitDealt", source: "Venom Coating", effect: { kind: "applyEffect", to: "other", template: poisonTpl(v) } }] }) },
             { nm: "Pyromancer", tiers: [.04, .07, .12], tags: ["fire"], ds: v => `+${pct(v)} increased attack damage per fire source you carry.`, build: v => ({ tags: ["fire"], modifiers: [{ stat: "attackDamage", op: "increased", value: v, perTag: "fire", source: "Pyromancer" }], triggers: [] }) },
-            // --- Phase 2 expressiveness primitives (threshold / tag-gated / transform) ---
-            { nm: "Rupture", tiers: [8, 12, 20], tags: ["poison"], ds: v => `On hit: if the foe has 5+ poison stacks, rupture them for ${v} true damage per stack.`, build: v => ({ tags: ["poison"], modifiers: [], triggers: [{ on: "onHitDealt", source: "Rupture", effect: { kind: "detonate", dotSource: "Poison", threshold: 5, perStack: v, consume: true } }] }) },
-            { nm: "Opportunist", tiers: [8, 14, 24], ds: v => `On hit: if the foe suffers 2+ status effects, deal +${v} true damage.`, build: v => ({ modifiers: [], triggers: [{ on: "onHitDealt", source: "Opportunist", condition: { kind: "targetEffectCount", min: 2 }, effect: { kind: "spawnPayload", of: { mode: "flat", amount: { type: "flat", value: v } } } }] }) },
-            { nm: "Wildfire", tags: ["fire"], ds: "Critical strikes spread burn to nearby foes.", src: { tags: ["fire"], modifiers: [], triggers: [{ on: "onCrit", source: "Wildfire", effect: { kind: "applyAoE", radius: 80, template: BURN } }] } },
-            // binary perk — no tiers
-            { nm: "Hurricane", ds: "+1 lightning bolt at another foe (scales with power; no on-hit effects).", src: { modifiers: [{ stat: "chain", op: "flat", value: 1, source: "Hurricane" }], triggers: [] } },
+            // --- (Frostbite, Ember Touch, Venom Coating, Rupture, Opportunist, Wildfire ABSORBED into composer atoms; Cleaving Blows + Hurricane removed — basic-attack shaping is now composer-authored) ---
+            // --- run modifiers: composite stat trade-offs, now offered as ONE-TIME perk cards (`once`: a build-identity pick, not a stack) ---
+            { nm: "Glass Cannon", once: true, ds: "+10% MORE damage, but −7% max health.", src: { modifiers: [{ stat: "attackDamage", op: "more", value: 0.10, source: "Glass Cannon" }, { stat: "maxHealth", op: "more", value: -0.07, source: "Glass Cannon" }], triggers: [] } },
+            { nm: "Juggernaut", once: true, ds: "+12% MORE max health, but −5% move speed.", src: { modifiers: [{ stat: "maxHealth", op: "more", value: 0.12, source: "Juggernaut" }, { stat: "moveSpeed", op: "more", value: -0.05, source: "Juggernaut" }], triggers: [] } },
+            { nm: "Blood Pact", once: true, ds: "Heal 2% max health on kill, but health slowly drains (−0.5/s).", src: { modifiers: [{ stat: "healthRegen", op: "flat", value: -0.5, source: "Blood Pact" }], triggers: [{ on: "onKill", source: "Blood Pact", effect: { kind: "heal", amount: { type: "statPct", stat: "maxHealth", pct: 0.02, of: "self" } } }] } },
+            { nm: "Zealot", once: true, ds: "+8% attack speed & +5% crit, but −6% armor.", src: { modifiers: [{ stat: "attackSpeed", op: "more", value: 0.08, source: "Zealot" }, { stat: "critChance", op: "flat", value: 0.05, source: "Zealot" }, { stat: "armor", op: "more", value: -0.06, source: "Zealot" }], triggers: [] } },
+            { nm: "Harvest", once: true, ds: "+20% remains harvested, but −4% damage.", src: { modifiers: [{ stat: "goldFind", op: "increased", value: 0.20, source: "Harvest" }, { stat: "attackDamage", op: "more", value: -0.04, source: "Harvest" }], triggers: [] } },
+            { nm: "Last Stand", once: true, ds: "+25% MORE damage while below 35% health.", src: { modifiers: [{ stat: "attackDamage", op: "more", value: 0.25, condition: { kind: "selfHealthBelow", pct: 0.35 }, source: "Last Stand" }], triggers: [] } },
+            { nm: "Adrenaline", once: true, ds: "+20% move speed while below 50% health.", src: { modifiers: [{ stat: "moveSpeed", op: "more", value: 0.20, condition: { kind: "selfHealthBelow", pct: 0.5 }, source: "Adrenaline" }], triggers: [] } },
+            { nm: "Fortress", once: true, ds: "+20% MORE max health while armor is 40+.", src: { modifiers: [{ stat: "maxHealth", op: "more", value: 0.20, condition: { kind: "selfStatAtLeast", stat: "armor", value: 40 }, source: "Fortress" }], triggers: [] } },
+            { nm: "Bloodthirst", once: true, ds: "Damage ramps with kills, up to +60%.", src: { modifiers: [{ stat: "attackDamage", op: "increased", value: 0.012, per: "kill", perMax: 50, source: "Bloodthirst" }], triggers: [] } },
+            { nm: "Nightblade", once: true, ds: "+15% MORE damage at night.", src: { modifiers: [{ stat: "attackDamage", op: "more", value: 0.15, condition: { kind: "phase", phase: "night" }, source: "Nightblade" }], triggers: [] } },
         ];
         /* perk luck rises with fire level; it weights each card's rarity roll toward rare/epic */
         function perkLuck() { return Math.min(0.9, (G.fireLevel - 1) * 0.035); }
@@ -4619,11 +4890,7 @@
         const PERK_TIER_CLS = ["r-common", "r-magic", "r-rare"], PERK_TIER_NM = ["Common", "Rare", "Epic"];
         // class signature perks — class-locked, rarity-rolled, and the rolled tier IS the rank (1/2/3)
         const STUN_DUR = [0, 0.4, 0.6, 1.0];
-        const SIGNATURE = {
-            ranger: { nm: "Piercing Shots", kind: "pierce", ds: r => `Basic arrows pierce ${r} extra ${r > 1 ? "foes" : "foe"} — each pass deals 30% less.` },
-            mage: { nm: "Arcane Cascade", kind: "chain", ds: r => `Basic strikes arc to ${r} nearby ${r > 1 ? "foes" : "foe"} — each arc deals 30% less.` },
-            knight: { nm: "Concussive Blows", kind: "stun", ds: r => `Basic attacks stun foes for ${STUN_DUR[r]}s.` },
-        };
+        // (class basic-attack signatures removed — pierce / arc / stun are now composer atoms; classes differ by stats, passive, and abilities)
 
         const ENEMIES = {
             // loot: {chance to drop, count:[min,max] items, lvl:[lo,hi] level offsets from YOUR level, rar = max rarity index (0 common,1 magic,2 rare)}
@@ -4670,54 +4937,7 @@
             e.r = Math.round(e.r * 1.12);                                                    // visibly chunkier
         }
 
-        /* === PHASE 4: RUN MODIFIERS =================================================
-           Run-level mutators applied to the hero as ordinary sources (so they stack and
-           fold through rebuild()/resolveStat exactly like perks). G.runMods is an array,
-           ready to stack; v1 assigns one at run start (deterministic on dailies). Use
-           grantRunMod(id) as the extension point for future acquisition (elite drops,
-           day choices). Each mod trades power for a cost, to stay interesting. */
-        const RELIC_CAP = 10;                                      // max relics held — bounds per:relic synergy and total stacking; full bag prompts swap-or-leave
-        const RUN_MODS = [
-            { id: "glasscannon", nm: "Glass Cannon", ds: "More damage, less max health", build: () => ({ modifiers: [{ stat: "attackDamage", op: "more", value: 0.10, source: "Glass Cannon" }, { stat: "maxHealth", op: "more", value: -0.07, source: "Glass Cannon" }], triggers: [] }) },
-            { id: "juggernaut", nm: "Juggernaut", ds: "More max health, slower", build: () => ({ modifiers: [{ stat: "maxHealth", op: "more", value: 0.12, source: "Juggernaut" }, { stat: "moveSpeed", op: "more", value: -0.05, source: "Juggernaut" }], triggers: [] }) },
-            { id: "bloodpact", nm: "Blood Pact", ds: "Heal on kill, but health slowly drains", build: () => ({ modifiers: [{ stat: "healthRegen", op: "flat", value: -0.5, source: "Blood Pact" }], triggers: [{ on: "onKill", source: "Blood Pact", effect: { kind: "heal", amount: { type: "statPct", stat: "maxHealth", pct: 0.02, of: "self" } } }] }) },
-            { id: "zealot", nm: "Zealot", ds: "More attack speed & crit, less armor", build: () => ({ modifiers: [{ stat: "attackSpeed", op: "more", value: 0.08, source: "Zealot" }, { stat: "critChance", op: "flat", value: 0.05, source: "Zealot" }, { stat: "armor", op: "more", value: -0.06, source: "Zealot" }], triggers: [] }) },
-            { id: "harvest", nm: "Harvest", ds: "More harvest, less damage", build: () => ({ modifiers: [{ stat: "goldFind", op: "increased", value: 0.20, source: "Harvest" }, { stat: "attackDamage", op: "more", value: -0.04, source: "Harvest" }], triggers: [] }) },
-            // --- interacting relics: reference your health, breakpoints, phase, tags, or each other ---
-            { id: "laststand", nm: "Last Stand", ds: "More damage while badly wounded", build: () => ({ modifiers: [{ stat: "attackDamage", op: "more", value: 0.25, condition: { kind: "selfHealthBelow", pct: 0.35 }, source: "Last Stand" }], triggers: [] }) },
-            { id: "adrenaline", nm: "Adrenaline", ds: "Faster while badly wounded", build: () => ({ modifiers: [{ stat: "moveSpeed", op: "more", value: 0.20, condition: { kind: "selfHealthBelow", pct: 0.5 }, source: "Adrenaline" }], triggers: [] }) },
-            { id: "fortress", nm: "Fortress", ds: "More max health while heavily armored", build: () => ({ modifiers: [{ stat: "maxHealth", op: "more", value: 0.20, condition: { kind: "selfStatAtLeast", stat: "armor", value: 40 }, source: "Fortress" }], triggers: [] }) },
-            { id: "resonance", nm: "Resonance", ds: "More damage for each relic you hold", build: () => ({ modifiers: [{ stat: "attackDamage", op: "increased", value: 0.03, per: "relic", source: "Resonance" }], triggers: [] }) },
-            { id: "bulwarkstone", nm: "Bulwark Stone", ds: "Armor for each relic you hold", build: () => ({ modifiers: [{ stat: "armor", op: "flat", value: 5, per: "relic", source: "Bulwark Stone" }], triggers: [] }) },
-            { id: "bloodthirst", nm: "Bloodthirst", ds: "Damage ramps with kills, up to a cap", build: () => ({ modifiers: [{ stat: "attackDamage", op: "increased", value: 0.012, per: "kill", perMax: 50, source: "Bloodthirst" }], triggers: [] }) },
-            { id: "embercall", nm: "Embercall", ds: "More damage per fire source you own", build: () => ({ tags: ["fire"], modifiers: [{ stat: "attackDamage", op: "increased", value: 0.04, perTag: "fire", source: "Embercall" }], triggers: [] }) },
-            { id: "nightblade", nm: "Nightblade", ds: "More damage at night", build: () => ({ modifiers: [{ stat: "attackDamage", op: "more", value: 0.15, condition: { kind: "phase", phase: "night" }, source: "Nightblade" }], triggers: [] }) },
-        ];
-        function runModById(id) { return RUN_MODS.find(m => m.id === id) || null; }
-        function grantRunMod(id) {                                  // stack a run modifier onto the hero (extension point for future acquisition)
-            if (typeof G === "undefined" || !G) return false;
-            const m = runModById(id); if (!m) return false;
-            const src = m.build(); src.id = "runmod_" + m.id; src.nm = m.nm; src.ds = m.ds;
-            (G.runMods || (G.runMods = [])).push(src);
-            rebuild(G.hero);
-            G.hero.currentHealth = Math.min(G.hero.currentHealth, resolveStat(G.hero, "maxHealth", ctx));   // clamp if max dropped (mid-run safe)
-            return true;
-        }
-        function rollStartRunMod() {                                // one modifier per run; deterministic on dailies (adds daily variety)
-            if (typeof G === "undefined" || !G) return;
-            G.runMods = [];
-            const pick = () => RUN_MODS[Math.floor(grng() * RUN_MODS.length)];
-            const mod = G.isDaily ? withSeed(subSeed("runmod", 0), pick) : pick();
-            if (mod) { grantRunMod(mod.id); G.hero.currentHealth = resolveStat(G.hero, "maxHealth", ctx); }   // start at full under the new max
-        }
-        const RELIC_DROP_CHANCE = 0.14;                             // chance an elite drops a relic (run modifier)
-        function rollEliteRelic(e) {                                // deterministic per spawn ordinal (daily-safe), independent of loot stream
-            let out = null;
-            withSeed(subSeed("relic", e.spawnIdx || 0), () => {
-                if (grng() < RELIC_DROP_CHANCE) out = RUN_MODS[Math.floor(grng() * RUN_MODS.length)].id;
-            });
-            return out;
-        }
+        /* === relics removed — the composer (atoms + ordered chain) is the sole build-depth system === */
         const ITEM_BASES = [
             // weapon — the offense engine
             { slot: "weapon", nm: "Shortbow", mods: [{ stat: "attackDamage", op: "flat", value: 5 }, { stat: "attackRange", op: "flat", value: 30 }] },
@@ -4946,53 +5166,6 @@
             if (m.op === "flat") { const v = FRAC.has(m.stat) ? Math.round(m.value * 100) + "%" : Math.round(m.value); return (m.value < 0 ? "" : "+") + v + " " + L; }
             return (m.value < 0 ? "" : "+") + Math.round(m.value * 100) + "% " + L;
         }
-        // Numeric description for a run modifier, generated from its actual values so it can
-        // never drift when those values are tuned. Accepts a built source (.modifiers) or a
-        // RUN_MODS def (.build()). Stat names localize via tf; connectives are English for now.
-        function runModDesc(rm) {
-            const b = rm && rm.modifiers ? rm : (rm && typeof rm.build === "function" ? rm.build() : rm);
-            if (!b) return "";
-            const fmtMod = (m) => {
-                const L = tf("stat_" + m.stat, LABEL[m.stat] || m.stat);
-                const sign = m.value < 0 ? "" : "+";
-                let n;
-                if (m.op === "flat") {
-                    n = FRAC.has(m.stat) ? (Math.round(m.value * 100) + "%")
-                        : (Math.abs(m.value) < 1 ? (+m.value.toFixed(1)) : Math.round(m.value));   // keep small decimals (e.g. -0.3 regen) instead of rounding to 0
-                } else {                                                                           // more / increased / hyperbolic
-                    const pct = m.value * 100;
-                    n = (Math.abs(pct) < 9.95 && Math.abs(pct - Math.round(pct)) > 0.05) ? (+pct.toFixed(1) + "%") : (Math.round(pct) + "%");   // keep precision on small per-stack values (2.5% not 3%)
-                }
-                let s = sign + n + " " + L;
-                if (m.perMax != null) {                                                            // bounded scaler — show the capped total, it ramps then plateaus
-                    const cap = m.op === "flat" ? (FRAC.has(m.stat) ? Math.round(m.value * m.perMax * 100) + "%" : (Math.abs(m.value * m.perMax) < 1 ? +(m.value * m.perMax).toFixed(1) : Math.round(m.value * m.perMax))) : Math.round(m.value * m.perMax * 100) + "%";
-                    s = sign + cap + " " + L + (m.per === "kill" ? ", ramps with kills" : m.per === "second" ? ", ramps over time" : "");
-                    return s;
-                }
-                if (m.perTag) s += " / " + tf("stat_tag_" + m.perTag, m.perTag) + " src";           // scales with how many of that tag you own
-                else if (m.per === "relic") s += " / relic";
-                else if (m.per === "kill") s += " / kill";
-                else if (m.per === "second") s += " / sec";
-                else if (m.per === "enemyNearby") s += " / foe near";
-                if (m.condition) {
-                    const c = m.condition;
-                    if (c.kind === "selfHealthBelow") s += " while <" + Math.round(c.pct * 100) + "% HP";
-                    else if (c.kind === "selfStatAtLeast") s += " if " + tf("stat_" + c.stat, LABEL[c.stat] || c.stat) + " ≥ " + c.value;
-                    else if (c.kind === "phase") s += (c.phase === "night" ? " at night" : " by day");
-                }
-                return s;
-            };
-            const parts = (b.modifiers || []).map(fmtMod);
-            for (const tr of (b.triggers || [])) {
-                const e = tr.effect;
-                if (e && e.kind === "heal" && tr.on === "onKill") {
-                    const a = e.amount || {};
-                    const amt = a.type === "statPct" ? (Math.round(a.pct * 100) + "%") : (a.value != null ? a.value : "");
-                    parts.push("heal " + amt + " on kill");
-                }
-            }
-            return parts.join(", ");
-        }
 
         /* =========================================================================
            WORLD / STATE
@@ -5037,6 +5210,7 @@
         const WINDUP_PCT = 0.25;   // fraction of the attack that is the committed wind-up
         const MIN_WINDUP = 0.10;   // floor so high attack-speed still has a readable commit
         const PROJ_SPEED = 560;
+        const MAGIC_PROJ_SPEED = 2400;    // the arcane bolt is a real projectile, but very fast — reads as the old instant beam; swept collision (below) keeps it from tunneling at this speed
         const CLEAVE_PCT = 0.5;    // splash damage as a fraction of the primary hit
         const RICOCHET_ARMOR = 8;  // effective armor at/above which arrows deflect instead of sticking
         const RICOCHET_DMG = 0.45; // fraction of damage a glancing (ricochet) arrow still deals
@@ -5059,7 +5233,7 @@
                 sources: [], activeEffects: [], equipment, slots: cls.slots, perks: [], boons: [],
                 atkState: "ready", atkT: 0, atkTarget: null, aim: 0, faceAng: 0, invulnT: 0, flash: 0, _critPity: 0, dead: false,
                 cooldowns: {}, dashT: 0, dashVX: 0, dashVY: 0, dashInst: null, dashHit: null, dashPass: false, dashKnock: 0,
-                abilityRanks: {}, castT: 0, castMax: 0, castAbility: null, castSnap: null, swingSide: 0, lungeT: 0, lungeVX: 0, lungeVY: 0, basicMod: null, flatTier: {}
+                abilityRanks: {}, castT: 0, castMax: 0, castAbility: null, castSnap: null, swingSide: 0, lungeT: 0, lungeVX: 0, lungeVY: 0, flatTier: {}, chain: [], atoms: [], fireSlots: 0
             };
             G = {
                 hero, classId: cls.id, enemies: [], shots: [], orbs: [], drops: [], fx: [], rings: [], telegraphs: [], eshots: [], boss: null,
@@ -5087,8 +5261,7 @@
         }
         function rebuild(h) {
             const items = []; for (const s of h.slots) if (h.equipment[s.id]) items.push(h.equipment[s.id]);
-            const runMods = (typeof G !== "undefined" && G && G.runMods) ? G.runMods : [];
-            h.sources = [h.classPassive, fireSource(), ...h.perks, ...items, ...setBonusSources(items), ...runMods];
+            h.sources = [h.classPassive, fireSource(), ...h.perks, ...items, ...setBonusSources(items)];
             // theme census: how many of each tag the hero currently owns (drives perTag modifiers)
             const tc = {}; for (const src of h.sources) for (const tag of (src.tags || [])) tc[tag] = (tc[tag] || 0) + 1;
             h.tagCount = tc;
@@ -5098,8 +5271,7 @@
         /* the source list the hero WOULD have with `item` placed into slot id `slotId` (others unchanged) */
         function sourcesWith(h, slotId, item) {
             const items = []; for (const s of h.slots) { const eq = s.id === slotId ? item : h.equipment[s.id]; if (eq) items.push(eq); }
-            const runMods = (typeof G !== "undefined" && G && G.runMods) ? G.runMods : [];
-            return [h.classPassive, fireSource(), ...h.perks, ...items, ...setBonusSources(items), ...runMods];
+            return [h.classPassive, fireSource(), ...h.perks, ...items, ...setBonusSources(items)];
         }
         /* compact delta string for a single stat */
         function fmtStatDelta(stat, d) {
@@ -5250,10 +5422,19 @@
         /* spawn one attack projectile carrying a tagged damage instance */
         function spawnShot(h, target, inst) {
             const ang = Math.atan2(target.y - h.y, target.x - h.x);
-            const pierce = (inst.kind === "basic" && h.basicMod && h.basicMod.kind === "pierce") ? h.basicMod.rank : 0;
-            G.shots.push({ x: h.x, y: h.y, vx: Math.cos(ang) * PROJ_SPEED, vy: Math.sin(ang) * PROJ_SPEED, life: 0.9, payload: inst, from: h, arrow: true, pierceLeft: pierce });
+            G.shots.push({ x: h.x, y: h.y, vx: Math.cos(ang) * PROJ_SPEED, vy: Math.sin(ang) * PROJ_SPEED, life: 0.9, payload: inst, from: h, arrow: true, glows: shotGlows(h), pierceLeft: (h.chain && h.chain.includes("pierce")) ? 2 : 0 });   // Pierce atom → punch through 2, stick/deflect on the 3rd
             spawnParticles(h.x + Math.cos(ang) * h.r, h.y + Math.sin(ang) * h.r, "#ffe2b0", 5, { speed: 175, life: 0.16, size: 2, dir: ang, spread: 0.5 });   // muzzle flash
             G.fx.push({ pop: true, x: h.x + Math.cos(ang) * (h.r + 4), y: h.y + Math.sin(ang) * (h.r + 4), r: 5, color: "#ffe7c0", life: 0.12, max: 0.12 });
+        }
+        /* arcane bolt: same projectile + pierce machinery as the arrow, only much faster and rendered as a glowing
+           purple beam trailing from the muzzle — so Pierce behaves identically to the ranger (≤3 foes, flies its range). */
+        function spawnMagicShot(h, target, inst) {
+            const ang = Math.atan2(target.y - h.y, target.x - h.x);
+            const range = resolveStat(h, "attackRange", ctx);   // bolt flies exactly the basic attack range, then fizzles
+            const glows = shotGlows(h);
+            G.shots.push({ x: h.x, y: h.y, ox: h.x, oy: h.y, vx: Math.cos(ang) * MAGIC_PROJ_SPEED, vy: Math.sin(ang) * MAGIC_PROJ_SPEED, life: range / MAGIC_PROJ_SPEED, payload: inst, from: h, magic: true, glows, pierceLeft: (h.chain && h.chain.includes("pierce")) ? 2 : 0 });   // Pierce → punch through 2, impact on the 3rd
+            // the bolt itself isn't drawn — the basic reads as an INSTANT arcane lance, pushed when the bolt resolves so it spans the muzzle to the actual last foe hit (see the shots expiry loop)
+            spawnParticles(h.x + Math.cos(ang) * h.r, h.y + Math.sin(ang) * h.r, "#b98cff", 5, { speed: 90, life: 0.22, size: 2, dir: ang, spread: 1.4 });   // cast flare at the hand
         }
         /* embed an arrow in the enemy's body — stored relative to its centre so it rides along until death */
         function stickArrow(e, s) {
@@ -5289,17 +5470,6 @@
             const landed = resolveAttack(h, target, inst, ctx);
             if (!inst.tags.includes("chain")) {
                 cleaveSplash(h, target);
-                const bm = h.basicMod;                            // Arcane Cascade — basic strike arcs to nearby foes
-                if (bm && bm.kind === "chain") {
-                    let from = target, dmg = inst.damage * 0.7; const seen = new Set([target]);
-                    for (let j = 0; j < bm.rank; j++) {
-                        const nxt = nearestUnhit(from.x, from.y, seen, 200); if (!nxt) break;
-                        seen.add(nxt); resolveAttack(h, nxt, abilityInstance(h, dmg, ["magic", "chain"]), ctx);
-                        G.fx.push({ bolt: true, x1: from.x, y1: from.y, x2: nxt.x, y2: nxt.y, life: 0.16, max: 0.16 });
-                        spawnParticles(nxt.x, nxt.y, "#c9a3ff", 5, { speed: 130, life: 0.25, size: 2 });
-                        from = nxt; dmg *= 0.7;
-                    }
-                }
             }
             const ang = Math.atan2(target.y - h.y, target.x - h.x);
             if (landed) {
@@ -5336,26 +5506,26 @@
             if (!h.atkTarget) return;
             emit({ type: "onAttack", self: h });
             if (h.attackType === "melee") meleeSwing(h);
-            else if (h.attackType === "magic") magicStrike(h, h.atkTarget, basicInstance(h, ctx, ["magic"]));   // instant arcane strike
-            else spawnShot(h, h.atkTarget, basicInstance(h, ctx, ["ranged"]));                                // real arrow projectile
-            const chain = Math.round(resolveStat(h, "chain", ctx));                                             // Hurricane: +1 bolt each
+            else if (h.attackType === "magic") { const mi = basicInstance(h, ctx, ["magic"]); mi._chain = true; spawnMagicShot(h, h.atkTarget, mi); }   // fast arcane projectile — chain runs per foe it pierces
+            else { const si = basicInstance(h, ctx, ["ranged"]); si._chain = true; spawnShot(h, h.atkTarget, si); }                                  // real arrow projectile — chain runs when it lands
+            const chain = Math.round(resolveStat(h, "chain", ctx));                                             // gear "extra bolts"
             if (chain > 0) for (const e of nearestList(h.x, h.y, G.enemies.filter(e => e !== h.atkTarget), chain, 520)) fireBolt(h, e);
         }
         /* melee swing: an instant hit on every foe inside a frontal arc within reach */
         function meleeSwing(h) {
             const reach = resolveStat(h, "attackRange", ctx);
             let hits = 0, hx = 0, hy = 0, anyCrit = false;
+            const inst = basicInstance(h, ctx, ["melee"]); inst._chain = true;   // one swing → one armed instance; the chain fires on the first foe actually struck
             for (const e of G.enemies) {
                 if (e.dead) continue;
                 const dx = e.x - h.x, dy = e.y - h.y, d = Math.hypot(dx, dy);
                 if (d <= reach + e.r) {
                     let diff = Math.abs(((Math.atan2(dy, dx) - h.aim + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
                     if (diff <= 1.2) {
-                        const landed = resolveAttack(h, e, basicInstance(h, ctx, ["melee"]), ctx);
+                        const landed = resolveAttack(h, e, inst, ctx);
                         if (landed) {
                             knockback(e, h.x, h.y, 28);                               // a firmer shove
                             hits++; hx += e.x; hy += e.y;
-                            if (h.basicMod && h.basicMod.kind === "stun" && !e.dead) stunEnemy(e, STUN_DUR[h.basicMod.rank]);   // arc hit + nudge (+ stun)
                         }
                     }                                                      // dodged → no shove, no connect (falls to the whiff feel)
                 }
@@ -5677,6 +5847,7 @@
            ========================================================================= */
         function update(dt) {
             const h = G.hero;
+            G._tick = (G._tick || 0) + 1;   // frame ordinal — lets the amp bonus merge into the strike's number only within the same frame
             if (G.dying) { tickDeath(dt); return; }
 
             // Phase-1 runtime scalers — keep the counters scaleCount() reads honest.
@@ -5687,7 +5858,7 @@
                 G.time += dt; G.phaseTime += dt;
                 // day/night clock — advances only while a wave is being fought
                 const len = G.isNight ? PHASE_NIGHT : PHASE_DAY;
-                if (G.phaseTime >= len) {
+                if ((!G.sandbox || G._sbEnv === "auto") && G.phaseTime >= len) {
                     G.phaseTime -= len; G.isNight = !G.isNight; ctx.phase = G.isNight ? "night" : "day";
                     if (!G.isNight) { G.dayNum++; tele("night_survived", { day: G.dayNum - 1, level: G.level, wave: G.wave }); }
                     else { tele("night_start", { day: G.dayNum, level: G.level, wave: G.wave }); }
@@ -5702,7 +5873,7 @@
                     const _q = G.spawnQueue.shift(); spawnEnemy(_q.key, _q);
                 }
                 // wave cleared?
-                if (G.spawnQueue.length === 0 && G.enemies.length === 0 && !(G._tut0 && G._tutLoot >= 1 && G._tutLoot < 3)) endWave();
+                if (!G.sandbox && G.spawnQueue.length === 0 && G.enemies.length === 0 && !(G._tut0 && G._tutLoot >= 1 && G._tutLoot < 3)) endWave();
             } else {
                 // intermission: time frozen, no spawns. The hearth tends the heroes' wounds until the next wave.
                 const rate = FIRE_REGEN_PER_LEVEL * G.fireLevel;     // hp/sec, scales with fire level
@@ -5737,7 +5908,7 @@
             // ---- weather: storms roll in and out, with lightning + thunder ----
             const st = G.storm;
             st.t -= dt;
-            if (st.t <= 0) { st.on = !st.on; st.t = st.on ? ri(16, 30) : ri(30, 60); if (st.on) { st.strikeIn = 1 + Math.random() * 2.5; st.boltIn = 4 + grng() * 6; } }
+            if ((!G.sandbox || G._sbRain === "auto") && st.t <= 0) { st.on = !st.on; st.t = st.on ? ri(16, 30) : ri(30, 60); if (st.on) { st.strikeIn = 1 + Math.random() * 2.5; st.boltIn = 4 + grng() * 6; } }
             st.intensity += ((st.on ? 1 : 0) - st.intensity) * Math.min(1, dt * 0.6);
             if (st.on && st.intensity > 0.35) { st.strikeIn -= dt; if (st.strikeIn <= 0) { triggerLightning(); st.strikeIn = 3.5 + Math.random() * 5; } }
             if (st.on && st.intensity > 0.4 && running && !G.dying && !G.hero.dead) {   // occasional damaging ground strike near the fire
@@ -5864,38 +6035,48 @@
                     continue;
                 }
                 if (s.hitCd > 0) s.hitCd -= dt;
-                const isBasicArrow = s.payload.kind === "basic" && s.from && s.from.attackType === "ranged";
-                if (isBasicArrow) {
+                const isBasicProj = s.payload.kind === "basic" && s.from && (s.from.attackType === "ranged" || s.from.attackType === "magic");
+                const isMagicProj = isBasicProj && s.from.attackType === "magic";
+                if (isBasicProj) {
                     s._hit = s._hit || new Set();
-                    const hit = (s.hitCd > 0) ? null : hitEnemy(s.x, s.y);
-                    if (hit && !s._hit.has(hit)) {
+                    // swept collision: walk the segment travelled this frame so a fast bolt can't tunnel past a foe at any speed
+                    const px = s.x - s.vx * dt, py = s.y - s.vy * dt;
+                    const segLen = Math.hypot(s.x - px, s.y - py);
+                    const steps = Math.max(1, Math.ceil(segLen / 10));   // ≤10u between checks — under the smallest hitbox
+                    let stop = false;
+                    for (let k = 1; k <= steps && !stop; k++) {
+                        if (s.hitCd > 0) break;                          // just deflected — no further hits this frame
+                        const cx = px + (s.x - px) * (k / steps), cy = py + (s.y - py) * (k / steps);
+                        const hit = hitEnemy(cx, cy);
+                        if (!hit || s._hit.has(hit)) continue;
                         s._hit.add(hit);
                         const mul = Math.pow(0.7, s._pc || 0);          // each successive pass deals 30% less
-                        if (s.pierceLeft > 0) {                            // Piercing Shots — punch through, keep flying
-                            const inst = Object.assign({}, s.payload, { damage: s.payload.damage * mul, tags: [...s.payload.tags, "pierce"] });
+                        const armored = resolveStat(hit, "armor", ctx) >= RICOCHET_ARMOR;
+                        if (armored) {                                 // glance off heavy armor — deflect; a piercing bolt is stopped here too
+                            const inst = Object.assign({}, s.payload, { damage: s.payload.damage * mul * RICOCHET_DMG, appliesOnHit: false, tags: [...s.payload.tags, "ricochet"], _dir: Math.atan2(s.vy, s.vx) });
+                            resolveAttack(s.from, hit, inst, ctx);
+                            const jx = (Math.random() - 0.5) * hit.r * 0.5, jy = (Math.random() - 0.5) * hit.r * 0.5;   // vary the contact point
+                            const ix = cx + jx, iy = cy + jy, nx = (ix - hit.x), ny = (iy - hit.y), nl = Math.hypot(nx, ny) || 1, dot = (s.vx * nx + s.vy * ny) / nl;
+                            s.vx = (s.vx - 2 * dot * nx / nl) * 0.6; s.vy = (s.vy - 2 * dot * ny / nl) * 0.6;
+                            const ja = (Math.random() - 0.5) * 0.5, c = Math.cos(ja), si = Math.sin(ja), nvx = s.vx * c - s.vy * si, nvy = s.vx * si + s.vy * c;
+                            s.vx = nvx; s.vy = nvy; s.x = ix; s.y = iy; s._lastHX = ix; s._lastHY = iy; s.life = Math.min(s.life, 0.4); s.hitCd = 0.05; s.pierceLeft = 0;
+                            spawnParticles(ix, iy, isMagicProj ? "#c9a3ff" : "#ffe3a0", 6, { speed: 170, life: 0.22, size: 2 }); shake(1.5);
+                            s._term = true; stop = true;
+                        } else if (s.pierceLeft > 0) {                  // Pierce: punch through a soft foe and keep flying at full pace
+                            const inst = Object.assign({}, s.payload, { damage: s.payload.damage * mul, tags: [...s.payload.tags, "pierce"], _dir: Math.atan2(s.vy, s.vx) });
                             resolveAttack(s.from, hit, inst, ctx);
                             s._pc = (s._pc || 0) + 1; s.pierceLeft--;
-                            spawnParticles(s.x, s.y, "#fff0d2", 4, { speed: 120, life: 0.16, size: 2 });
-                        } else {
-                            const armored = resolveStat(hit, "armor", ctx) >= RICOCHET_ARMOR;
-                            if (armored) {                                 // glance off heavy armor — reduced, deflect, keep flying
-                                const inst = Object.assign({}, s.payload, { damage: s.payload.damage * mul * RICOCHET_DMG, appliesOnHit: false, tags: [...s.payload.tags, "ricochet"] });
-                                resolveAttack(s.from, hit, inst, ctx);
-                                const jx = (Math.random() - 0.5) * hit.r * 0.5, jy = (Math.random() - 0.5) * hit.r * 0.5;   // vary the contact point
-                                const ix = s.x + jx, iy = s.y + jy, nx = (ix - hit.x), ny = (iy - hit.y), nl = Math.hypot(nx, ny) || 1, dot = (s.vx * nx + s.vy * ny) / nl;
-                                s.vx = (s.vx - 2 * dot * nx / nl) * 0.6; s.vy = (s.vy - 2 * dot * ny / nl) * 0.6;
-                                const ja = (Math.random() - 0.5) * 0.5, c = Math.cos(ja), si = Math.sin(ja), nvx = s.vx * c - s.vy * si, nvy = s.vx * si + s.vy * c;
-                                s.vx = nvx; s.vy = nvy; s.life = Math.min(s.life, 0.4); s.hitCd = 0.05;
-                                spawnParticles(ix, iy, "#ffe3a0", 6, { speed: 170, life: 0.22, size: 2 }); shake(1.5);
-                            } else {                                     // terminal hit on a soft body — stick (only if it lands)
-                                const inst = Object.assign({}, s.payload, { damage: s.payload.damage * mul });
-                                const landed = resolveAttack(s.from, hit, inst, ctx);
-                                if (landed) {
-                                    if (!s.payload.tags.includes("chain")) cleaveSplash(s.from, hit);
-                                    if (!hit.dead) stickArrow(hit, s);
-                                    s.life = 0;
-                                }                                            // miss → arrow flies on past
-                            }
+                            s._lastHit = hit; s._lastHX = cx; s._lastHY = cy;   // remember the last foe pierced, for the terminal blow if the bolt fizzles before a 3rd
+                            spawnParticles(cx, cy, isMagicProj ? "#c9a3ff" : "#fff0d2", 5, { speed: 130, life: 0.18, size: 2, dir: Math.atan2(s.vy, s.vx), spread: 0.5 });
+                        } else {                                       // terminal hit on a soft body
+                            const inst = Object.assign({}, s.payload, { damage: s.payload.damage * mul, _dir: Math.atan2(s.vy, s.vx) });   // pierce keys off the bolt's true heading at impact
+                            const landed = resolveAttack(s.from, hit, inst, ctx);
+                            if (landed) {
+                                if (!s.payload.tags.includes("chain")) cleaveSplash(s.from, hit);
+                                if (isMagicProj) { spawnParticles(cx, cy, "#c9a3ff", 8, { speed: 160, life: 0.32, size: 2.6 }); G.fx.push({ pop: true, x: cx, y: cy, r: 7, color: "#d9c2ff", life: 0.16, max: 0.16 }); }
+                                else if (!hit.dead) stickArrow(hit, { x: cx, y: cy, vx: s.vx, vy: s.vy });
+                                s.x = cx; s.y = cy; s._lastHX = cx; s._lastHY = cy; s.life = 0; s._term = true; stop = true;
+                            }                                            // miss → bolt flies on past
                         }
                     }
                 } else {
@@ -5909,6 +6090,18 @@
                         }
                     }
                 }
+            }
+            for (const s of G.shots) {
+                if (s.life > 0 || !s.magic) continue;
+                if (s._lastHit && !s._term) {                    // bolt fizzled after piercing fewer than the cap — still land its terminal blow (the small AoE) on the last foe hit
+                    if (!s.payload.tags.includes("chain")) cleaveSplash(s.from, s._lastHit);
+                    spawnParticles(s._lastHX, s._lastHY, "#c9a3ff", 8, { speed: 160, life: 0.32, size: 2.6 });
+                    G.fx.push({ pop: true, x: s._lastHX, y: s._lastHY, r: 7, color: "#d9c2ff", life: 0.16, max: 0.16 });
+                    s._term = true;
+                }
+                // the arcane lance spans the muzzle to where the bolt actually ended — the last foe it pierced, or its fizzle point on a miss — so the visual matches the real pierce reach
+                const ex = (s._lastHX != null) ? s._lastHX : s.x, ey = (s._lastHY != null) ? s._lastHY : s.y;
+                G.fx.push({ zap: true, x1: s.ox, y1: s.oy, x2: ex, y2: ey, life: 0.13, max: 0.13, auras: s.glows });
             }
             G.shots = G.shots.filter(s => s.life > 0);
 
@@ -5972,7 +6165,8 @@
                     continue;
                 }
                 const dx = h.x - e.x, dy = h.y - e.y, d = Math.hypot(dx, dy) || 1;
-                const esp = resolveStat(e, "moveSpeed", ctx);
+                const noMove = G.sandbox && G._sbNoMove, noAtk = G.sandbox && G._sbNoAtk, noDmg = G.sandbox && G._sbNoDmg;   // sandbox behaviour toggles
+                const esp = noMove ? 0 : resolveStat(e, "moveSpeed", ctx);
                 const reach = e.r + h.r + 2;
                 const atkReach = e.r + h.r + 20;          // enemies can land a melee swing from a bit further than contact
                 // separation so they don't stack
@@ -5988,7 +6182,7 @@
                         if (d > e.keepDist + 20) { e.x += dx / d * esp * dt; e.y += dy / d * esp * dt; }
                         else if (d < e.keepDist - 40) { e.x -= dx / d * esp * dt; e.y -= dy / d * esp * dt; } // back off if too close
                         e.castT -= dt;
-                        if (e.castT <= 0 && d < 420) { e.windT = e.windup; e.windAim = Math.atan2(dy, dx); e.windTX = h.x; e.windTY = h.y; } // commit, lock target
+                        if (!noAtk && e.castT <= 0 && d < 420) { e.windT = e.windup; e.windAim = Math.atan2(dy, dx); e.windTX = h.x; e.windTY = h.y; } // commit, lock target
                     }
                 } else if (e.bomber) {
                     // bomber: rush, then a short fuse, then explode in a blast
@@ -5997,7 +6191,7 @@
                             if (Math.hypot(h.x - e.x, h.y - e.y) <= e.blast + h.r) resolveAttack(e, h, basicInstance(e, ctx, ["blast"]), ctx);
                             G.fx.push({ cleave: true, enemy: true, x: e.x, y: e.y, r: e.blast, life: 0.3, max: 0.3 }); e.currentHealth = 0;
                         }
-                    } else { if (d > reach) { e.x += dx / d * esp * dt; e.y += dy / d * esp * dt; } else e.fuse = 0.45; }
+                    } else { if (d > reach) { e.x += dx / d * esp * dt; e.y += dy / d * esp * dt; } else if (!noAtk) e.fuse = 0.45; }
                 } else if (e.boss) {
                     // boss: advance, periodic telegraphed slam, and a wound-up melee swing
                     if (e.windT > 0) {
@@ -6012,7 +6206,7 @@
                     else {
                         if (d > reach) { e.x += dx / d * esp * dt; e.y += dy / d * esp * dt; }
                         e.castT -= dt;
-                        if (e.castT <= 0) {
+                        if (!noAtk && e.castT <= 0) {
                             e.castT = 3.5;
                             G.telegraphs.push({
                                 x: h.x, y: h.y, r: 130, t: 0.85, maxT: 0.85, faction: "enemy", from: e,
@@ -6020,7 +6214,7 @@
                             });
                         }
                         e.atkTimer -= dt;
-                        if (d <= atkReach && e.atkTimer <= 0) { e.windT = e.windup; e.windAim = Math.atan2(dy, dx); }   // begin swing wind-up
+                        if (!noAtk && d <= atkReach && e.atkTimer <= 0) { e.windT = e.windup; e.windAim = Math.atan2(dy, dx); }   // begin swing wind-up
                     }
                 } else {
                     // default melee chaser — telegraph a wind-up, then swing; step out of reach to dodge it
@@ -6036,17 +6230,18 @@
                     }
                     else {
                         if (d > reach) { e.x += dx / d * esp * dt; e.y += dy / d * esp * dt; }
-                        if (d <= atkReach && e.atkTimer <= 0) { e.windT = e.windup; e.windAim = Math.atan2(dy, dx); }  // commit to a swing
+                        if (!noAtk && d <= atkReach && e.atkTimer <= 0) { e.windT = e.windup; e.windAim = Math.atan2(dy, dx); }  // commit to a swing
                     }
                 }
                 tickActor(e, dt);
                 if (e.flash > 0) e.flash -= dt;
                 if (e.hitScale > 1) e.hitScale += (1 - e.hitScale) * Math.min(1, dt * 12);
+                if (noDmg) e.currentHealth = resolveStat(e, "maxHealth", ctx);   // immortal target: wipe this frame's damage so it reads full
                 if (e.currentHealth <= 0) killEnemy(e);
             }
 
             // shadow exposure — must run BEFORE tickActor so the regen drain bites now
-            manageExposure(h, dt);
+            if (G.sandbox) sandboxUpkeep(h, dt); else manageExposure(h, dt);
 
             // hero upkeep
             tickActor(h, dt);
@@ -6104,8 +6299,11 @@
             for (const it of G.drops) {
                 if (it.dead) continue;                           // already collected/decided this frame — don't re-trigger (fixes relic double-collect)
                 const d = Math.hypot(h.x - it.x, h.y - it.y); it.bob += dt * 3; if (d < h.r + 16) {
-                    if (it.relic) {                                  // relic → ask Take / Leave instead of auto-applying
-                        if (!G._relicPick) openRelicPick(it);        // one prompt at a time; pauses the game
+                    if (it.atom) {                                  // composer atom pickup — into the owned pool + auto-slot, with a collect popup
+                        it.dead = true;
+                        if (!(h.atoms || (h.atoms = [])).includes(it.atom)) { h.atoms.push(it.atom); autoFillChain(h); }
+                        spawnParticles(it.x, it.y, (ATOMS[it.atom] && COMPOSER_ROLE_COL[ATOMS[it.atom].role]) || "#54dcd0", 16, { speed: 140, life: 0.55, size: 2.5, grav: -20 });
+                        atomToast(it.atom); if (SFX.pickup) SFX.pickup();
                         continue;
                     }
                     G.satchel.push(it.item); it.dead = true; if (it.item && it.item.id === "item_tut") G._tutLoot = 2; tutBeat("gear");
@@ -6226,7 +6424,7 @@
             G.cam.y += ((h.y - H / 2) - G.cam.y) * Math.min(1, dt * 6);
 
             // death
-            if (h.currentHealth <= 0) { startDeath(); }
+            if (!G.sandbox && h.currentHealth <= 0) { startDeath(); }
 
             // level up check (may pause) — held off until a fire-feeding pour has finished, so the fill plays out first
             if (G.xp >= G.xpNext && !G._banking) levelUp();
@@ -6274,6 +6472,7 @@
         }
 
         function killEnemy(e) {
+            if (G.sandbox && G._sbNoDmg) { e.currentHealth = resolveStat(e, "maxHealth", ctx); return; }   // sandbox: foes are immortal targets
             if (e.dead) return; e.dead = true; G.kills++;
             // ---- kill streak / combo ----
             G.combo++; G.comboT = COMBO_WINDOW;
@@ -6324,7 +6523,14 @@
                 G._tutLoot = 1;
             }
             for (const item of rollEnemyLoot(e)) G.drops.push({ x: e.x + cri(-18, 18), y: e.y + cri(-18, 18), bob: crand() * 6, item, dead: false });
-            if (e.elite) { const rid = rollEliteRelic(e); if (rid) G.drops.push({ x: e.x + cri(-12, 12), y: e.y + cri(-12, 12), bob: crand() * 6, relic: rid, dead: false }); }   // elites can drop a run-modifier relic
+            if (e.boss && G.hero) {                                          // bosses drop a rare GRAMMAR atom as a pickup — collected by walking over it
+                const avail = ATOM_BOSS_POOL.filter(id => !(G.hero.atoms || []).includes(id));
+                if (avail.length) {
+                    const id = avail[Math.floor(Math.random() * avail.length)];
+                    const ang = crand() * Math.PI * 2, off = 58;             // land clear of the 50+ remains orbs & gear pile at the boss spot, so it's actually visible
+                    G.drops.push({ x: e.x + Math.cos(ang) * off, y: e.y + Math.sin(ang) * off, bob: crand() * 6, atom: id, dead: false });
+                }
+            }
         }
         function spawnOrb(x, y, type, val, opts) {
             opts = opts || {};
@@ -6564,7 +6770,12 @@
             tgt._killPower = (crit ? 1.8 : 1) * (p && p.kind === "ability" ? 1.35 : 1);   // drives how hard the remains splash on death
             if (!splash && !isBolt && !(isMelee && !crit)) { crit ? SFX.crit() : SFX.hit(G.combo); }   // combo raises the hit pitch
             if (splash) G.fx.push({ x: tgt.x + cri(-6, 6), y: tgt.y - tgt.r, vy: -30, life: 0.8, t: 0, txt: "-" + Math.round(dealt), col: "#ffcf8a" });  // cleave damage — shown like burn/poison ticks
-            else G.fx.push({ x: tgt.x + cri(-6, 6), y: tgt.y - tgt.r, vy: -34, life: 0.7, txt: Math.round(dealt), crit, t: 0 });
+            else if (p && p._fold && tgt._foldFx && tgt._foldTick === G._tick) {   // amp bonus on the just-struck foe — add it into the strike's number, don't spawn a second
+                tgt._foldFx._dmg += dealt; tgt._foldFx.txt = String(Math.round(tgt._foldFx._dmg));
+            } else {
+                const numFx = { x: tgt.x + cri(-6, 6), y: tgt.y - tgt.r, vy: -34, life: 0.7, txt: String(Math.round(dealt)), crit, t: 0, _dmg: dealt };
+                G.fx.push(numFx); tgt._foldFx = numFx; tgt._foldTick = G._tick;   // remember it so an immediately-following amp bonus can fold in
+            }
             // sparks fly from the contact edge along the hit direction — transferred force, not a generic puff
             const dir = G.hero ? Math.atan2(tgt.y - G.hero.y, tgt.x - G.hero.x) : null;
             const cxx = dir != null ? tgt.x - Math.cos(dir) * tgt.r * 0.6 : tgt.x, cyy = dir != null ? tgt.y - Math.sin(dir) * tgt.r * 0.6 : tgt.y;
@@ -6596,6 +6807,25 @@
         /* =========================================================================
            PROGRESSION  (level-up, fire, inventory)
            ========================================================================= */
+        function fireBurst(cardEl) {                                          // one-shot ember pop when Feed the Fire is chosen
+            const r = cardEl.getBoundingClientRect();                         // read position BEFORE the modal hides
+            const cx = r.left + r.width / 2, cy = r.top + r.height * 0.62;
+            const wrap = document.createElement("div");
+            wrap.style.cssText = "position:fixed;left:0;top:0;z-index:9999;pointer-events:none";
+            for (let i = 0; i < 20; i++) {
+                const sp = document.createElement("i"); sp.className = "burstember";
+                const ang = -Math.PI / 2 + (Math.random() * 2 - 1) * 1.15;    // mostly upward, with spread
+                const dist = 40 + Math.random() * 120;
+                sp.style.left = cx + "px"; sp.style.top = cy + "px";
+                sp.style.setProperty("--dx", (Math.cos(ang) * dist).toFixed(0) + "px");
+                sp.style.setProperty("--dy", (Math.sin(ang) * dist).toFixed(0) + "px");
+                sp.style.setProperty("--bd", (0.5 + Math.random() * 0.45).toFixed(2) + "s");
+                wrap.appendChild(sp);
+            }
+            document.body.appendChild(wrap);
+            setTimeout(() => wrap.remove(), 1100);                            // self-clean after the longest pop finishes
+        }
+
         function levelUp() {
             G.xp -= G.xpNext; G.level++; G.xpNext = Math.floor(16 * Math.pow(1.28, G.level - 1));
             // fireLevel is no longer welded to level — it rises only when you spend a level on the "Feed the Fire" card below.
@@ -6621,6 +6851,7 @@
                         apply: h => { h.perks.push(src); if (p.heal) h.currentHealth += v; if (p.flat) { (h.flatTier || (h.flatTier = {}))[p.nm] = t; } rebuild(h); }
                     });
                 } else {
+                    if (p.once && G.hero.perks.includes(p.src)) continue;   // run-mod trade-offs are one-time identity picks — don't re-offer once owned
                     pool.push({ nm: tn(p.nm), ds: desc(p.nm, p.ds), key: p.nm, up: false, apply: h => { h.perks.push(p.src); rebuild(h); } });
                 }
             }
@@ -6633,22 +6864,24 @@
                     apply: h => { h.abilityRanks[ab.id] = (h.abilityRanks[ab.id] || 0) + 1; }
                 });
             }
-            // class signature — class-locked; the rolled rarity tier IS the rank (1/2/3)
-            const sig = SIGNATURE[G.hero.classId];
-            if (sig && (G.hero.basicMod?.rank || 0) < 3) {
-                const t = rollPerkTier(), rank = t + 1;
-                pool.push({
-                    nm: `✦ ${tn(sig.nm)}`, ds: desc(sig.nm, sig.ds, rank), key: sig.nm, rarCls: PERK_TIER_CLS[t], rar: PERK_TIER_NM[t], up: false,
-                    apply: h => { const cur = h.basicMod?.rank || 0; if (rank > cur) h.basicMod = { kind: sig.kind, rank }; }
-                });
-            }
             const choices = []; while (choices.length < 3 && pool.length) choices.push(pool.splice(Math.floor(grng() * pool.length), 1)[0]);
+            // composer: surface a BASIC atom as a card — a producer first, so no run stays unbuildable; then ~55% thereafter
+            const _atomOffer = G._tut0 ? null : atomOfferFor(G.hero);
+            if (_atomOffer) {
+                const atom = ATOMS[_atomOffer];
+                choices[Math.floor(grng() * choices.length)] = {
+                    nm: `✦ ${atom.nm}`, ds: `Chain atom — ${atom.ds}`, key: "atom_" + _atomOffer, rar: "Atom", atom: true,
+                    apply: h => { if (!(h.atoms || (h.atoms = [])).includes(_atomOffer)) h.atoms.push(_atomOffer); autoFillChain(h); }
+                };
+            }
             if (!G._tut0) choices.push({                                       // 4th option: invest this level in the FIRE instead of the watcher
                 nm: "Feed the Fire", key: "feed_fire", fire: true,
-                ds: `Push back the dark — brighter light, +12 health, stronger mending, and luckier cards from here on.`,
+                ds: `Push back the dark — brighter light, +12 health, stronger mending, luckier cards, and a chain slot every 2 levels.`,
                 apply: h => {
                     const fromR = G.lightR; G.fireLevel++;
                     G.lightR = Math.min(460, 250 + (G.fireLevel - 1) * 8);    // radius now rides fireLevel, not level
+                    h.fireSlots = Math.min(CHAIN_SLOT_CAP - CHAIN_BASE_SLOTS, Math.floor((G.fireLevel - 1) / 2));   // +1 chain slot per 2 fire levels (cap 12 total)
+                    autoFillChain(h);
                     G.rings.push({ from: fromR, to: G.lightR, life: 0.9, max: 0.9 });
                     rebuild(h);                                               // fireSource() max-health passive scales with fireLevel
                     SFX.fire(); spawnParticles(0, 0, "#ffb347", 22, { speed: 160, life: 0.8, size: 3, grav: -30 });
@@ -6668,7 +6901,7 @@
             if (G._tut0) { box.style.gridTemplateColumns = "minmax(0,300px)"; box.style.justifyContent = "center"; }   // single card, centered
             else { box.style.gridTemplateColumns = ""; box.style.justifyContent = ""; }
             for (const card of choices) {
-                const c = document.createElement("div"); c.className = "card" + (card.rarCls ? (" " + card.rarCls) : "") + (card.up ? " upg" : "") + (card.fire ? " firecard" : "");
+                const c = document.createElement("div"); c.className = "card" + (card.rarCls ? (" " + card.rarCls) : "") + (card.up ? " upg" : "") + (card.fire ? " firecard" : "") + (card.atom ? " atomcard" : "");
                 const rtag = card.rar ? `<div class="rtag">${tn(card.rar)}</div>` : "";
                 c.innerHTML = `${rtag}<div class="nm">${card.nm}</div><div class="ds">${card.ds}</div>`;
                 if (card.fire) {                                              // ember crackle, scoped to the Feed the Fire card
@@ -6685,6 +6918,7 @@
                     c.appendChild(em);
                 }
                 c.onclick = () => {
+                    if (card.fire) fireBurst(c);                              // ember pop, read position before hide
                     card.apply(G.hero);
                     tele("level_up", { level: G.level, choice: card.key || card.nm, rar: card.rar || "", up: card.up ? 1 : 0 });
                     (G.hero.boons || (G.hero.boons = [])).push({ nm: card.nm, ds: card.ds, rarCls: card.rarCls || "" });   // remember it for the stats modal
@@ -6698,91 +6932,7 @@
             }
             G.paused = true; show("levelup"); screenFlash("255,210,130", 0.4); SFX.levelUp(); tutBeat("boons");
         }
-        // Relic pickup is a choice, not an auto-grab: walking onto a relic pauses and asks
-        // Take (stack it for the run) or Leave (it's gone). Relics shape build direction, so consent matters.
-        function openRelicPick(drop) {
-            if (!drop || !drop.relic || drop.dead || G._relicPick) return;   // ignore dead drops / a prompt already open (no double-collect)
-            G._relicPick = drop;
-            const m = runModById(drop.relic);
-            const nm = m ? tf("runmod_" + drop.relic, m.nm) : "Relic";
-            const ds = m ? runModDesc(m) : "";
-            const held = (G.runMods || []).length;
-            const full = held >= RELIC_CAP;
-            const sub = document.querySelector("#relicpick .sub");
-            if (sub) sub.textContent = full ? tf("relicFull", "Bag full — swap a relic out, or leave this one behind.") : tf("relicChoose", "Take it to stack its power for the rest of the run — or leave it behind for good.");
-            const box = document.getElementById("reliccard"); box.innerHTML = "";
-            box.style.gridTemplateColumns = "minmax(0,360px)"; box.style.justifyContent = "center";
-            const c = document.createElement("div"); c.className = "card relic-card";
-            let html = `<div class="rtag" style="color:#c89bff">${tf("relicTag", "RELIC")} ${held}/${RELIC_CAP}</div>` +
-                `<div class="nm">✦ ${nm}</div><div class="ds">${ds}</div>`;
-            if (!full) html += `<div class="relicbtns"><button class="rbtn take" id="relic-take">${tf("takeRelic", "Take")}</button>` +
-                `<button class="rbtn leave" id="relic-leave">${tf("leaveRelic", "Leave")}</button></div>`;
-            else html += `<div class="swaplbl">${tf("relicSwap", "Replace which relic?")}</div><div class="swaplist" id="relic-swaplist"></div>` +
-                `<div class="relicbtns"><button class="rbtn leave" id="relic-leave">${tf("leaveRelic", "Leave")}</button></div>`;
-            c.innerHTML = html; box.appendChild(c);
-            document.getElementById("relic-leave").onclick = leaveRelic;
-            if (!full) document.getElementById("relic-take").onclick = takeRelic;
-            else {
-                const list = document.getElementById("relic-swaplist");
-                (G.runMods || []).forEach((rm, i) => {
-                    const k = rm.id.replace("runmod_", "");
-                    const b = document.createElement("button"); b.className = "rbtn swap";
-                    b.innerHTML = `<span class="swnm">${tf("runmod_" + k, rm.nm)}</span><span class="swds">${runModDesc(rm)}</span>`;
-                    b.onclick = () => swapRelic(i);
-                    list.appendChild(b);
-                });
-            }
-            G.paused = true; show("relicpick"); screenFlash("200,155,255", 0.32); SFX.levelUp && SFX.levelUp();
-        }
-        function takeRelic() {
-            const drop = G._relicPick; if (!drop) return;
-            if ((G.runMods || []).length >= RELIC_CAP) return;          // safety: bag full → must swap, not take
-            grantRunMod(drop.relic); drop.dead = true; G._relicPick = null;
-            spawnParticles(drop.x, drop.y, "#c89bff", 18, { speed: 150, life: 0.6, size: 2.6, grav: -20 });
-            const m = runModById(drop.relic); msgToast((m ? tf("runmod_" + drop.relic, m.nm) : "Relic") + " ✦");
-            tele("relic_take", { id: drop.relic, held: (G.runMods || []).length });
-            renderBoons(); hide("relicpick"); G.paused = tutCardUp();
-        }
-        function swapRelic(idx) {
-            const drop = G._relicPick; if (!drop) return;
-            if (idx >= 0 && idx < (G.runMods || []).length) G.runMods.splice(idx, 1);   // drop the chosen relic to make room
-            grantRunMod(drop.relic); drop.dead = true; G._relicPick = null;             // grantRunMod rebuilds + clamps health
-            spawnParticles(drop.x, drop.y, "#c89bff", 18, { speed: 150, life: 0.6, size: 2.6, grav: -20 });
-            const m = runModById(drop.relic); msgToast((m ? tf("runmod_" + drop.relic, m.nm) : "Relic") + " ✦");
-            tele("relic_swap", { id: drop.relic, held: (G.runMods || []).length });
-            renderBoons(); hide("relicpick"); G.paused = tutCardUp();
-        }
-        function leaveRelic() {
-            const drop = G._relicPick; if (!drop) return;
-            drop.dead = true; G._relicPick = null;                          // Leave = gone for good (no second chance)
-            tele("relic_leave", { id: drop.relic });
-            spawnParticles(drop.x, drop.y, "#6b5a86", 8, { speed: 80, life: 0.45, size: 2, grav: 40 });
-            hide("relicpick"); G.paused = tutCardUp();
-        }
-
-        function fireCost() { return Math.round(18 * Math.pow(1.55, G.fireLevel - 1)); }
-        function openFire() {
-            if (!running || G.hero.dead) return;
-            G.paused = true; show("firepanel");
-            const cost = fireCost();
-            document.getElementById("firesub").textContent = "Stray past its light and the dark will take hold. Feed the fire to push that edge back.";
-            const luck = perkLuck(), rareOdds = Math.round((0.02 + luck * 0.30 + 0.16 + luck * 0.34) * 100), epicOdds = Math.round((0.02 + luck * 0.30) * 100);
-            document.getElementById("fireinfo").innerHTML =
-                `<div class="item"><div class="nm">Fire level ${G.fireLevel}</div>
-                          <div class="mods">Light radius ${Math.round(G.lightR)} · +${12 * (G.fireLevel - 1)} max health · +${5 * (G.fireLevel - 1)}% gold · mends ${(FIRE_REGEN_PER_LEVEL * G.fireLevel).toFixed(1)} hp/sec between waves</div>
-                          <div class="mods">Perk luck — ${rareOdds}% rare, ${epicOdds}% epic on level-up cards</div></div>
-                         <div style="color:var(--muted);font-size:12.5px">Next level reclaims another 46 of ground from the dark, steels you, and sharpens your perk luck.</div>`;
-            const ub = document.getElementById("upgradebtn");
-            ub.textContent = `Feed fire — ◈ ${cost}`;
-            ub.disabled = G.gold < cost;
-            ub.style.opacity = G.gold < cost ? 0.5 : 1;
-            ub.onclick = () => {
-                if (G.gold < fireCost()) return; G.gold -= fireCost(); const from = G.lightR; G.fireLevel++; G.lightR += 46;
-                G.rings.push({ from, to: G.lightR, life: 0.9, max: 0.9 }); screenFlash("255,180,90", 0.45);
-                spawnParticles(0, 0, "#ffb347", 30, { speed: 180, life: 0.8, size: 3, grav: -30 }); shake(6); SFX.fire();
-                rebuild(G.hero); openFire();
-            };
-        }
+        // (fireCost / openFire removed — fire now levels only via the "Feed the Fire" level-up card; gold is retired)
         const SLOT_SVG = {
             weapon: '<path d="M12 3l2.2 5.2V15h-4.4V8.2z"/><path d="M8 15h8"/><path d="M11 17h2v4h-2z"/>',
             helm: '<path d="M5 13a7 7 0 0 1 14 0v3H5z"/><path d="M5 13.2h14"/>',
@@ -6909,7 +7059,6 @@
             const bb = document.getElementById("boonsbox"); if (!bb) return;
             const h = G.hero, list = [];
             if (h.classPassive && h.classPassive.nm) list.push({ nm: tn(h.classPassive.nm), ds: desc(h.classPassive.nm, h.classPassive.ds || ""), col: "#ffd9a0" });   // class signature
-            for (const rm of (G.runMods || [])) { const k = rm.id.replace("runmod_", ""); list.push({ nm: tf("runmod_" + k, rm.nm), ds: runModDesc(rm), col: "#c89bff" }); }   // run modifiers — numeric, value-derived (never drifts)
             const fl = G.fireLevel - 1; if (fl > 0) list.push({ nm: tn("Campfire"), ds: "+" + (12 * fl) + " " + t("stat_maxHealth"), col: "#ff9a4a" });                 // the fire itself
             for (const b of (h.boons || [])) list.push({ nm: b.nm, ds: b.ds, rarCls: b.rarCls });                                          // boons picked at level-up (already localized at pick)
             // active set bonuses from worn gear
@@ -7097,12 +7246,16 @@
             // drops on ground
             for (const it of G.drops) {
                 const x = sx(it.x), y = sy(it.y) + Math.sin(it.bob) * 2;
-                if (it.relic) {                                       // relic — purple gem, distinct from gear diamonds
-                    g.save(); g.shadowBlur = 18; g.shadowColor = "#c89bff"; g.fillStyle = "#c89bff";
+                if (it.atom) {                                       // composer atom — role-colored hexagon + pulsing halo + ✦; the pulse marks it as special loot, distinct from static gear diamonds
+                    const arol = (ATOMS[it.atom] && COMPOSER_ROLE_COL[ATOMS[it.atom].role]) || "#54dcd0";
+                    const pr = 18 + Math.sin(it.bob * 2) * 2.5;      // breathing halo
+                    g.save();
+                    g.globalAlpha = 0.45; g.strokeStyle = arol; g.lineWidth = 2; g.beginPath(); g.arc(x, y, pr, 0, 7); g.stroke();
+                    g.globalAlpha = 1; g.shadowBlur = 20; g.shadowColor = arol; g.fillStyle = arol;
                     g.beginPath();
-                    for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3 - Math.PI / 2, px = x + Math.cos(a) * 10, py = y + Math.sin(a) * 10; k ? g.lineTo(px, py) : g.moveTo(px, py); }
+                    for (let k = 0; k < 6; k++) { const aa = k * Math.PI / 3 - Math.PI / 2, px = x + Math.cos(aa) * 13, py = y + Math.sin(aa) * 13; k ? g.lineTo(px, py) : g.moveTo(px, py); }
                     g.closePath(); g.fill();
-                    g.fillStyle = "rgba(255,255,255,.9)"; g.beginPath(); g.arc(x, y - 1, 3, 0, 7); g.fill(); g.restore();
+                    g.shadowBlur = 0; g.fillStyle = "#10131a"; g.font = "bold 15px system-ui"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("\u2726", x, y + 0.5); g.restore();
                     continue;
                 }
                 const col = it.item.rarity === "rare" ? "#ffd24a" : it.item.rarity === "magic" ? "#7fb2ff" : "#d8c7a6";
@@ -7271,6 +7424,22 @@
             g.lineCap = "round";
             for (const s of G.shots) {
                 const x = sx(s.x), y = sy(s.y);
+                if (s.magic) continue;                           // arcane basic is shown as the instant zap lance (pushed on cast) — no flying bolt
+                if (s.glows && s.glows.length) {                 // per-atom flight aura (e.g. Overcharge → red); layered if several atoms glow
+                    g.save(); g.globalCompositeOperation = "lighter"; g.shadowBlur = 14;
+                    for (const col of s.glows) { g.shadowColor = col; g.fillStyle = col; g.globalAlpha = 0.45; g.beginPath(); g.arc(x, y, 4.6, 0, 7); g.fill(); }
+                    g.restore();
+                }
+                if (false) {                                     // (former arcane-bolt streak — replaced by the instant lance above)
+                    const ox = sx(s.ox), oy = sy(s.oy);
+                    g.save(); g.globalCompositeOperation = "lighter"; g.lineCap = "round";
+                    g.shadowBlur = 14; g.shadowColor = "#b98cff";
+                    g.strokeStyle = "rgba(155,108,214,0.55)"; g.lineWidth = 4.2; g.beginPath(); g.moveTo(ox, oy); g.lineTo(x, y); g.stroke();
+                    g.shadowBlur = 6; g.strokeStyle = "rgba(231,220,255,0.95)"; g.lineWidth = 1.6; g.beginPath(); g.moveTo(ox, oy); g.lineTo(x, y); g.stroke();
+                    g.fillStyle = "#efe6ff"; g.beginPath(); g.arc(x, y, 3.6, 0, 7); g.fill();
+                    g.restore();
+                    continue;
+                }
                 const magic = s.payload && s.payload.tags && s.payload.tags.includes("magic");
                 g.strokeStyle = s.big ? "#9fd0ff" : (magic ? "#c79bf0" : "#ffd9a0"); g.lineWidth = s.big ? 4 : 2.5;
                 g.beginPath(); g.moveTo(x, y); g.lineTo(x - s.vx * (s.big ? 0.02 : 0.012), y - s.vy * (s.big ? 0.02 : 0.012)); g.stroke();
@@ -7372,10 +7541,22 @@
                 if (f.zap) {
                     const k = Math.max(0, f.life / f.max);                  // mage basic — instant arcane lance
                     const x1 = sx(f.x1), y1 = sy(f.y1), x2 = sx(f.x2), y2 = sy(f.y2);
-                    g.save(); g.lineCap = "round"; g.shadowBlur = 10; g.shadowColor = "#9a6cf0";
-                    g.globalAlpha = 0.5 * k; g.strokeStyle = "#b98cff"; g.lineWidth = 6; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
-                    g.globalAlpha = k; g.strokeStyle = "#f0e6ff"; g.lineWidth = 2.5; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+                    g.save(); g.lineCap = "round";
+                    if (f.auras) for (const a of f.auras) {                  // per-atom glow encapsulating the lance (wider + softer than the purple), e.g. Overcharge red
+                        g.shadowBlur = 18; g.shadowColor = a; g.globalAlpha = 0.4 * k; g.strokeStyle = a; g.lineWidth = 11;
+                        g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+                    }
+                    g.shadowBlur = 10; g.shadowColor = f.glow || "#9a6cf0";
+                    g.globalAlpha = 0.5 * k; g.strokeStyle = f.glow || "#b98cff"; g.lineWidth = 6; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+                    g.globalAlpha = k; g.strokeStyle = f.col || "#f0e6ff"; g.lineWidth = 2.5; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
                     g.shadowBlur = 0; g.globalAlpha = 1; g.restore(); continue;
+                }
+                if (f.lance) {                                   // pierce passthrough — a straight streak along the strike line (no jitter, unlike a bolt)
+                    const k = Math.max(0, f.life / f.max);
+                    g.globalAlpha = k * 0.9; g.strokeStyle = f.col || "#ffe6b0"; g.lineWidth = (f.w || 3) * (0.4 + 0.6 * k); g.lineCap = "round";
+                    g.shadowBlur = 10; g.shadowColor = f.glow || "#ffd9a0";
+                    g.beginPath(); g.moveTo(sx(f.x1), sy(f.y1)); g.lineTo(sx(f.x2), sy(f.y2)); g.stroke();
+                    g.shadowBlur = 0; g.lineCap = "butt"; g.globalAlpha = 1; continue;
                 }
                 if (f.bolt) {
                     const k = Math.max(0, f.life / f.max);                 // chain-lightning arc between two foes
@@ -7853,6 +8034,11 @@
             el.innerHTML = `${t("pickedUp")} <b class="${item.rarCls}">${item.nm}</b>${item.lvl ? ` <span style="opacity:.7">· ${t("lvShort")} ${item.lvl}</span>` : ""}`;
             el.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("on"), 1800);
         }
+        function atomToast(id) {                                    // composer atom collect popup — mirrors the gear toast, in atom teal
+            const el = document.getElementById("loottoast"); if (!el || !ATOMS[id]) return;
+            el.innerHTML = `${t("pickedUp")} <b style="color:#54dcd0">\u2726 ${ATOMS[id].nm}</b> <span style="opacity:.7">\u00b7 ${ATOMS[id].role}</span>`;
+            el.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("on"), 1800);
+        }
         function msgToast(text) {
             const el = document.getElementById("loottoast"); if (!el) return;
             el.innerHTML = text; el.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("on"), 1600);
@@ -7886,6 +8072,7 @@
                     e.preventDefault(); return;
                 }
                 if (k === "i") { togglePanel("inventory"); e.preventDefault(); return; }
+                if (k === "c") { if (document.getElementById("composer").classList.contains("on")) closeComposer(); else openComposer(); e.preventDefault(); return; }
                 if (k === "p") { togglePause(); e.preventDefault(); return; }
                 // abilities (edge-triggered; ignore key-repeat)
                 if (ABILITY_BY_KEY[k] && G && !G.paused && !G.hero.dead) {
@@ -7899,7 +8086,7 @@
             keys.add(k);
         });
         addEventListener("keyup", e => keys.delete(e.key.toLowerCase()));
-        cv.addEventListener("mousedown", e => { SFX.resume(); mouseDown = true; upd(e); e.preventDefault(); });
+        cv.addEventListener("mousedown", e => { SFX.resume(); if (G && G._sbPlace) { const r = cv.getBoundingClientRect(); sbPlaceAt((e.clientX - r.left) + G.cam.x, (e.clientY - r.top) + G.cam.y); e.preventDefault(); return; } mouseDown = true; upd(e); e.preventDefault(); });
         addEventListener("mouseup", () => mouseDown = false);
         cv.addEventListener("mousemove", upd);
         cv.addEventListener("contextmenu", e => e.preventDefault());   // right-click is "move", not a menu
@@ -8014,9 +8201,110 @@
             if (id === "inventory") { invSel = null; renderInventory(); }
             G.paused = true; show(id);
         }
-        function closePanels() { hide("inventory"); hide("firepanel"); if (G && !document.getElementById("levelup").classList.contains("on") && !tutCardUp()) G.paused = false; }
+        function closePanels() { hide("inventory"); hide("composer"); if (G && !document.getElementById("levelup").classList.contains("on") && !tutCardUp()) G.paused = false; }
         function pauseOpen() { const el = document.getElementById("pause"); return !!el && el.classList.contains("on"); }
-        function panelOpen() { return document.getElementById("inventory").classList.contains("on") || document.getElementById("firepanel").classList.contains("on"); }
+        function panelOpen() { return document.getElementById("inventory").classList.contains("on") || document.getElementById("composer").classList.contains("on"); }
+        /* --- composer workbench: drives the pure chain primitives, then re-renders --- */
+        const COMPOSER_ROLE_COL = { prod: "#ff8a2b", amp: "#ffc46b", gate: "#7fb0ff", fin: "#ff6b9d", util: "#86e07a" };
+        let composerSel = null;
+        function composerInspect(id) { composerSel = id; renderComposer(); }
+        function renderComposer() {
+            const h = G && G.hero; if (!h) return;
+            const cap = chainSlotCount(h);
+            document.getElementById("cmpslots").textContent = h.chain.length + " / " + cap;
+            const row = document.getElementById("chainrow"); row.innerHTML = "";
+            for (let i = 0; i < cap; i++) {
+                const id = h.chain[i], slot = document.createElement("div");
+                if (id) {
+                    const a = ATOMS[id]; slot.className = "cslot" + (composerSel === id ? " sel" : ""); slot.style.setProperty("--rc", COMPOSER_ROLE_COL[a.role] || "");
+                    slot.innerHTML = `<div class="cidx">${i + 1}</div>`
+                        + `<div class="cinsp" onpointerdown="composerDragStart(event,${i})"><div class="cnm">${a.nm}</div><div class="crole">${a.role}</div></div>`
+                        + `<div class="cbtns"><button class="cmv" ${i === 0 ? "disabled" : ""} onclick="composerMove(${i},-1)">◀</button>`
+                        + `<button class="crm" onclick="composerUnslot(${i})" title="bench this atom">✕</button>`
+                        + `<button class="cmv" ${i === h.chain.length - 1 ? "disabled" : ""} onclick="composerMove(${i},1)">▶</button></div>`;
+                } else { slot.className = "cslot empty"; slot.innerHTML = `<div class="cidx">${i + 1}</div><div class="cempty">empty</div>`; }
+                row.appendChild(slot);
+            }
+            const bench = document.getElementById("cbench"); bench.innerHTML = "";
+            const owned = (h.atoms || []).filter(id => !h.chain.includes(id));
+            if (!owned.length) { bench.innerHTML = `<div class="cbnone">No atoms in reserve. Feed the fire for slots; bosses and level-ups grant atoms.</div>`; }
+            else for (const id of owned) {
+                const a = ATOMS[id], chip = document.createElement("button");
+                chip.className = "catom" + (composerSel === id ? " sel" : ""); chip.style.setProperty("--rc", COMPOSER_ROLE_COL[a.role] || "");
+                chip.innerHTML = `<span class="cnm">${a.nm}</span><span class="crole">${a.role}</span>`;
+                chip.onclick = () => composerInspect(id);
+                bench.appendChild(chip);
+            }
+            const det = document.getElementById("catomdetail"), a = composerSel && ATOMS[composerSel];
+            if (a) {
+                det.style.setProperty("--rc", COMPOSER_ROLE_COL[a.role] || "");
+                const onBench = (h.atoms || []).includes(composerSel) && !h.chain.includes(composerSel), full = h.chain.length >= cap;
+                det.innerHTML = `<div class="dhead"><span class="dnm">${a.nm}</span><span class="drole">${a.role}</span></div><div class="dds">${a.ds}</div>`
+                    + (onBench ? `<button class="cslotit" ${full ? "disabled" : ""} onclick="composerSlot('${composerSel}')">${full ? t("chainFull") : t("slotIt")}</button>` : "");
+            } else {
+                det.style.removeProperty("--rc");
+                det.innerHTML = `<div class="dhint">${t("inspectHint")}</div>`;
+            }
+        }
+        function composerMove(i, dir) { if (chainMove(G.hero, i, dir)) { renderComposer(); SFX.pickup && SFX.pickup(); } }
+        function composerUnslot(i) { if (chainUnslot(G.hero, i)) renderComposer(); }
+        function composerSlot(id) { if (chainSlot(G.hero, id)) { renderComposer(); SFX.pickup && SFX.pickup(); } }
+        /* --- chain drag-and-drop (pointer events → works on mouse + touch); ◀ ▶ remain the universal fallback --- */
+        let cDrag = null;
+        function composerDragStart(ev, i) {
+            if (ev.button != null && ev.button > 0) return;                 // primary button / touch only
+            cDrag = { from: i, x0: ev.clientX, y0: ev.clientY, dragging: false, ghost: null, drop: null };
+            const move = e => composerDragMove(e), up = e => { composerDragEnd(e); removeEventListener("pointermove", move); removeEventListener("pointerup", up); removeEventListener("pointercancel", up); };
+            addEventListener("pointermove", move); addEventListener("pointerup", up); addEventListener("pointercancel", up);
+        }
+        function composerDragMove(e) {
+            if (!cDrag) return;
+            if (!cDrag.dragging) {
+                if (Math.hypot(e.clientX - cDrag.x0, e.clientY - cDrag.y0) < 7) return;   // below threshold — still might be a tap
+                cDrag.dragging = true;
+                const src = document.querySelectorAll("#chainrow .cslot")[cDrag.from];
+                if (src) { const g = src.cloneNode(true); g.className = "cghost"; g.style.setProperty("--rc", src.style.getPropertyValue("--rc")); document.body.appendChild(g); cDrag.ghost = g; src.classList.add("dragging"); }
+            }
+            e.preventDefault();
+            if (cDrag.ghost) { cDrag.ghost.style.left = e.clientX + "px"; cDrag.ghost.style.top = e.clientY + "px"; }
+            cDrag.drop = composerHitTest(e.clientX, e.clientY);
+            composerPaintDrop(cDrag.drop);
+        }
+        function composerDragEnd() {
+            if (!cDrag) return;
+            const d = cDrag; cDrag = null;
+            if (d.ghost) d.ghost.remove();
+            if (d.dragging) {
+                if (d.drop && chainDrop(G.hero, d.from, d.drop.type, d.drop.at) && SFX.pickup) SFX.pickup();
+                renderComposer();
+            } else { const id = G.hero.chain[d.from]; if (id) composerInspect(id); }   // no drag → it was a tap
+        }
+        function composerHitTest(px, py) {
+            const slots = [...document.querySelectorAll("#chainrow .cslot")].map((el, i) => ({ i, r: el.getBoundingClientRect(), empty: el.classList.contains("empty") }));
+            const filled = slots.filter(s => !s.empty); if (!filled.length) return null;
+            const rowTop = Math.min(...slots.map(s => s.r.top)), rowBot = Math.max(...slots.map(s => s.r.bottom));
+            if (py < rowTop - 28 || py > rowBot + 28) return null;          // dropped well away from the chain → no-op
+            let best = null, bestD = Infinity;
+            for (const s of filled) {
+                const cx = s.r.left + s.r.width / 2, cy = s.r.top + s.r.height / 2, inRow = py >= s.r.top && py <= s.r.bottom;
+                const dd = Math.hypot(px - cx, py - cy) - (inRow ? 1e5 : 0);   // strongly prefer a slot on the pointer's row
+                if (dd < bestD) { bestD = dd; best = s; }
+            }
+            const rel = (px - best.r.left) / best.r.width;
+            if (rel >= 0.30 && rel <= 0.70) return { type: "swap", at: best.i };   // on the atom → swap
+            return { type: "insert", at: rel < 0.5 ? best.i : best.i + 1 };        // toward an edge / gap → insert between
+        }
+        function composerPaintDrop(drop) {
+            const slots = document.querySelectorAll("#chainrow .cslot");
+            slots.forEach(s => s.classList.remove("cdrop-swap", "cdrop-before", "cdrop-after"));
+            if (!drop) return;
+            if (drop.type === "swap") { if (slots[drop.at]) slots[drop.at].classList.add("cdrop-swap"); }
+            else if (slots[drop.at]) slots[drop.at].classList.add("cdrop-before");
+            else if (slots[drop.at - 1]) slots[drop.at - 1].classList.add("cdrop-after");
+        }
+        function openComposer() { if (!running || !G || !G.hero || G.hero.dead) return; composerSel = null; G.paused = true; show("composer"); renderComposer(); }
+        function closeComposer() { closePanels(); }
+        document.getElementById("composer").addEventListener("click", e => { if (e.target.id === "composer") closeComposer(); });
         function togglePause() { if (pauseOpen()) { resumeGame(); return; } if (running && G && !G.hero.dead && !G.paused) { G.paused = true; show("pause"); } }
         function resumeGame() { if (!pauseOpen()) return; hide("pause"); if (G) G.paused = false; }
         function pauseHome() { hide("pause"); toStart("menu"); }
@@ -8044,6 +8332,107 @@
         }
         function cyclePick(dir) { pickIdx = (pickIdx + dir + PICK_ORDER.length) % PICK_ORDER.length; renderHeroPick(); SFX.cast && SFX.cast(); }
         function beginPick() { startGame(PICK_ORDER[pickIdx]); }
+        /* --- Chain Sandbox: a no-pressure lab to compose and watch chains fire with the real art.
+           Reuses the whole game (render, enemies, combat, composer); a G.sandbox flag suspends
+           waves, death, exposure, and the day/night clock so you can experiment freely. --- */
+        function applySandboxSetup() {                                       // the lab baseline — shared by start + reset
+            G.sandbox = true; G._sbType = G._sbType || "grunt"; G._sbAuto = false; G._sbAutoT = 0;
+            G._sbEnv = "day"; G._sbRain = "off"; G._sbPlace = false; G._sbNoMove = false; G._sbNoAtk = false; G._sbNoDmg = false;
+            G.waveState = "active"; G.isNight = false; ctx.phase = "day";   // permanent daylight, combat features live
+            G.spawnQueue = []; G.enemies = []; G.orbs = []; G.parts = []; G.fx = [];
+            G._tut0 = false; G._tut0Pending = false;                        // no tutorial in the lab
+            G.hero.atoms = Object.keys(ATOMS); G.hero.fireSlots = CHAIN_SLOT_CAP - CHAIN_BASE_SLOTS;   // own every atom, full 12-slot chain
+            hide("intermission"); hide("levelup"); closePanels();
+            document.getElementById("sbpanel").classList.add("on");
+            const ac = document.getElementById("sbauto"); if (ac) ac.checked = false;
+            const pb = document.getElementById("sbpausebtn"); if (pb) { pb.textContent = "⏸ Pause"; pb.classList.remove("act"); }
+            const cs = document.getElementById("sbclass"); if (cs) cs.value = G.classId;
+            const mv = document.getElementById("sbmove"), at = document.getElementById("sbatk"), dm = document.getElementById("sbdmg"); if (mv) mv.checked = true; if (at) at.checked = true; if (dm) dm.checked = true;
+            sbActive("sbenv", "env", "day"); sbActive("sbenv", "rain", "off"); sbPlaceStop();
+        }
+        function startSandbox() { startGame(PICK_ORDER[pickIdx]); G.hero.chain = []; applySandboxSetup(); }
+        function sbLoadClass(cls) {                                           // swap the watcher on the fly — fresh class hero, lab baseline, same composed chain
+            if (!G) return;
+            const chain = G.hero.chain.slice();
+            startGame(cls); applySandboxSetup();
+            G.hero.chain = chain.filter(id => ATOMS[id]);
+        }
+        function sbReset() { if (G) sbLoadClass(G.classId); }                 // reset stats / fire & hero level / environment to lab defaults; keep the watcher and the chain
+        function sbSwapClass(cls) {                                           // swap the watcher ON THE FLY — keep the arena, enemies, environment; only the hero's class changes
+            if (!G || !G.sandbox) return;
+            const c = setActiveClass(cls), h = G.hero;
+            h.attackType = c.attackType; h.classId = c.id; h.classPassive = c.passive; h.tags = c.tags.slice();
+            h.baseStats = mkStats(c.baseStats); h.slots = c.slots;
+            h.equipment = {}; for (const s of c.slots) h.equipment[s.id] = null;
+            h.r = (c.attackType === "melee" ? 13 : 12);
+            h.abilityRanks = {}; h.cooldowns = {}; h.atkState = "ready"; h.atkT = 0; h.atkTarget = null;
+            h.perks = []; h.boons = []; h.flatTier = {};                    // perks/boons were earned as the old class — drop them for a clean swap
+            G.classId = c.id;
+            buildHotbar(); rebuild(h);                                       // rebuild the hotbar + recompute resolved stats from the new class base
+            h.atoms = Object.keys(ATOMS); h.fireSlots = CHAIN_SLOT_CAP - CHAIN_BASE_SLOTS;   // keep every atom + full chain
+            h.chain = (h.chain || []).filter(id => ATOMS[id]);
+            h.currentHealth = resolveStat(h, "maxHealth", ctx);
+            const cs = document.getElementById("sbclass"); if (cs) cs.value = c.id;
+        }
+        function sbSpawn(key) {
+            if (!G || !G.sandbox) return;
+            const before = G.enemies.length; spawnEnemy(key || "grunt");
+            const e = G.enemies[G.enemies.length - 1];
+            if (e && G.enemies.length > before) {                            // reposition near the hero so it's on-screen
+                const ang = Math.random() * Math.PI * 2, d = 150 + Math.random() * 110;
+                e.x = G.hero.x + Math.cos(ang) * d; e.y = G.hero.y + Math.sin(ang) * d; e.vx = 0; e.vy = 0;
+            }
+        }
+        function sbPlaceAt(wx, wy) {                                          // drop the selected foe exactly where you clicked
+            if (!G || !G.sandbox) return;
+            const before = G.enemies.length; spawnEnemy(G._sbType || "grunt");
+            const e = G.enemies[G.enemies.length - 1];
+            if (e && G.enemies.length > before) { e.x = wx; e.y = wy; e.vx = 0; e.vy = 0; }
+        }
+        function sbPlaceMode() {
+            if (!G || !G.sandbox) return;
+            if (G._sbPlace) { sbPlaceStop(); return; }
+            G._sbPlace = true; G.paused = true;                              // stop the game so you can place at leisure
+            const b = document.getElementById("sbplacebtn"); if (b) b.classList.add("act");
+            const bn = document.getElementById("sbplacebanner"); if (bn) bn.classList.add("on");
+        }
+        function sbPlaceStop() {
+            if (!G) return; G._sbPlace = false; if (G.sandbox) G.paused = false;
+            const b = document.getElementById("sbplacebtn"); if (b) b.classList.remove("act");
+            const bn = document.getElementById("sbplacebanner"); if (bn) bn.classList.remove("on");
+        }
+        function sbClear() { if (G) { G.enemies = []; G.parts = []; G.fx = []; G.orbs = []; } }
+        function sbPause() {                                                 // lab freeze: stop the action but keep the scene + panel visible
+            if (!G || !G.sandbox) return;
+            G.paused = !G.paused;
+            const b = document.getElementById("sbpausebtn");
+            if (b) { b.textContent = G.paused ? "▶ Resume" : "⏸ Pause"; b.classList.toggle("act", G.paused); }
+        }
+        function sbLevelUp() { if (!G || !G.hero || G.dying) return; G.xp += G.xpNext; levelUp(); }   // real level-up flow: hero level + boon pick + Feed-the-Fire
+        function sbToggle(id) { const el = document.getElementById(id); el.classList.toggle("on"); if (id === "sbstats" && el.classList.contains("on")) renderSbStats(); }
+        const SB_STATS = ["maxHealth", "attackDamage", "attackSpeed", "attackRange", "critChance", "critMultiplier", "moveSpeed", "armor"];
+        function renderSbStats() {
+            const el = document.getElementById("sbstats"); if (!G || !G.hero) return;
+            el.innerHTML = '<div class="sbsubttl">Hero base stats &nbsp;·&nbsp; resolved at right</div>' + SB_STATS.map(s =>
+                `<div class="statrow"><label>${s}</label><input type="number" step="any" value="${G.hero.baseStats[s] != null ? G.hero.baseStats[s] : 0}" oninput="sbSetStat('${s}',this.value)"><span class="rv" id="rv_${s}">${(+resolveStat(G.hero, s, ctx)).toFixed(2)}</span></div>`
+            ).join("");
+        }
+        function sbSetStat(s, v) {
+            if (!G || !G.hero) return;
+            G.hero.baseStats[s] = parseFloat(v) || 0; rebuild(G.hero);
+            const rv = document.getElementById("rv_" + s); if (rv) rv.textContent = (+resolveStat(G.hero, s, ctx)).toFixed(2);
+        }
+        function sbActive(sub, attr, val) { document.querySelectorAll("#" + sub + " [data-" + attr + "]").forEach(b => b.classList.toggle("act", b.getAttribute("data-" + attr) === val)); }
+        function sbEnv(mode) { if (!G) return; G._sbEnv = mode; if (mode === "day") G.isNight = false; else if (mode === "night") G.isNight = true; sbActive("sbenv", "env", mode); }
+        function sbRain(mode) { if (!G) return; G._sbRain = mode; if (G.storm) { if (mode === "on") G.storm.on = true; else if (mode === "off") G.storm.on = false; } sbActive("sbenv", "rain", mode); }
+        function sandboxUpkeep(h, dt) {                                       // never die; hold the chosen environment + max chain slots; optional auto-spawn
+            h.invulnT = Math.max(h.invulnT || 0, 0.5);
+            h.currentHealth = resolveStat(h, "maxHealth", ctx);
+            h.fireSlots = CHAIN_SLOT_CAP - CHAIN_BASE_SLOTS;                  // keep the full 12-slot chain even after a Feed-the-Fire pick
+            if (G._sbEnv === "day") G.isNight = false; else if (G._sbEnv === "night") G.isNight = true;
+            if (G.storm) { if (G._sbRain === "on") G.storm.on = true; else if (G._sbRain === "off") G.storm.on = false; }
+            if (G._sbAuto) { G._sbAutoT = (G._sbAutoT || 0) - dt; if (G._sbAutoT <= 0 && G.enemies.length < 14) { G._sbAutoT = 1.1; sbSpawn(G._sbType || "grunt"); } }
+        }
         function dailyAttemptKey(seed) { return "ew.dailyDone." + (seed >>> 0); }
         function dailyAttempted(seed) { return !!Store.get(dailyAttemptKey(seed), 0); }   // local UX guard; the server is the real first-only authority
         function startDaily() {                                    // today's shared challenge: seed + class fixed by the date
@@ -8073,7 +8462,7 @@
         function beginDaily(date) { _dailyPending = dailySeed(date); }   // call before startGame to play today's seed
         function startGame(classId) {
             SFX.resume();
-            hide("start"); hide("over"); hide("levelup"); hide("inventory"); hide("firepanel"); hide("supporter");
+            hide("start"); hide("over"); hide("levelup"); hide("inventory"); hide("supporter");
             if (!_sessionStarted) { _sessionStarted = true; tele("session_start", {}); }
             runsThisSession++;
             // seed the gameplay stream for this run: daily seed if requested, else a fresh random seed.
@@ -8081,7 +8470,6 @@
             seedRun(runSeed);
             newGame(classId || "ranger"); running = true; G.paused = false; last = performance.now(); acc = 0;
             G.runSeed = runSeed; G.isDaily = (_dailyPending != null); _dailyPending = null;
-            rollStartRunMod();                                      // assign this run's modifier (deterministic on dailies)
             G._firstBankDone = false; G._runStartMs = performance.now();   // for time-to-first-bank
             tele("run_start", { cls: G.classId, runNo: Telemetry.runCount, sessRun: runsThisSession });
             G.cam.x = G.hero.x - W / 2; G.cam.y = G.hero.y - H / 2;     // snap camera onto the hero (the fire sits just above for the reveal)
@@ -8260,7 +8648,7 @@
         function tutCardUp() { const w = document.getElementById("tutorial"); return !!w && w.classList.contains("on"); }
         /* resume play once a card closes — but only if no other screen also holds the pause */
         function tutResume() {
-            const held = ["levelup", "firepanel", "inventory", "pause", "supporter"].some(id => {
+            const held = ["levelup", "inventory", "pause", "supporter"].some(id => {
                 const el = document.getElementById(id); return el && el.classList.contains("on");
             });
             if (!held && running && G && !G.hero.dead) G.paused = false;
@@ -8458,7 +8846,7 @@
             // reflect ad-removal everywhere the ad button shows
             const adb = document.getElementById("ov-ad"); if (adb) adb.style.display = owned ? "none" : "";
         }
-        function toStart(pane) { running = false; if (G) { G.paused = true; G.dying = false; } SFX.silenceAmbience(); hide("over"); show("start"); showStartPane(pane || "menu"); }
+        function toStart(pane) { running = false; if (G) { G.paused = true; G.dying = false; G.sandbox = false; } const _sp = document.getElementById("sbpanel"); if (_sp) _sp.classList.remove("on"); SFX.silenceAmbience(); hide("over"); show("start"); showStartPane(pane || "menu"); }
 
         function frame(now) {
             const dt = (now - last) / 1000; last = now;

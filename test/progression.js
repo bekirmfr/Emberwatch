@@ -20,6 +20,7 @@
    Usage:  node test/progression.js
    Env:    CLASS=ranger|mage|knight  WAVES=100  SEED=12345  POLICY=greedy|random
            RELIC=all|smart|none      NIGHT=0|1
+           FIREPOL=none|early|balanced|always   (how the simulated player spends level-ups on "Feed the Fire")
 */
 
 const { loadGame, seedRandom, restoreRandom } = require('./simlib');
@@ -31,8 +32,16 @@ const POLICY = process.env.POLICY || 'greedy';
 const RELIC  = process.env.RELIC  || 'all';     // all = take every relic; smart = only if it raises power; none = ignore
 const REXCL  = process.env.REXCL  || 'none';    // exclude relics by unbounded scaling: perrelic | perkill | both | none
 const GEAR   = process.env.GEAR !== '0';        // GEAR=0 disables equipping drops (isolate the gear contribution)
-const PERK   = process.env.PERK !== '0';        // PERK=0 disables taking perks (still levels for fireLevel HP)
+const PERK   = process.env.PERK !== '0';        // PERK=0 disables taking perks (then a level-up only ever feeds the fire)
 const NIGHT  = process.env.NIGHT === '1';
+// --- decoupled fire choice (matches the live game: each level-up is 3 perks OR "Feed the Fire") ---
+// fireLevel rises ONLY when the simulated player spends a level-up on the fire. These knobs model that choice.
+const FIREPOL    = process.env.FIREPOL || 'balanced';   // none=pure combat · early=front-load fire · balanced=invest under pressure/cadence · always=every level
+const FIRE_FRAG  = +(process.env.FIREFRAG  || 4);       // balanced: feed the fire when surviving fewer than this many big hits (felt fragile)
+const FIRE_EARLY = +(process.env.FIREEARLY || 5);       // early: keep feeding until fireLevel reaches this, then all perks
+const FIRE_CAD   = +(process.env.FIRECAD   || 4);       // balanced: also invest every Nth level even when safe (wants light/luck/slots)
+const SLOT_CAP   = +(process.env.SLOTCAP   || 12);      // composer hard cap — chosen for a ~10x worst-chain ceiling (fuzzer: 12 slots ≈ 10x, still bounded)
+const XPMUL      = +(process.env.XPMUL     || 1);       // multiply XP income (models an XP-boost relic, or a retuned xpNext curve)
 
 const api = loadGame();
 const ctx = api.getCtx();
@@ -126,6 +135,22 @@ function takePerk(h, waveArmor, fast) {
   h.perks.push(pick.src); if (pick.heal) h.currentHealth += pick.heal; api.rebuild(h);
 }
 
+/* ---------- the level-up choice: take a perk, or spend it on "Feed the Fire" ----------
+   Mirrors the live card. fireLevel rises ONLY here, on a fire-pick — never welded to level.
+   `frag` = hitsSurvived this wave (low = the run felt dangerous → a real player invests in the fire). */
+function wantFire(frag) {
+  if (FIREPOL === 'none')   return false;
+  if (FIREPOL === 'always') return true;
+  if (FIREPOL === 'early')  return G.fireLevel < FIRE_EARLY;
+  // balanced: invest in the fire under survival pressure, or on a periodic cadence (wanting light/luck/slots)
+  return frag < FIRE_FRAG || (G.level % FIRE_CAD === 0);
+}
+function feedFire(h) {
+  G.fireLevel++;                 // the only place fireLevel grows; fireSource() +12-HP passive applies on rebuild
+  G.lightR = Math.min(460, 250 + (G.fireLevel - 1) * 8);
+  api.rebuild(h);
+}
+
 /* ---------- build one wave's REAL enemies ---------- */
 function buildWave(w) {
   G.wave = w - 1; G.waveState = 'intermission'; G._tut0Pending = false; G._tut0 = false;
@@ -190,18 +215,19 @@ for (let w = 1; w <= WAVES; w++) {
   if (firstDanger == null && hitsSurvived < 3 && w > 3) firstDanger = w;
   if (!saturated && oneShotFrac >= 1 && offPer > 25) saturated = true;   // hero trivially wins → cheaper probes from here
 
-  rows.push({ w, n: enemies.length, isBoss, lvl: G.level, relics: G.runMods.length, waveDps, avgHit, heroEhp, avgTrashEff, oneShotFrac, ttkTrash, hitsSurvived, survT, offPer, maxEnemyHp });
+  rows.push({ w, n: enemies.length, isBoss, lvl: G.level, fire: G.fireLevel, relics: G.runMods.length, waveDps, avgHit, heroEhp, avgTrashEff, oneShotFrac, ttkTrash, hitsSurvived, survT, offPer, maxEnemyHp });
 
   // collect rewards for the next wave
   for (const e of enemies) {
-    G.xp += e.xp || 0; G.kills++; h.killCount = (h.killCount || 0) + 1;   // per:kill (Bloodthirst) reads h.killCount
+    G.xp += (e.xp || 0) * XPMUL; G.kills++; h.killCount = (h.killCount || 0) + 1;   // per:kill (Bloodthirst) reads h.killCount
     for (const it of (api.rollEnemyLoot(e) || [])) if (GEAR && tryEquip(h, it)) itemsEquipped++;
     if (e.elite) { const rid = api.rollEliteRelic(e); if (rid && !relicExcluded(rid) && (!CAP || G.runMods.length < CAP) && takeRelicMaybe(h, rid)) relicsTaken++; }
   }
   let guard = 0;
   while (G.xp >= G.xpNext && guard++ < 60) {
-    G.xp -= G.xpNext; G.level++; G.fireLevel = G.level; G.xpNext = Math.floor(16 * Math.pow(1.28, G.level - 1));
-    if (PERK) takePerk(h, repArmor, saturated);
+    G.xp -= G.xpNext; G.level++; G.xpNext = Math.floor(16 * Math.pow(1.28, G.level - 1));
+    if (wantFire(hitsSurvived)) feedFire(h);           // spend the level on the fire (fireLevel++)
+    else if (PERK) takePerk(h, repArmor, saturated);   // otherwise take the best perk
   }
   h.currentHealth = api.resolveStat(h, 'maxHealth', ctx);
 }
@@ -217,9 +243,9 @@ function fnum(x) {
 const padL = (s, n) => String(s).padStart(n);
 const padR = (s, n) => String(s).padEnd(n);
 
-console.log(`\nPROGRESSION  class=${CLASS}  waves=${WAVES}  seed=${SEED}  policy=${POLICY}  relic=${RELIC}  gear=${GEAR ? 'on' : 'OFF'}  perks=${PERK ? 'on' : 'OFF'}  ${NIGHT ? 'NIGHT' : 'day'}`);
+console.log(`\nPROGRESSION  class=${CLASS}  waves=${WAVES}  seed=${SEED}  policy=${POLICY}  relic=${RELIC}  firepol=${FIREPOL}  gear=${GEAR ? 'on' : 'OFF'}  perks=${PERK ? 'on' : 'OFF'}  ${NIGHT ? 'NIGHT' : 'day'}`);
 console.log('enemy side = real game systems · hero side = optimizing player (basic-attack DPS; AoE/abilities not counted, so real fights are easier)\n');
-console.log(padR('wave', 6) + padR('lvl', 4) + padR('rel', 5) + padR('foes', 6) + padL('heroDPS', 9) + padL('avgHit', 9) + padL('trashHP', 9) + padL('hits→kill', 10) + padL('1shot', 7) + padL('heroEHP', 9) + padL('survHits', 9) + '  note');
+console.log(padR('wave', 6) + padR('lvl', 4) + padR('fire', 5) + padR('rel', 5) + padR('foes', 6) + padL('heroDPS', 9) + padL('avgHit', 9) + padL('trashHP', 9) + padL('hits→kill', 10) + padL('1shot', 7) + padL('heroEHP', 9) + padL('survHits', 9) + '  note');
 
 const tag = (r) => {
   const t = [];
@@ -233,7 +259,7 @@ for (const r of rows) {
   if (!(r.w <= 3 || r.w % 5 === 0 || r.isBoss || r.w === firstOneShot || r.w === firstDanger || r.w === WAVES)) continue;
   const htk = r.avgHit > 0 ? (r.avgTrashEff / r.avgHit) : Infinity;
   console.log(
-    padR(r.w, 6) + padR(r.lvl, 4) + padR(r.relics, 5) + padR(r.n, 6) +
+    padR(r.w, 6) + padR(r.lvl, 4) + padR(r.fire, 5) + padR(r.relics, 5) + padR(r.n, 6) +
     padL(fnum(r.waveDps), 9) + padL(fnum(r.avgHit), 9) + padL(fnum(r.avgTrashEff), 9) +
     padL(htk < 1 ? '<1' : fnum(htk), 10) + padL(Math.round(r.oneShotFrac * 100) + '%', 7) +
     padL(fnum(r.heroEhp), 9) + padL(r.hitsSurvived > 999 ? '999+' : r.hitsSurvived.toFixed(1), 9) + '  ' + tag(r));
@@ -245,6 +271,17 @@ console.log('\nSCALING CURVE  (offense = heroDPS ÷ one typical trash effHP; >1 
 console.log('  wave    ' + marks.map(m => padL(m, 9)).join(''));
 console.log('  offense ' + marks.map(m => padL(fnum(at(m).offPer || 0), 9)).join(''));
 console.log('  survHits' + marks.map(m => { const v = at(m).hitsSurvived || 0; return padL(v > 999 ? '999+' : v.toFixed(1), 9); }).join(''));
+console.log('  fireLvl ' + marks.map(m => padL(at(m).fire || 0, 9)).join(''));
+
+// ---- FIRE / COMPOSER SLOTS: how many times the player fed the fire → how deep a chain that buys ----
+const BASE_SLOTS = +(process.env.BASESLOTS || 3);        // composer starts at 3 slots; fire milestones add to it
+const firePicks = G.fireLevel - 1;                       // fireLevel starts at 1; each pick adds one
+const slotsAt = (rate) => Math.min(SLOT_CAP, BASE_SLOTS + Math.floor(firePicks / rate));
+console.log('\nFIRE TRACK / COMPOSER SLOTS  (firepol=' + FIREPOL + ', base ' + BASE_SLOTS + ' slots + fire milestones, cap ' + SLOT_CAP + ')');
+console.log('  • Feed-the-Fire chosen ' + firePicks + ' time(s) over ' + WAVES + ' waves → final fireLevel ' + G.fireLevel + ' (final level ' + G.level + ')');
+console.log('  • total slots if +1 slot every … fire level: ' +
+  '1→' + slotsAt(1) + '  2→' + slotsAt(2) + '  3→' + slotsAt(3) + '  4→' + slotsAt(4));
+console.log('  • run FIREPOL=none for the pure-combat floor (stays at base ' + BASE_SLOTS + '), FIREPOL=always for the greedy ceiling');
 
 console.log('\nVERDICT');
 console.log('  • one-shots most trash from wave ' + (firstOneShot || '—') + (saturated ? ' (one-shots all trash thereafter)' : ''));
@@ -261,6 +298,7 @@ console.log('  • wave-100 offense ' + fnum(oN) + '× a typical foe · late-gam
 if (!CAP) console.log('  • NOTE: relic cap is OFF for this run (CAP=0). The game caps relics at ' + (api.RELIC_CAP || '?') + '; the default run models that. This uncapped curve is impossible in-game.');
 else if (G.runMods.length >= CAP) console.log('  • relic bag held at cap ' + CAP + ' (matches the in-game Take/Leave / swap limit).');
 console.log('RAW relic=' + RELIC + ' rexcl=' + REXCL + ' cap=' + (CAP || 'none') + ' gear=' + (GEAR ? 1 : 0) + ' perk=' + (PERK ? 1 : 0) +
+  ' firepol=' + FIREPOL + ' firePicks=' + (G.fireLevel - 1) + ' fireLevel=' + G.fireLevel +
   ' | offPer w1=' + (at(1).offPer || 0).toPrecision(4) + ' w50=' + off50.toPrecision(4) + ' w100=' + oN.toPrecision(4) +
   ' | relics=' + G.runMods.length + ' level=' + G.level + ' firstOneShot=' + (firstOneShot || 0));
 console.log('');
