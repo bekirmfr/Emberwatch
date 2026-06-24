@@ -1,8 +1,7 @@
 /* simlib.js — shared headless environment + game loader for balance tooling.
    Evals emberwatch.html's <script> in a stubbed browser env and hands back live
    references to the REAL game functions, so tools drive the actual combat pipeline
-   (resolveAttack / basicInstance / tickActor / resolveStat / the trigger bus + guard).
-   Kept separate from test/harness.js so the correctness gate stays self-contained. */
+   (resolveAttack / basicInstance / tickActor / resolveStat / the trigger bus + guard). */
 const fs = require('fs');
 const path = require('path');
 
@@ -67,9 +66,7 @@ function loadGame(htmlPath) {
   const HTML = htmlPath || path.join(__dirname, '..', 'emberwatch.html');
   const code = [...fs.readFileSync(HTML, "utf8").matchAll(/<script>([\s\S]*?)<\/script>/g)].map(x => x[1]).join("\n");
   const api = {};
-  // The appended snippet runs in this scope, so it can see both `api` and the game's
-  // eval-scoped functions; G and ctx are exposed via getters so callers see live state.
-  const grab = '\n;Object.assign(api, { startGame, buildHotbar, resolveStat, resolveAttack, basicInstance, tickActor, rebuild, rollItem, PERKS, mkStats, ITEM_BASES, ENEMIES, ENEMY_AFFIXES, seedRun, grng, dailySeed, startWave, spawnEnemy, rollEnemyLoot, resolveAll, sourcesWith, BURN, POISON, chillTpl, burnTpl, poisonTpl, applyEffectTemplate, runChain, ATOMS, chainSlotCount, autoFillChain, grantChainAtom, atomOfferFor, ATOM_PRODUCERS, chainMove, chainUnslot, chainSlot, chainDrop, ATOM_CARD_POOL, ATOM_BOSS_POOL, killEnemy, getG: () => G, getCtx: () => ctx });';
+  const grab = '\n;Object.assign(api, { startGame, buildHotbar, resolveStat, resolveAttack, basicInstance, tickActor, rebuild, rollItem, PERKS, mkStats, ITEM_BASES, ENEMIES, ENEMY_AFFIXES, seedRun, grng, dailySeed, startWave, spawnEnemy, rollEnemyLoot, resolveAll, sourcesWith, BURN, POISON, chillTpl, burnTpl, poisonTpl, applyEffectTemplate, runChain, runReactions, REACTIONS, ATOMS, GATE_BONUS, ATOM_CARD_POOL, chainShape, shapeText, SHAPE_I18N, chainSlotCount, autoFillChain, grantChainAtom, atomOfferFor, ATOM_PRODUCERS, chainMove, chainUnslot, chainSlot, chainDrop, ATOM_BOSS_POOL, killEnemy, getG: () => G, getCtx: () => ctx });';
   eval(code + grab);
   return api;
 }

@@ -1548,6 +1548,9 @@
         /* --- composer workbench: ordered slots + a bench of owned atoms --- */
         .modal.cmp { width: min(760px,95vw); }
         .chainrow { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px }
+        .cmpshape { display: flex; align-items: baseline; gap: 10px; margin: 2px 0 10px; padding: 7px 11px; border-radius: 9px; background: rgba(8,11,18,.5); border: 1px solid var(--line); border-left: 3px solid var(--ember) }
+        .cmpshape .shname { font-size: 13px; font-weight: 700; letter-spacing: .04em; color: var(--ember-hi) }
+        .cmpshape .shds { font-size: 12px; color: #aab2c4 }
         .cslot {
             position: relative; flex: 0 0 auto; width: 134px; min-height: 80px;
             border: 1px solid var(--rc, var(--line)); border-left: 3px solid var(--rc, var(--line));
@@ -2992,6 +2995,7 @@
                 <div class="sub" data-i18n="composeHint">Order is power. Each atom acts on the charge in turn — amplifiers boost only what comes after them, finishers spend what came before.</div>
                 <div class="lh-sec" data-i18n="chain">Chain</div>
                 <div class="chainrow" id="chainrow"></div>
+                <div class="cmpshape" id="cmpshape"></div>
                 <div class="lh-sec" data-i18n="bench">Bench — owned atoms</div>
                 <div class="cbench" id="cbench"></div>
                 <div class="catomdetail" id="catomdetail"></div>
@@ -4601,8 +4605,51 @@
            <= the unique-amp ceiling; single-pass, so no re-entrancy). All magnitudes are
            fractions of attackDamage, so the chain scales with the hero and stays relevant.
            ========================================================================= */
-        const CHAIN_BASE_SLOTS = 3, CHAIN_SLOT_CAP = 12;     // base 3, +1 per 2 fire levels, cap 12 (progression-sim tuned)
+        const CHAIN_BASE_SLOTS = 3, CHAIN_SLOT_CAP = 8;      // base 3, +1 per 2 fire levels, cap 8 (Phase 4: slot scarcity sharpens commitment; the bench is the record of roads not taken)
         const ATOM_V = { EMBER: 0.40, VENOM: 0.30, FROST: 0.5, SEARING: 0.7, ARC: 0.45, DET: 0.20, RUP: 0.30, MARK: 1.25, MOMMAX: 5, OC: 1.5, FOCUS: 2 };
+        /* === REACTIONS — the EMERGENT core (Reactor Composer) ============================================
+           A reaction SPENDS a COMBINATION of statuses and runs a distinct EFFECT — each combination is a
+           different VERB, not a bigger burst, so combining produces behaviour no producer has alone:
+             Burn+Poison           → Detonate : single-target burst        (damage)
+             Burn+Frostbite        → Shatter  : instant AoE pulse, charge-split across foes hit (area)
+             Frostbite+Poison      → Blight   : poison leaps to nearby foes as fresh poison      (contagion)
+             Burn+Frostbite+Poison → Cataclysm: AoE burst + reseeds burn/poison on neighbours    (apex)
+           Resolution is ambient + greedy + MOST-SPECIFIC (the richest combination wins, fires once, and
+           consumes its statuses). Conservation: each effect's output is bounded by the stacks it spends
+           (it spends the DoTs instead of letting them tick), which is what keeps the system bounded. */
+        const REACT = { DET: 0.20, SHATTER: 0.30, BLIGHT_DOT: 0.18, CATA: 0.26 };
+        const REACTIONS = {
+            "Burn|Poison": {
+                consume: ["Burn", "Poison"], threshold: 5,
+                effect: (att, s, n) => { chainTrueHit(att, s.primary, REACT.DET * resolveStat(att, "attackDamage", ctx) * n * s.power * s.mark); }
+            },
+            "Burn|Frostbite": {                                   // SHATTER — thermal shock; AoE, charge-split so total is bounded regardless of crowd
+                consume: ["Burn", "Frostbite"], threshold: 3,
+                effect: (att, s, n) => {
+                    const near = chainNearby(s.primary, 3, 90), all = [s.primary, ...near];
+                    const each = REACT.SHATTER * resolveStat(att, "attackDamage", ctx) * n * s.power * s.mark / all.length;
+                    for (const t of all) chainTrueHit(att, t, each);
+                }
+            },
+            "Frostbite|Poison": {                                 // BLIGHT — contagion; the chilled poison leaps outward as fresh poison
+                consume: ["Frostbite", "Poison"], threshold: 3,
+                effect: (att, s, n) => {
+                    const near = chainNearby(s.primary, 3, 90), AD = resolveStat(att, "attackDamage", ctx);
+                    if (!near.length) { chainTrueHit(att, s.primary, REACT.BLIGHT_DOT * AD * n * s.power * s.mark); return; }
+                    const perFoe = Math.max(1, Math.round(n / near.length));   // distribute the spent stacks across neighbours (conserved)
+                    for (const t of near) for (let i = 0; i < perFoe; i++) applyEffectTemplate(t, poisonTpl(REACT.BLIGHT_DOT * AD * s.power * s.mark));
+                }
+            },
+            "Burn|Frostbite|Poison": {                            // CATACLYSM — apex; AoE burst + reseeds the board for follow-up reactions
+                consume: ["Burn", "Frostbite", "Poison"], threshold: 5,
+                effect: (att, s, n) => {
+                    const near = chainNearby(s.primary, 3, 90), all = [s.primary, ...near], AD = resolveStat(att, "attackDamage", ctx);
+                    const each = REACT.CATA * AD * n * s.power * s.mark / all.length;
+                    for (const t of all) chainTrueHit(att, t, each);
+                    for (const t of near) { applyEffectTemplate(t, burnTpl(REACT.BLIGHT_DOT * AD * s.power * s.mark)); applyEffectTemplate(t, poisonTpl(REACT.BLIGHT_DOT * AD * s.power * s.mark)); }
+                }
+            },
+        };
         function chainTrueHit(att, tgt, dmg) {
             resolveAttack(att, tgt, { damage: dmg, critChance: 0, critMult: 1, canCrit: false, appliesOnHit: false, lifesteal: 0, lifestealMult: 0, armorPen: 0, kind: "proc", damageType: "true", tags: ["chain"] }, ctx);
         }
@@ -4629,13 +4676,38 @@
             }
             return hits;
         }
-        function chainBurst(att, s, sources, per) {           // finisher: consume the primary's DoT stacks for a burst
+        function chainBurst(att, s, sources, per, threshold) {   // finisher: consume the primary's DoT stacks for a burst
             const t = s.primary; if (!t.activeEffects) return; let n = 0;
             for (const e of t.activeEffects) if (sources.includes(e.source)) n += (e.stacks || 1);
-            if (n < 5) return;                                // threshold (matches Rupture)
+            if (n < (threshold || 5)) return;                 // threshold (registry-owned; default 5 matches Rupture)
             t.activeEffects = t.activeEffects.filter(e => !sources.includes(e.source));
             chainTrueHit(att, t, per * resolveStat(att, "attackDamage", ctx) * n * s.power * s.mark);
             s._burst = n;                                     // record stacks spent → finisher VFX scales to the payoff
+        }
+        /* Ambient reaction pass (Reactor Composer). After the chain's atoms have loaded statuses, the
+           RICHEST qualifying reaction (most statuses consumed) fires ONCE, consuming its statuses for a
+           burst scaled to the stacks spent. Greedy + single-pass: one reaction per swing, no cascade, no
+           re-entry. Most-specific-wins (subset size, then stacks, then key) makes selection independent of
+           registry declaration order. Proven by reaction-contract.test.js. NOTE: chill's source is
+           "Frostbite" and is single-instance (refresh), so it contributes presence + 1 stack, not a pile. */
+        function runReactions(att, s) {
+            const t = s.primary; if (!t || t.dead || !t.activeEffects) return;
+            const present = {};
+            for (const e of t.activeEffects) present[e.source] = (present[e.source] || 0) + (e.stacks || 1);
+            let best = null;
+            for (const key in REACTIONS) {
+                const R = REACTIONS[key];
+                if (!R.consume.every(src => present[src] != null)) continue;          // consume must be a subset of present
+                let n = 0; for (const src of R.consume) n += present[src];
+                if (n < R.threshold) continue;                                        // self-gates, like the old chainBurst
+                if (!best || R.consume.length > best.R.consume.length ||              // 1) most-specific
+                    (R.consume.length === best.R.consume.length && n > best.n) ||     // 2) most stacks
+                    (R.consume.length === best.R.consume.length && n === best.n && key < best.key)) best = { key, R, n };
+            }
+            if (!best) return;
+            t.activeEffects = t.activeEffects.filter(e => !best.R.consume.includes(e.source));   // CONSUME (conservation)
+            best.R.effect(att, s, best.n);                                           // run the reaction's distinct verb (damage / area / contagion / apex)
+            s._burst = best.n; s._reactKey = best.key;                               // payoff size + which reaction → FX
         }
         function heroImpactFx(h, tgt, dir) {                  // replay the watcher's own basic-hit flourish on a foe (used at the soft end of a pierce line)
             const ux = Math.cos(dir), uy = Math.sin(dir);
@@ -4650,30 +4722,37 @@
                 spawnParticles(tgt.x, tgt.y, "#ffe7b0", 8, { speed: 150, life: 0.28, size: 2.3, dir, spread: 0.7 });
             }
         }
+        /* GATES are conditional amplifiers (not pure halts): when the condition HOLDS, boost the rest of the
+           chain by this much (added to s.power, like Momentum — so downstream producers AND the reaction
+           payoff scale); when it FAILS, the chain stops. Reliable conditions (Kindling needs Burn upstream,
+           Exploit needs 2 statuses) pay modestly; swingy ones (onCrit, everyThird) and the rare finisher
+           (Execute, foe <30%) pay more. Additive → stacking is linear, so the worst case stays bounded.
+           First-pass values; the reliability↔reward axis is the lever to tune from play. */
+        const GATE_BONUS = { onCrit: 1.4, execute: 2.5, kindling: 0.8, everyThird: 1.8, exploit: 0.9 };
         const ATOMS = {
             // producers — load the charge
-            ember:      { role: "prod", nm: "Ember",          ds: "Sets the target alight (burns, scales with attack).", act: (h, s) => { const b = resolveStat(h, "attackDamage", ctx); for (const t of s.targets) applyEffectTemplate(t, burnTpl(ATOM_V.EMBER * b * s.power * s.mark)); s.tags.add("fire"); s.dot = true; } },
-            venom:      { role: "prod", nm: "Venom",          ds: "Poisons the target (stacks, scales with attack).", act: (h, s) => { const b = resolveStat(h, "attackDamage", ctx); for (const t of s.targets) applyEffectTemplate(t, poisonTpl(ATOM_V.VENOM * b * s.power * s.mark)); s.tags.add("poison"); s.dot = true; } },
+            ember:      { role: "prod", nm: "Ember",          ds: "Sets the target alight (burns, scales with attack).", act: (h, s) => { const b = resolveStat(h, "attackDamage", ctx); const c = chargeShare(s); for (const t of s.targets) applyEffectTemplate(t, burnTpl(ATOM_V.EMBER * b * c)); s.tags.add("fire"); s.dot = true; } },
+            venom:      { role: "prod", nm: "Venom",          ds: "Poisons the target (stacks, scales with attack).", act: (h, s) => { const b = resolveStat(h, "attackDamage", ctx); const c = chargeShare(s); for (const t of s.targets) applyEffectTemplate(t, poisonTpl(ATOM_V.VENOM * b * c)); s.tags.add("poison"); s.dot = true; } },
             frostNail:  { role: "prod", nm: "Frost Nail",     ds: "Chills the target — slows it.", act: (h, s) => { for (const t of s.targets) applyEffectTemplate(t, chillTpl(ATOM_V.FROST)); s.tags.add("frost"); } },
-            searing:    { role: "prod", nm: "Searing Strike", ds: "A bonus fire hit.", act: (h, s) => { const b = resolveStat(h, "attackDamage", ctx); for (const t of s.targets) chainTrueHit(h, t, ATOM_V.SEARING * b * s.power * s.mark); s.tags.add("fire"); } },
-            arc:        { role: "prod", nm: "Arc",            ds: "Lightning leaps to nearby foes.", act: (h, s) => { const b = resolveStat(h, "attackDamage", ctx); for (const t of chainNearby(s.primary, 2, 90)) chainTrueHit(h, t, ATOM_V.ARC * b * s.power * s.mark); } },
+            searing:    { role: "prod", nm: "Searing Strike", ds: "A bonus fire hit.", act: (h, s) => { const b = resolveStat(h, "attackDamage", ctx); const c = chargeShare(s); for (const t of s.targets) chainTrueHit(h, t, ATOM_V.SEARING * b * c); s.tags.add("fire"); } },
+            arc:        { role: "prod", nm: "Arc",            ds: "Lightning leaps to nearby foes.", act: (h, s) => { const b = resolveStat(h, "attackDamage", ctx); const near = chainNearby(s.primary, 2, 90); const c = (s.power * s.mark) / Math.max(1, near.length); for (const t of near) chainTrueHit(h, t, ATOM_V.ARC * b * c); } },
             // amplifiers — transform the live charge (want to sit upstream)
             overcharge: { role: "amp",  nm: "Overcharge",     ds: "Everything downstream hits 50% harder.", act: (h, s) => { s.power *= ATOM_V.OC; } },
             focus:      { role: "amp",  nm: "Focus",          ds: "Double power, but single-target only.", act: (h, s) => { s.power *= ATOM_V.FOCUS; s.targets = [s.primary]; } },
             fork:       { role: "amp",  nm: "Fork",           ds: "Downstream producers hit 2 extra foes.", act: (h, s) => { s.targets = [s.primary, ...chainNearby(s.primary, 2, 90)]; } },
             pierce:     { role: "amp",  nm: "Pierce",         ds: "The strike punches through, hitting up to 3 foes in a line.", act: (h, s) => { if (h.attackType !== "melee") return; const dir = (s.basic && s.basic._dir != null) ? s.basic._dir : Math.atan2(s.primary.y - h.y, s.primary.x - h.x); const b = chainPierce(s.primary, dir, 2, resolveStat(h, "attackRange", ctx), 18); s.pierceHits = b; s.pierceDir = dir; s.targets = [s.primary, ...b]; } },
-            momentum:   { role: "amp",  nm: "Momentum",       ds: "+10% power per status type built up the chain.", act: (h, s) => { s.power *= 1 + 0.1 * Math.min(s.tags.size, ATOM_V.MOMMAX); } },
-            spread:     { role: "amp",  nm: "Spread",         ds: "Copies your burn to nearby foes.", act: (h, s) => { if (s.dot) { const b = resolveStat(h, "attackDamage", ctx); for (const t of chainNearby(s.primary, 3, 90)) applyEffectTemplate(t, burnTpl(ATOM_V.EMBER * b * s.power * s.mark)); } } },
+            momentum:   { role: "amp",  nm: "Momentum",       ds: "+10% power per atom sharing your chain's dominant role — rewards committing to a shape.", act: (h, s) => { const rc = {}; for (const id of h.chain) { const a = ATOMS[id]; if (a) rc[a.role] = (rc[a.role] || 0) + 1; } const dom = Math.max(1, ...Object.values(rc)); s.power *= 1 + 0.1 * Math.min(dom - 1, ATOM_V.MOMMAX); } },
+            spread:     { role: "amp",  nm: "Spread",         ds: "Copies your burn to nearby foes.", act: (h, s) => { if (s.dot) { const b = resolveStat(h, "attackDamage", ctx); const near = chainNearby(s.primary, 3, 90); const c = (s.power * s.mark) / Math.max(1, near.length); for (const t of near) applyEffectTemplate(t, burnTpl(ATOM_V.EMBER * b * c)); } } },
             // gates — a failed gate stops the rest of the chain
-            onCrit:     { role: "gate", nm: "On Crit",        ds: "Continue only on a critical hit.", act: (h, s) => { if (!s.crit) s.alive = false; } },
-            execute:    { role: "gate", nm: "Execute",        ds: "Continue only if the foe is below 30% health.", act: (h, s) => { if (s.primary.currentHealth > 0.30 * resolveStat(s.primary, "maxHealth", ctx)) s.alive = false; } },
-            kindling:   { role: "gate", nm: "Kindling",       ds: "Continue only if the foe is burning.", act: (h, s) => { if (!s.primary.activeEffects.some(e => e.source === "Burn")) s.alive = false; } },
-            everyThird: { role: "gate", nm: "Every Third",    ds: "Fires only on every third attack.", act: (h, s) => { if ((h._chainAtk || 0) % 3 !== 0) s.alive = false; } },
-            exploit:    { role: "gate", nm: "Exploit",        ds: "Continue only if the foe has 2+ status effects.", act: (h, s) => { if ((s.primary.activeEffects || []).length < 2) s.alive = false; } },
-            stun:       { role: "gate", nm: "Stun",           ds: "Briefly stuns the target.", act: (h, s) => { if (!s.primary.dead && typeof stunEnemy === "function") stunEnemy(s.primary, 0.5); } },
-            // finishers — spend the loaded charge
-            detonate:   { role: "fin",  nm: "Detonate",       ds: "Consumes burn/poison stacks for a burst.", act: (h, s) => { chainBurst(h, s, ["Burn", "Poison"], ATOM_V.DET); } },
-            rupture:    { role: "fin",  nm: "Rupture",        ds: "Consumes poison stacks for true damage.", act: (h, s) => { chainBurst(h, s, ["Poison"], ATOM_V.RUP); } },
+            onCrit:     { role: "gate", nm: "On Crit",        ds: "On a crit, boost the rest of the chain — otherwise it stops.", act: (h, s) => { if (s.crit) s.power += GATE_BONUS.onCrit; else s.alive = false; } },
+            execute:    { role: "gate", nm: "Execute",        ds: "Against a foe below 30% health, boost the rest of the chain hard — otherwise it stops.", act: (h, s) => { if (s.primary.currentHealth <= 0.30 * resolveStat(s.primary, "maxHealth", ctx)) s.power += GATE_BONUS.execute; else s.alive = false; } },
+            kindling:   { role: "gate", nm: "Kindling",       ds: "If the foe is burning, boost the rest of the chain — otherwise it stops.", act: (h, s) => { if (s.primary.activeEffects.some(e => e.source === "Burn")) s.power += GATE_BONUS.kindling; else s.alive = false; } },
+            everyThird: { role: "gate", nm: "Every Third",    ds: "Every third attack, boost the rest of the chain hard — otherwise it stops.", act: (h, s) => { if ((h._chainAtk || 0) % 3 === 0) s.power += GATE_BONUS.everyThird; else s.alive = false; } },
+            exploit:    { role: "gate", nm: "Exploit",        ds: "If the foe has 2+ statuses, boost the rest of the chain — otherwise it stops.", act: (h, s) => { if ((s.primary.activeEffects || []).length >= 2) s.power += GATE_BONUS.exploit; else s.alive = false; } },
+            stun:       { role: "util", nm: "Stun",           ds: "Briefly stuns the target.", act: (h, s) => { if (!s.primary.dead && typeof stunEnemy === "function") stunEnemy(s.primary, 0.5); } },
+            // finishers RETIRED (Reactor Composer Phase 1b): Detonate/Rupture removed — burn/poison and
+            // poison bursts are now AMBIENT reactions (see REACTIONS + runReactions). The two slots are
+            // freed from the pool; the atoms may be repurposed later as reaction conditioners.
             // utility
             leech:      { role: "util", nm: "Leech",          ds: "Heals you a little on each chain.", act: (h, s) => { h.currentHealth = Math.min(resolveStat(h, "maxHealth", ctx), h.currentHealth + 2 * s.power); } },
             mark:       { role: "util", nm: "Mark",           ds: "Downstream producers deal +25%.", act: (h, s) => { s.mark *= ATOM_V.MARK; } },
@@ -4702,25 +4781,39 @@
             everyThird: (h, s) => { s.alive ? spawnParticles(s.primary.x, s.primary.y, "#8ad0ff", 11, { speed: 130, life: 0.4, size: 2.3 }) : chainFizzle(s.primary); },
             exploit:    (h, s) => { s.alive ? spawnParticles(s.primary.x, s.primary.y, "#c89aff", 10, { speed: 110, life: 0.38, size: 2.2 }) : chainFizzle(s.primary); },
             stun:       (h, s) => { spawnParticles(s.primary.x, s.primary.y - s.primary.r, "#fff0a0", 9, { speed: 55, life: 0.55, size: 2.4, grav: -8 }); },
-            // finishers — a burst scaled to the stacks actually spent (s._burst, set by chainBurst)
-            detonate:   (h, s) => { if (!s._burst) return; const n = s._burst; s._burst = 0; G.fx.push({ cleave: true, enemy: true, x: s.primary.x, y: s.primary.y, r: s.primary.r + 18 + Math.min(40, n * 3), life: 0.32, max: 0.32 }); spawnParticles(s.primary.x, s.primary.y, "#ff8a2b", 16 + Math.min(20, n * 2), { speed: 210, life: 0.5, size: 3 }); spawnParticles(s.primary.x, s.primary.y, "#86e07a", 8, { speed: 150, life: 0.45, size: 2.4 }); if (typeof shake === "function") shake(2 + Math.min(5, n * 0.4)); },
-            rupture:    (h, s) => { if (!s._burst) return; const n = s._burst; s._burst = 0; spawnParticles(s.primary.x, s.primary.y, "#6fdc5a", 14 + Math.min(18, n * 2), { speed: 190, life: 0.5, size: 2.8 }); if (typeof shake === "function") shake(2 + Math.min(4, n * 0.3)); },
+            // (Detonate/Rupture FX retired → see REACTION_FX below; reactions are now ambient)
             // utility
             leech:      (h, s) => { spawnParticles(h.x, h.y, "#86e07a", 8, { speed: 50, life: 0.5, size: 2, grav: -30 }); },
             mark:       (h, s) => { spawnParticles(s.primary.x, s.primary.y, "#ffe08a", 10, { speed: 80, life: 0.3, size: 2 }); s.primary.hitScale = Math.max(s.primary.hitScale || 1, 1.15); },
+        };
+        /* --- per-reaction VFX (kept separate from runReactions so visuals never touch damage logic).
+           Keyed by reaction key; reads s._burst (stacks spent) to scale the payoff flourish. --- */
+        const REACTION_FX = {
+            "Burn|Poison":           (h, s) => { const n = s._burst || 0; G.fx.push({ cleave: true, enemy: true, x: s.primary.x, y: s.primary.y, r: s.primary.r + 18 + Math.min(40, n * 3), life: 0.32, max: 0.32 }); spawnParticles(s.primary.x, s.primary.y, "#ff8a2b", 16 + Math.min(20, n * 2), { speed: 210, life: 0.5, size: 3 }); spawnParticles(s.primary.x, s.primary.y, "#86e07a", 8, { speed: 150, life: 0.45, size: 2.4 }); if (typeof shake === "function") shake(2 + Math.min(5, n * 0.4)); },
+            "Burn|Frostbite":        (h, s) => { const n = s._burst || 0; G.fx.push({ cleave: true, enemy: true, x: s.primary.x, y: s.primary.y, r: s.primary.r + 16 + Math.min(36, n * 3), life: 0.3, max: 0.3 }); spawnParticles(s.primary.x, s.primary.y, "#9ad8ff", 14 + Math.min(18, n * 2), { speed: 220, life: 0.45, size: 2.6 }); spawnParticles(s.primary.x, s.primary.y, "#ffd9a8", 8, { speed: 170, life: 0.4, size: 2.3 }); if (typeof shake === "function") shake(2 + Math.min(5, n * 0.4)); },
+            "Frostbite|Poison":      (h, s) => { spawnParticles(s.primary.x, s.primary.y, "#6fdc5a", 10, { speed: 90, life: 0.4, size: 2.4 }); for (const t of chainNearby(s.primary, 3, 90)) { G.fx.push({ bolt: true, x1: s.primary.x, y1: s.primary.y, x2: t.x, y2: t.y, life: 0.2, max: 0.2, col: "#86e07a", glow: "#bff0a0" }); spawnParticles(t.x, t.y, "#86e07a", 7, { speed: 70, life: 0.5, size: 2.2, grav: 50 }); } },
+            "Burn|Frostbite|Poison": (h, s) => { const n = s._burst || 0; G.fx.push({ cleave: true, enemy: true, x: s.primary.x, y: s.primary.y, r: s.primary.r + 22 + Math.min(48, n * 3), life: 0.36, max: 0.36 }); spawnParticles(s.primary.x, s.primary.y, "#ffffff", 20 + Math.min(24, n * 2), { speed: 260, life: 0.55, size: 3.2 }); spawnParticles(s.primary.x, s.primary.y, "#ff8a2b", 10, { speed: 180, life: 0.5, size: 2.6 }); spawnParticles(s.primary.x, s.primary.y, "#9ad8ff", 10, { speed: 180, life: 0.5, size: 2.6 }); for (const t of chainNearby(s.primary, 3, 90)) spawnParticles(t.x, t.y, "#ffd0a0", 6, { speed: 90, life: 0.45, size: 2.2 }); if (typeof shake === "function") shake(3 + Math.min(6, n * 0.4)); },
         };
         // per-atom glow carried on the basic projectile while that atom sits in the chain — a flight-time tell, distinct from the ATOM_FX impact burst above.
         // Add an entry here to give any atom its own projectile aura; multiple active atoms layer their halos.
         const ATOM_PROJ_GLOW = { overcharge: "#ff5a4a" };
         function shotGlows(h) { return (h.chain || []).map(id => ATOM_PROJ_GLOW[id]).filter(Boolean); }
         function chainSlotCount(h) { return Math.min(CHAIN_SLOT_CAP, CHAIN_BASE_SLOTS + Math.floor(h.fireSlots || 0)); }
+        /* Phase 2 — FINITE CHARGE. The chain carries one charge per swing; spread across N targets it
+           divides linearly, so going wide trades per-target weight for reach (concentrate vs distribute).
+           chargeShare(s) = (power*mark)/N. Single target → full charge; Fork's 3 targets → a third each.
+           Applied at the per-target producer loop + the no-producer fold. Frost is a slow (no damage), so
+           it is exempt. Reactions fire on the primary only and are not split (the concentrate payoff). */
+        function chargeShare(s) { return (s.power * s.mark) / Math.max(1, s.targets.length); }
         function runChain(h, primary, basic) {                // ONE left-to-right pass per basic attack (single-pass: no re-entry)
             if (!h.chain || !h.chain.length || !primary || primary.dead) return;
             h._chainAtk = (h._chainAtk || 0) + 1;
             const s = { crit: Math.random() < resolveStat(h, "critChance", ctx), power: 1, mark: 1, targets: [primary], primary, tags: new Set(), alive: true, dot: false, basic, pierceHits: null, pierceConsumed: false };
             for (const id of h.chain) { if (!s.alive) break; const a = ATOMS[id]; if (!a) continue; a.act(h, s); if (a.role === "prod") { s.prodFired = true; if (s.pierceHits) s.pierceConsumed = true; } const fx = ATOM_FX[id]; if (fx) fx(h, s); }
+            if (s.alive) runReactions(h, s);                 // ambient/greedy/most-specific reaction pass (consumes statuses, sets s._burst + s._reactKey)
+            if (s._reactKey && REACTION_FX[s._reactKey]) REACTION_FX[s._reactKey](h, s);   // reaction flourish (VFX only)
             if (s.alive && s.basic && !s.prodFired && !s._burst) {   // no producer or finisher consumed the charge → the basic attack carries it: amps boost (and re-target) the basic strike itself
-                const scale = s.power * s.mark;
+                const scale = chargeShare(s);                         // finite charge: the amp-boosted basic also splits across added targets
                 for (const t of s.targets) {
                     if (!t || t.dead) continue;
                     if (t === s.primary) {                            // fold the boost into the strike's single number (don't roll a separate crit)
@@ -4748,8 +4841,8 @@
             }
         }
         // --- acquisition: basic atoms arrive as rare level-up cards; the rare grammar drops from bosses ---
-        const ATOM_CARD_POOL = ["ember", "venom", "frostNail", "searing", "arc", "overcharge", "detonate", "spread", "rupture", "exploit", "stun", "pierce", "leech", "mark"];
-        const ATOM_BOSS_POOL = ["focus", "fork", "momentum", "onCrit", "execute", "kindling", "everyThird"];
+        const ATOM_CARD_POOL = ["ember", "venom", "frostNail", "searing", "arc", "overcharge", "spread", "exploit", "stun", "pierce", "leech", "mark", "momentum"];
+        const ATOM_BOSS_POOL = ["focus", "fork", "onCrit", "execute", "kindling", "everyThird"];
         const ATOM_PRODUCERS = Object.keys(ATOMS).filter(id => ATOMS[id].role === "prod");   // derived — the atoms that load the charge (a chain needs at least one)
         function atomOfferFor(h) {                            // which atom (if any) the next level-up offers as a card
             const owned = h.atoms || [];
@@ -4767,6 +4860,8 @@
             return grng() < 0.55 ? pick(unowned) : null;       // afterwards, atom cards surface ~55% of level-ups from the full pool
         }
         function autoFillChain(h) {                           // append owned-but-unslotted atoms up to the slot count (player reorders later)
+            if (h.chain) h.chain = h.chain.filter(id => ATOMS[id]);   // prune retired/unknown ids before filling
+            if (h.atoms) h.atoms = h.atoms.filter(id => ATOMS[id]);
             const cap = chainSlotCount(h);
             for (const id of (h.atoms || [])) { if (h.chain.length >= cap) break; if (!h.chain.includes(id)) h.chain.push(id); }
         }
@@ -8208,10 +8303,48 @@
         const COMPOSER_ROLE_COL = { prod: "#ff8a2b", amp: "#ffc46b", gate: "#7fb0ff", fin: "#ff6b9d", util: "#86e07a" };
         let composerSel = null;
         function composerInspect(id) { composerSel = id; renderComposer(); }
+        /* Localized shape strings — separate table mirroring the DESC pattern: [name, description] per
+           language, lookup falls back to English. Best-effort translations; a native pass is advisable. */
+        const SHAPE_I18N = {
+            en: { cataclysm: ["Cataclysm build", "All three statuses — the triple reaction clears and reseeds the cluster."], detonator: ["Detonator", "Burn + poison — Detonate spends the stacks for one big hit."], shatter: ["Shatter build", "Burn + frost — Shatter pulses damage across nearby foes."], blight: ["Blight build", "Frost + poison — the poison spreads from foe to foe."], stacker: ["Stacker", "Build burn/poison; reactions detonate the stacks."], spreader: ["Spreader", "Touch many foes — the charge spreads thin across them."], burst: ["Burst", "Quiet most swings, then a conditional spike."], hybrid: ["Hybrid", "Pulled between styles — commit harder for more power."], unfocused: ["Unfocused", "No clear style yet — add producers and pick a direction."] },
+            tr: { cataclysm: ["Kıyamet dizilimi", "Üç durum birden — üçlü tepkime kümeyi temizler ve yeniden tohumlar."], detonator: ["Patlatıcı", "Yanık + zehir — Patlatma yığınları tek büyük vuruşa harcar."], shatter: ["Parçalama dizilimi", "Yanık + don — Parçalama yakın düşmanlara hasar yayar."], blight: ["Yıkım dizilimi", "Don + zehir — zehir düşmandan düşmana yayılır."], stacker: ["Yığıcı", "Yanık/zehir biriktir; tepkimeler yığınları patlatır."], spreader: ["Yayıcı", "Çok düşmana değ — yük aralarında incelir."], burst: ["Patlama", "Çoğu vuruşta sessiz, sonra koşullu bir sıçrama."], hybrid: ["Karma", "Stiller arasında kaldın — daha çok güç için bağlan."], unfocused: ["Odaksız", "Henüz net bir stil yok — üretici ekle ve bir yön seç."] },
+            zh: { cataclysm: ["浩劫流", "三种状态齐备——三重反应清场并再次播撒。"], detonator: ["引爆流", "燃烧+中毒——引爆消耗叠层造成一次重击。"], shatter: ["碎裂流", "燃烧+冰冻——碎裂向附近敌人扩散伤害。"], blight: ["疫病流", "冰冻+中毒——毒素在敌群间蔓延。"], stacker: ["叠加流", "积累燃烧/中毒；反应引爆叠层。"], spreader: ["扩散流", "触及众多敌人——充能因此被稀释。"], burst: ["爆发流", "多数挥击沉寂，随后有条件地爆发。"], hybrid: ["混合流", "在风格间摇摆——更专注投入可获得更多威力。"], unfocused: ["无主题", "尚无明确风格——添加产出者并选定方向。"] },
+            es: { cataclysm: ["Build Cataclismo", "Los tres estados: la reacción triple limpia y resiembra el grupo."], detonator: ["Detonador", "Quemadura + veneno: Detonar gasta las pilas en un gran golpe."], shatter: ["Build Estallido", "Quemadura + escarcha: Estallido reparte daño entre enemigos cercanos."], blight: ["Build Plaga", "Escarcha + veneno: el veneno se propaga de enemigo a enemigo."], stacker: ["Acumulador", "Acumula quemadura/veneno; las reacciones detonan las pilas."], spreader: ["Dispersor", "Alcanza a muchos enemigos: la carga se reparte y debilita."], burst: ["Estallido", "Silencioso casi siempre, luego un pico condicional."], hybrid: ["Híbrido", "Dividido entre estilos: comprométete para más poder."], unfocused: ["Sin enfoque", "Aún sin estilo claro: añade productores y elige un rumbo."] },
+            fr: { cataclysm: ["Build Cataclysme", "Les trois états — la réaction triple nettoie et réensemence le groupe."], detonator: ["Détonateur", "Brûlure + poison — Détonation dépense les piles en un grand coup."], shatter: ["Build Fracas", "Brûlure + givre — Fracas diffuse les dégâts aux ennemis proches."], blight: ["Build Putréfaction", "Givre + poison — le poison se propage d'ennemi en ennemi."], stacker: ["Cumulateur", "Accumule brûlure/poison ; les réactions font exploser les piles."], spreader: ["Disperseur", "Touche de nombreux ennemis — la charge se dilue."], burst: ["Salve", "Discret la plupart du temps, puis un pic conditionnel."], hybrid: ["Hybride", "Partagé entre les styles — engage-toi pour plus de puissance."], unfocused: ["Sans cap", "Pas encore de style clair — ajoute des producteurs et choisis une voie."] },
+            ru: { cataclysm: ["Сборка «Катаклизм»", "Все три статуса — тройная реакция зачищает и засевает группу."], detonator: ["Детонатор", "Ожог + яд — Детонация тратит стаки на один мощный удар."], shatter: ["Сборка «Раскол»", "Ожог + холод — Раскол разносит урон по ближним врагам."], blight: ["Сборка «Гниль»", "Холод + яд — яд расползается от врага к врагу."], stacker: ["Накопитель", "Копите ожог/яд; реакции взрывают стаки."], spreader: ["Распылитель", "Задевает многих врагов — заряд распыляется."], burst: ["Всплеск", "Тихо почти всегда, затем условный всплеск."], hybrid: ["Гибрид", "Между стилями — сосредоточьтесь ради силы."], unfocused: ["Без фокуса", "Пока нет чёткого стиля — добавьте источники и выберите путь."] },
+            ja: { cataclysm: ["カタクリズム型", "三状態すべて——三重反応が群れを一掃し再び撒く。"], detonator: ["デトネーター", "燃焼+毒——デトネートがスタックを消費し一撃を放つ。"], shatter: ["シャッター型", "燃焼+凍結——シャッターが近くの敵へダメージを広げる。"], blight: ["ブライト型", "凍結+毒——毒が敵から敵へ伝染する。"], stacker: ["スタッカー", "燃焼/毒を蓄積し、反応でスタックを爆発させる。"], spreader: ["スプレッダー", "多くの敵に触れる——チャージは薄く分散する。"], burst: ["バースト", "ほとんどの攻撃は静かで、条件付きで爆発する。"], hybrid: ["ハイブリッド", "スタイルの板挟み——絞り込めば威力が増す。"], unfocused: ["方向性なし", "まだ明確なスタイルがない——生成役を加えて方針を選ぼう。"] },
+            ar: { cataclysm: ["بناء الكارثة", "الحالات الثلاث معًا — التفاعل الثلاثي يكتسح المجموعة ويعيد بذرها."], detonator: ["المفجِّر", "حرق + سم — التفجير يستهلك الطبقات في ضربة واحدة كبيرة."], shatter: ["بناء التحطيم", "حرق + صقيع — التحطيم ينشر الضرر على الأعداء القريبين."], blight: ["بناء الوباء", "صقيع + سم — ينتشر السم من عدو إلى آخر."], stacker: ["مُكدِّس", "اجمع الحرق/السم؛ التفاعلات تفجّر الطبقات."], spreader: ["موزِّع", "تلمس أعداءً كثيرين — تنتشر الشحنة وتضعف."], burst: ["انفجار", "هادئ في معظم الضربات، ثم اندفاعة مشروطة."], hybrid: ["هجين", "متأرجح بين الأساليب — التزم لمزيد من القوة."], unfocused: ["بلا تركيز", "لا أسلوب واضح بعد — أضف منتِجين واختر اتجاهًا."] },
+        };
+        function shapeText(key) { const tbl = SHAPE_I18N[LANG] || SHAPE_I18N.en; return tbl[key] || SHAPE_I18N.en[key]; }
+        /* Legible shape readout: name the build by its REACTION PAYOFF first — which emergent verb it can
+           trigger, set by the status-producers it slots (Burn=ember, Poison=venom, Frostbite=frostNail).
+           Falls back to the role shape (how it fights) only when fewer than two producers are present, so
+           a build with no reaction still reads sensibly. Pure display — reads h.chain, touches no combat. */
+        function chainShape(h) {
+            const ids = (h.chain || []).filter(id => ATOMS[id]);
+            const has = id => ids.includes(id);
+            const b = has("ember"), p = has("venom"), f = has("frostNail");   // which reaction-triggering statuses this chain can apply
+            if (b && p && f) return "cataclysm";                              // richest reaction reachable → the build's identity
+            if (b && p) return "detonator";
+            if (b && f) return "shatter";
+            if (f && p) return "blight";
+            const count = set => ids.reduce((n, id) => n + (set.includes(id) ? 1 : 0), 0);   // <2 producers: name by how it fights
+            const stacker = count(["ember", "venom"]);
+            const spreader = count(["fork", "spread", "arc", "pierce"]);
+            const burst = count(["onCrit", "execute", "kindling", "everyThird", "exploit", "focus", "searing"]);
+            const max = Math.max(stacker, spreader, burst);
+            if (max === 0) return "unfocused";
+            const top = [["stacker", stacker], ["spreader", spreader], ["burst", burst]].filter(([, v]) => v === max);
+            return top.length > 1 ? "hybrid" : top[0][0];
+        }
         function renderComposer() {
             const h = G && G.hero; if (!h) return;
+            if (h.chain) h.chain = h.chain.filter(id => ATOMS[id]);   // drop retired/unknown ids (e.g. a resumed run carrying old atoms)
+            if (h.atoms) h.atoms = h.atoms.filter(id => ATOMS[id]);
             const cap = chainSlotCount(h);
             document.getElementById("cmpslots").textContent = h.chain.length + " / " + cap;
+            const shapeEl = document.getElementById("cmpshape");
+            if (shapeEl) { const txt = shapeText(chainShape(h)); shapeEl.innerHTML = `<span class="shname">${txt[0]}</span><span class="shds">${txt[1]}</span>`; }
             const row = document.getElementById("chainrow"); row.innerHTML = "";
             for (let i = 0; i < cap; i++) {
                 const id = h.chain[i], slot = document.createElement("div");
