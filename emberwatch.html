@@ -141,6 +141,10 @@
             background: linear-gradient(90deg,#2f7fb0,#6fd3ff)
         }
 
+        .heat > i {
+            background: linear-gradient(90deg,#c8642e,#ff9a4a)
+        }
+
         .bar > span {
             position: absolute;
             inset: 0;
@@ -2861,6 +2865,7 @@
         <div class="hud" id="topleft">
             <div class="bar hp"><i id="hpghost"></i><i id="hpfill"></i><span id="hptext"></span></div>
             <div class="bar xp"><i id="xpfill"></i><span id="xptext"></span></div>
+            <div class="bar heat" id="heatbar"><i id="heatfill"></i><span id="heattext"></span></div>
             <div class="row"><div class="lvl"><span data-i18n="level">Level</span> <span id="lvl">1</span></div></div>
         </div>
 
@@ -2947,6 +2952,7 @@
         <div id="bottombar">
             <div class="hud" id="hotbar"></div>
             <div id="buttons">
+                <button class="btn" id="composebtn2" onclick="openComposer()"><span data-i18n="composeChain">Compose chain</span><span class="k">C</span></button>
                 <button class="btn" id="invbtn"><span data-i18n="pack">Watcher's Pack</span><span class="k">I</span><span class="badge" id="invbadge">!</span></button>
             </div>
         </div>
@@ -2996,6 +3002,7 @@
                 <div class="lh-sec" data-i18n="chain">Chain</div>
                 <div class="chainrow" id="chainrow"></div>
                 <div class="cmpshape" id="cmpshape"></div>
+                <div class="cmpshape" id="cmpheat"></div>
                 <div class="lh-sec" data-i18n="bench">Bench — owned atoms</div>
                 <div class="cbench" id="cbench"></div>
                 <div class="catomdetail" id="catomdetail"></div>
@@ -4445,7 +4452,7 @@
             tgt.currentHealth -= dealt;
             // lifesteal: full on single-target basics, 33% on AoE/cleave instances
             if (p.lifesteal > 0 && (p.lifestealMult || 0) > 0)
-                att.currentHealth = Math.min(att.currentHealth + dealt * p.lifesteal * p.lifestealMult, resolveStat(att, "maxHealth", ctx));
+                att.currentHealth = Math.min(att.currentHealth + dealt * p.lifesteal * p.lifestealMult * heatHealMult(att), resolveStat(att, "maxHealth", ctx));
             onDamage(tgt, dealt, crit, p);
             if (tgt === G.hero && att && att !== G.hero && !(p.tags && p.tags.includes("reflect"))) {   // counter — reflect a share of damage taken
                 const ct = resolveStat(G.hero, "counter", ctx);
@@ -4550,7 +4557,8 @@
         }
         function tickActor(actor, dt) {
             const regen = resolveStat(actor, "healthRegen", ctx);
-            actor.currentHealth += regen * dt;
+            const rmul = (regen > 0 && actor === G.hero && (actor._heatActive || 0) > 0) ? heatHealMult(actor) : 1;   // can't regen through an overload while you're running it hot
+            actor.currentHealth += regen * rmul * dt;
             const mx = resolveStat(actor, "maxHealth", ctx);
             if (actor.currentHealth > mx) actor.currentHealth = mx;
             if (regen < 0 && actor.currentHealth > 0) {                          // burn / venom / drain is removing HP — show the drain
@@ -4605,7 +4613,7 @@
            <= the unique-amp ceiling; single-pass, so no re-entrancy). All magnitudes are
            fractions of attackDamage, so the chain scales with the hero and stays relevant.
            ========================================================================= */
-        const CHAIN_BASE_SLOTS = 3, CHAIN_SLOT_CAP = 8;      // base 3, +1 per 2 fire levels, cap 8 (Phase 4: slot scarcity sharpens commitment; the bench is the record of roads not taken)
+        const CHAIN_BASE_SLOTS = 6, CHAIN_SLOT_CAP = 10;      // slots are now a generous PLACEMENT ceiling; HEAT (scaling with level) is the real, binding limiter on how much you can sustainably run. Heat forces focus, not slot scarcity.
         const ATOM_V = { EMBER: 0.40, VENOM: 0.30, FROST: 0.5, SEARING: 0.7, ARC: 0.45, DET: 0.20, RUP: 0.30, MARK: 1.25, MOMMAX: 5, OC: 1.5, FOCUS: 2 };
         /* === REACTIONS — the EMERGENT core (Reactor Composer) ============================================
            A reaction SPENDS a COMBINATION of statuses and runs a distinct EFFECT — each combination is a
@@ -4743,6 +4751,7 @@
             pierce:     { role: "amp",  nm: "Pierce",         ds: "The strike punches through, hitting up to 3 foes in a line.", act: (h, s) => { if (h.attackType !== "melee") return; const dir = (s.basic && s.basic._dir != null) ? s.basic._dir : Math.atan2(s.primary.y - h.y, s.primary.x - h.x); const b = chainPierce(s.primary, dir, 2, resolveStat(h, "attackRange", ctx), 18); s.pierceHits = b; s.pierceDir = dir; s.targets = [s.primary, ...b]; } },
             momentum:   { role: "amp",  nm: "Momentum",       ds: "+10% power per atom sharing your chain's dominant role — rewards committing to a shape.", act: (h, s) => { const rc = {}; for (const id of h.chain) { const a = ATOMS[id]; if (a) rc[a.role] = (rc[a.role] || 0) + 1; } const dom = Math.max(1, ...Object.values(rc)); s.power *= 1 + 0.1 * Math.min(dom - 1, ATOM_V.MOMMAX); } },
             spread:     { role: "amp",  nm: "Spread",         ds: "Copies your burn to nearby foes.", act: (h, s) => { if (s.dot) { const b = resolveStat(h, "attackDamage", ctx); const near = chainNearby(s.primary, 3, 90); const c = (s.power * s.mark) / Math.max(1, near.length); for (const t of near) applyEffectTemplate(t, burnTpl(ATOM_V.EMBER * b * c)); } } },
+            overdrive:  { role: "amp",  nm: "Overdrive",      ds: "Inverts Heat: running hot now BOOSTS the chain instead of throttling it. Build to ride the red.", act: (h, s) => { } },   // effect is the heat-curve flip, read in heatThrottle() at chain start
             // gates — a failed gate stops the rest of the chain
             onCrit:     { role: "gate", nm: "On Crit",        ds: "On a crit, boost the rest of the chain — otherwise it stops.", act: (h, s) => { if (s.crit) s.power += GATE_BONUS.onCrit; else s.alive = false; } },
             execute:    { role: "gate", nm: "Execute",        ds: "Against a foe below 30% health, boost the rest of the chain hard — otherwise it stops.", act: (h, s) => { if (s.primary.currentHealth <= 0.30 * resolveStat(s.primary, "maxHealth", ctx)) s.power += GATE_BONUS.execute; else s.alive = false; } },
@@ -4754,7 +4763,7 @@
             // poison bursts are now AMBIENT reactions (see REACTIONS + runReactions). The two slots are
             // freed from the pool; the atoms may be repurposed later as reaction conditioners.
             // utility
-            leech:      { role: "util", nm: "Leech",          ds: "Heals you a little on each chain.", act: (h, s) => { h.currentHealth = Math.min(resolveStat(h, "maxHealth", ctx), h.currentHealth + 2 * s.power); } },
+            leech:      { role: "util", nm: "Leech",          ds: "Heals you a little on each chain.", act: (h, s) => { h.currentHealth = Math.min(resolveStat(h, "maxHealth", ctx), h.currentHealth + 2 * s.power * heatHealMult(h)); } },
             mark:       { role: "util", nm: "Mark",           ds: "Downstream producers deal +25%.", act: (h, s) => { s.mark *= ATOM_V.MARK; } },
         };
         /* --- per-atom VFX (kept separate from act() so visuals never touch damage logic).
@@ -4805,10 +4814,31 @@
            Applied at the per-target producer loop + the no-producer fold. Frost is a slow (no damage), so
            it is exempt. Reactions fire on the primary only and are not split (the concentrate payoff). */
         function chargeShare(s) { return (s.power * s.mark) / Math.max(1, s.targets.length); }
+        /* === HEAT — the chain's metabolism (resource economy) ==========================================
+           Firing the chain costs heat; heat decays exponentially, so each build settles at a steady-state
+           heat proportional to (per-swing cost × attack rate). That makes "run cool / run hot" a build
+           axis, and it turns the bound from an artificial build-time ceiling into an EMERGENT play-time
+           one: sustained output is limited by how fast you can vent, not by a hard-coded cap.
+           Option 4: by default heat THROTTLES the chain (power sags toward HEAT_FLOOR as you run hot);
+           an OVERLOAD atom (overdrive) FLIPS the curve so running hot instead BOOSTS toward HEAT_CEIL —
+           the build-around that rewards living in the red. First-pass numbers; all tunable from play. */
+        const HEAT_BASE = 30, HEAT_PER_LVL = 2, HEAT_CAP_MAX = 90, HEAT_DECAY = 1.0, HEAT_FLOOR = 0.5, HEAT_CEIL = 1.8;
+        function heatCap(h) { return Math.min(HEAT_CAP_MAX, HEAT_BASE + HEAT_PER_LVL * Math.max(0, ((G && G.level) || 1) - 1)); }   // heatCap = min(90, 30 + 2·(level−1)): heat is an early, ever-present pressure — even a 3-atom build runs warm/hot from level 3. Comfortable ≈ 2 atoms early; a full stack always redlines.
+        const HEAT_BURN_AT = 0.45, HEAT_BURN_PCT = 0.06;   // above 45% heat you BURN: up to 6% max-HP/s near full heat. Threshold sits inside the band hot builds actually reach (~50-65%) so the risk bites them and spares cool builds.
+        const HEAT_HEAL_SUPPRESS = 0.9, HEAT_HEAL_FLOOR = 0.10;   // running hot also CHOKES healing — you can't lifesteal/regen/leech your way through an overload. The deeper the red, the less heals land, so the burn is a genuine net drain no matter how much sustain you stack.
+        function heatHealMult(h) { const f = heatFrac(h); return f > HEAT_BURN_AT ? Math.max(HEAT_HEAL_FLOOR, 1 - HEAT_HEAL_SUPPRESS * (f - HEAT_BURN_AT) / (1 - HEAT_BURN_AT)) : 1; }   // 1 when cool → ~0.1 at full overload
+        const HEAT_COST = { ember: 6, venom: 6, frostNail: 6, searing: 7, arc: 7, overcharge: 9, focus: 9, fork: 9, pierce: 9, momentum: 8, spread: 9, onCrit: 12, execute: 12, kindling: 11, everyThird: 11, exploit: 11, stun: 5, leech: 4, mark: 6, overdrive: 10 };
+        function chainLoad(h) { let n = 0; for (const id of (h.chain || [])) n += HEAT_COST[id] || 0; return n; }   // the build's metabolic cost — sum of its atoms' heat
+        function heatFrac(h) { return Math.min(1, chainLoad(h) / heatCap(h)); }   // LOAD-based: a stable, legible build property (cost vs capacity), not a twitch meter
+        function heatOverload(h) { return !!(h.chain && h.chain.includes("overdrive")); }   // overload build → running hot pays (power) but still burns (HP)
+        function heatThrottle(h) { const f = heatFrac(h); return heatOverload(h) ? 1 + (HEAT_CEIL - 1) * f : 1 - (1 - HEAT_FLOOR) * f; }
+        function heatBurnFrac(h) { const f = heatFrac(h); return f > HEAT_BURN_AT ? HEAT_BURN_PCT * (f - HEAT_BURN_AT) / (1 - HEAT_BURN_AT) : 0; }   // max-HP fraction drained per second while the chain is running hot
+        function ventHeat(h, dt) { if (h._heatActive > 0) h._heatActive = Math.max(0, h._heatActive - dt); }   // decays the "engine running" window; load-based heat needs no venting, but burn only applies while the chain is active
         function runChain(h, primary, basic) {                // ONE left-to-right pass per basic attack (single-pass: no re-entry)
             if (!h.chain || !h.chain.length || !primary || primary.dead) return;
             h._chainAtk = (h._chainAtk || 0) + 1;
-            const s = { crit: Math.random() < resolveStat(h, "critChance", ctx), power: 1, mark: 1, targets: [primary], primary, tags: new Set(), alive: true, dot: false, basic, pierceHits: null, pierceConsumed: false };
+            h._heatActive = 0.6;   // running the chain keeps the engine hot for a moment → burn applies while actively fighting, not while idle
+            const s = { crit: Math.random() < resolveStat(h, "critChance", ctx), power: heatThrottle(h), mark: 1, targets: [primary], primary, tags: new Set(), alive: true, dot: false, basic, pierceHits: null, pierceConsumed: false };
             for (const id of h.chain) { if (!s.alive) break; const a = ATOMS[id]; if (!a) continue; a.act(h, s); if (a.role === "prod") { s.prodFired = true; if (s.pierceHits) s.pierceConsumed = true; } const fx = ATOM_FX[id]; if (fx) fx(h, s); }
             if (s.alive) runReactions(h, s);                 // ambient/greedy/most-specific reaction pass (consumes statuses, sets s._burst + s._reactKey)
             if (s._reactKey && REACTION_FX[s._reactKey]) REACTION_FX[s._reactKey](h, s);   // reaction flourish (VFX only)
@@ -4841,7 +4871,7 @@
             }
         }
         // --- acquisition: basic atoms arrive as rare level-up cards; the rare grammar drops from bosses ---
-        const ATOM_CARD_POOL = ["ember", "venom", "frostNail", "searing", "arc", "overcharge", "spread", "exploit", "stun", "pierce", "leech", "mark", "momentum"];
+        const ATOM_CARD_POOL = ["ember", "venom", "frostNail", "searing", "arc", "overcharge", "spread", "exploit", "stun", "pierce", "leech", "mark", "momentum", "overdrive"];
         const ATOM_BOSS_POOL = ["focus", "fork", "onCrit", "execute", "kindling", "everyThird"];
         const ATOM_PRODUCERS = Object.keys(ATOMS).filter(id => ATOMS[id].role === "prod");   // derived — the atoms that load the charge (a chain needs at least one)
         function atomOfferFor(h) {                            // which atom (if any) the next level-up offers as a card
@@ -5328,7 +5358,7 @@
                 sources: [], activeEffects: [], equipment, slots: cls.slots, perks: [], boons: [],
                 atkState: "ready", atkT: 0, atkTarget: null, aim: 0, faceAng: 0, invulnT: 0, flash: 0, _critPity: 0, dead: false,
                 cooldowns: {}, dashT: 0, dashVX: 0, dashVY: 0, dashInst: null, dashHit: null, dashPass: false, dashKnock: 0,
-                abilityRanks: {}, castT: 0, castMax: 0, castAbility: null, castSnap: null, swingSide: 0, lungeT: 0, lungeVX: 0, lungeVY: 0, flatTier: {}, chain: [], atoms: [], fireSlots: 0
+                abilityRanks: {}, castT: 0, castMax: 0, castAbility: null, castSnap: null, swingSide: 0, lungeT: 0, lungeVX: 0, lungeVY: 0, flatTier: {}, chain: [], atoms: [], fireSlots: 0, heat: 0
             };
             G = {
                 hero, classId: cls.id, enemies: [], shots: [], orbs: [], drops: [], fx: [], rings: [], telegraphs: [], eshots: [], boss: null,
@@ -5475,7 +5505,7 @@
                 x: h.x + Math.cos(ang) * dist, y: h.y + Math.sin(ang) * dist, vx: 0, vy: 0,
                 baseStats: mkStats({ ...a.stats, maxHealth: Math.round(a.stats.maxHealth * d), attackDamage: Math.round(a.stats.attackDamage * d), armor: Math.round((a.stats.armor || 0) * (1 + (d - 1) * 0.4)), critMultiplier: 1.5 }),
                 sources: [{ id: "arch", modifiers: [], triggers: [] }, NIGHT_SWARM], activeEffects: [],
-                atkTimer: atk0, castT: 1.2, xp: a.xp, gold: a.gold, flash: 0, dead: false, hitScale: 1,
+                atkTimer: atk0, castT: 1.2, xp: Math.max(1, Math.round(a.xp * d)), gold: a.gold, flash: 0, dead: false, hitScale: 1,
                 windT: 0, windAim: 0, windTX: 0, windTY: 0, windup: ({ swift: 0.24, brute: 0.5, spitter: 0.42, boss: 0.5 }[key]) || 0.34,
                 ranged: !!a.ranged, keepDist: a.keepDist || 0, bomber: !!a.bomber, blast: a.blast || 0, boss: !!a.boss, fuse: 0
             };
@@ -6340,6 +6370,21 @@
 
             // hero upkeep
             tickActor(h, dt);
+            ventHeat(h, dt);                       // decays the active-fire window
+            {                                       // running the chain hot BURNS — the genuine risk; only while actively fighting; lethal overheat falls through to the global death check
+                const bf = heatBurnFrac(h);
+                if (bf > 0 && (h._heatActive || 0) > 0 && !h.dead && (h.invulnT || 0) <= 0) {
+                    const dmg = bf * resolveStat(h, "maxHealth", ctx) * dt;
+                    h.currentHealth -= dmg;
+                    h._heatBleed = (h._heatBleed || 0) + dmg;          // accumulate so the popup shows a readable amount, not a per-frame sliver
+                    h._heatFxT = (h._heatFxT || 0) + dt;
+                    if (h._heatFxT > 0.34) {                            // ~3 ticks/sec: bleed motes + a red HP number for what overheat just cost
+                        h._heatFxT = 0;
+                        if (typeof spawnParticles === "function") spawnParticles(h.x, h.y - h.r * 0.25, "#ff2a1e", 7, { speed: 80, life: 0.5, size: 2.4, grav: 130 });   // dark-red, dripping down — bleeding, not embers
+                        if (h._heatBleed >= 1 && G.fx) { G.fx.push({ x: h.x + (Math.random() * 12 - 6), y: h.y - h.r - 4, vy: -24, life: 0.85, t: 0, txt: "-" + Math.round(h._heatBleed), col: "#ff3326" }); h._heatBleed = 0; }
+                    }
+                }
+            }
             if (h.flash > 0) h.flash -= dt;
 
             // remains: scatter, then a magnet sweep into your satchel; you bank them at the fire
@@ -6922,7 +6967,11 @@
         }
 
         function levelUp() {
-            G.xp -= G.xpNext; G.level++; G.xpNext = Math.floor(16 * Math.pow(1.28, G.level - 1));
+            G.xp -= G.xpNext; G.level++;
+            // xpNext: exponential for the first ~12 levels (early ramp unchanged), then a LINEAR tail so late
+            // levels stay reachable instead of compounding to thousands (the post-20 stall). Paired with
+            // enemy XP now scaling by difficulty, this keeps level cadence steady through the late game.
+            { const k = G.level - 1, CAP = 12, peak = 16 * Math.pow(1.28, Math.min(k, CAP)); G.xpNext = Math.floor(k <= CAP ? peak : peak * (1 + 0.10 * (k - CAP))); }
             // fireLevel is no longer welded to level — it rises only when you spend a level on the "Feed the Fire" card below.
             // Abilities still unlock on TOTAL levels (G.level), so a fire-heavy build still gets its full kit on schedule.
             const unlocked = ABILITIES.filter(a => (a.unlock == null ? 1 : a.unlock) === G.level);
@@ -7870,6 +7919,7 @@
                 g.fillStyle = "#ffd0e0"; g.font = "600 11px ui-sans-serif,system-ui"; g.textAlign = "center";
                 g.fillText(t("wardenOfDark"), W / 2, by - 6);
             }
+            // chain heat now renders as an HTML bar in the top-left HUD (below HP/remains) — see updateHUD
             // lucidity — as the watcher fades, a pulsing crimson dark closes in from the edges
             if (G.lucidity > 0.01) {
                 const luc = G.lucidity, hx = sx(G.hero.x), hy = sy(G.hero.y);
@@ -8057,6 +8107,7 @@
             document.getElementById("hptext").textContent = Math.max(0, Math.ceil(h.currentHealth)) + " / " + Math.round(mx);
             document.getElementById("xpfill").style.width = (G.xp / G.xpNext * 100) + "%";
             document.getElementById("xptext").textContent = t("remains") + " " + Math.floor(G.xp) + " / " + G.xpNext;
+            { const hb = document.getElementById("heatbar"); if (hb) { if (h.chain && h.chain.length) { hb.style.display = ""; const hf = heatFrac(h), ov = heatOverload(h); const fi = document.getElementById("heatfill"); fi.style.width = Math.round(hf * 100) + "%"; fi.style.background = ov ? "linear-gradient(90deg,#e0a020,#ffcf4a)" : (hf > 0.66 ? "linear-gradient(90deg,#c83020,#ff5a3c)" : "linear-gradient(90deg,#c8642e,#ff9a4a)"); document.getElementById("heattext").textContent = (ov ? "OVERLOAD " : "HEAT ") + Math.round(hf * 100) + "%"; } else hb.style.display = "none"; } }
             document.getElementById("lvl").textContent = G.level;
             document.getElementById("kills").textContent = G.kills;
             document.getElementById("dayn").textContent = G.dayNum;
@@ -8345,6 +8396,19 @@
             document.getElementById("cmpslots").textContent = h.chain.length + " / " + cap;
             const shapeEl = document.getElementById("cmpshape");
             if (shapeEl) { const txt = shapeText(chainShape(h)); shapeEl.innerHTML = `<span class="shname">${txt[0]}</span><span class="shds">${txt[1]}</span>`; }
+            const heatEl = document.getElementById("cmpheat");
+            if (heatEl) {
+                const f = heatFrac(h), pct = Math.round(f * 100), thr = heatThrottle(h), over = heatOverload(h), burn = heatBurnFrac(h);
+                const col = over ? "#ffcf4a" : f > 0.66 ? "#ff5a3c" : f > 0.45 ? "#ff9a4a" : "#7fd6a0";
+                const choke = burn > 0 ? ` · heals only ${Math.round(heatHealMult(h) * 100)}%` : "";
+                let note;
+                if (over) note = `running hot boosts you ×${thr.toFixed(2)}` + (burn > 0 ? ` · burning ${(burn * 100).toFixed(1)}%/s${choke}` : "");
+                else if (burn > 0) note = `throttled ×${thr.toFixed(2)} · burning ${(burn * 100).toFixed(1)}%/s${choke} — too hot for your level`;
+                else if (f > 0.45) note = `throttled ×${thr.toFixed(2)} — easing toward overheat`;
+                else note = "running cool — full power, no burn";
+                heatEl.innerHTML = `<span class="shname" style="color:${col}">HEAT ${pct}%</span><span class="shds">${note}</span>`;
+                heatEl.style.borderLeftColor = col;
+            }
             const row = document.getElementById("chainrow"); row.innerHTML = "";
             for (let i = 0; i < cap; i++) {
                 const id = h.chain[i], slot = document.createElement("div");

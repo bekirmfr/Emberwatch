@@ -40,6 +40,9 @@ const BUILDS = [
   { name: 'Concentrator',       chain: ['ember', 'overcharge', 'focus', 'momentum'] },
   { name: 'Kindling gate',      chain: ['ember', 'kindling', 'venom', 'overcharge'] },   // ember burns → kindling boosts downstream reliably
   { name: 'onCrit gate',        chain: ['onCrit', 'ember', 'venom', 'focus'] },          // gate upstream → boosts producers + reaction on crit swings
+  { name: 'Cool (lean)',        chain: ['ember', 'venom'] },                             // cheap → stays cool → full power, sustainable
+  { name: 'Hot (loaded)',       chain: ['ember', 'venom', 'overcharge', 'focus', 'momentum'] }, // expensive → runs hot → throttled
+  { name: 'Overload',           chain: ['ember', 'venom', 'overcharge', 'focus', 'overdrive'] }, // expensive + overdrive → hot BOOSTS
 ];
 
 function makeCluster(n) {
@@ -57,6 +60,7 @@ function measure(chain, nTargets) {
   const cl = makeCluster(nTargets);
   G.enemies = cl;                                          // chainNearby (fork/arc/spread) reads this
   h.chain = chain.slice();
+  h.heat = 0;                                              // every build starts cool; heat then settles to its own load-driven steady state
   h.x = cl[0].x; h.y = cl[0].y - 30;
   const start = cl.map(d => d.currentHealth);
   let acc = 0, t = 0; const as = Math.max(0.2, api.resolveStat(h, 'attackSpeed', ctx));
@@ -66,29 +70,31 @@ function measure(chain, nTargets) {
       if (!cl[0].dead) { const basic = api.basicInstance(h, ctx, ['melee']); basic._chain = true; api.resolveAttack(h, cl[0], basic, ctx); }
       acc += 1 / as;
     }
+    api.ventHeat(h, DT);                                   // hero upkeep isn't run here, so vent explicitly → real metabolism over the window
     for (const d of cl) api.tickActor(d, DT);
     t += DT;
   }
   restoreRandom();
   const single = (start[0] - cl[0].currentHealth) / WINDOW;
   const total = cl.reduce((s, d, i) => s + (start[i] - d.currentHealth), 0) / WINDOW;
-  return { single, total };
+  return { single, total, heat: api.heatFrac(h), burn: api.heatBurnFrac(h) };
 }
 
 const baseSingle = measure([], 1).single;
 console.log(`\nCOMPOSER PROBE  seed=${SEED}  window=${WINDOW}s  enemyArmor=${ARMOR}  cluster=${CLUSTER}`);
 console.log(`baseline lone-basic single-target DPS=${baseSingle.toFixed(1)} · real pipeline (chargeShare + ambient reactions + DoT ticks)\n`);
-console.log('archetype              shape       singleDPS  xBase   clusterDPS  xBase');
+console.log('archetype              shape       singleDPS  xBase   clusterDPS  xBase    heat%   burn%/s');
 const rows = [];
 for (const b of BUILDS) {
   const s1 = measure(b.chain, 1);
   const sc = measure(b.chain, CLUSTER);
   const shape = b.chain.length ? api.chainShape(h) : '—';
-  rows.push({ name: b.name, shape, single: s1.single, cluster: sc.total });
+  rows.push({ name: b.name, shape, single: s1.single, cluster: sc.total, heat: s1.heat, burn: s1.burn });
   console.log(
     b.name.padEnd(22) + String(shape).padEnd(11) +
     s1.single.toFixed(1).padStart(9) + (s1.single / baseSingle).toFixed(2).padStart(7) + 'x' +
-    sc.total.toFixed(1).padStart(11) + (sc.total / baseSingle).toFixed(2).padStart(7) + 'x');
+    sc.total.toFixed(1).padStart(11) + (sc.total / baseSingle).toFixed(2).padStart(7) + 'x' +
+    (100 * s1.heat).toFixed(0).padStart(8) + '%' + (100 * s1.burn).toFixed(1).padStart(8) + '%');
 }
 
 // --- balance verdict: spread of the BUILT archetypes (exclude baseline) ---

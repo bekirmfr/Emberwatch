@@ -66,7 +66,7 @@ function loadGame(htmlPath) {
   const HTML = htmlPath || path.join(__dirname, '..', 'emberwatch.html');
   const code = [...fs.readFileSync(HTML, "utf8").matchAll(/<script>([\s\S]*?)<\/script>/g)].map(x => x[1]).join("\n");
   const api = {};
-  const grab = '\n;Object.assign(api, { startGame, buildHotbar, resolveStat, resolveAttack, basicInstance, tickActor, rebuild, rollItem, PERKS, mkStats, ITEM_BASES, ENEMIES, ENEMY_AFFIXES, seedRun, grng, dailySeed, startWave, spawnEnemy, rollEnemyLoot, resolveAll, sourcesWith, BURN, POISON, chillTpl, burnTpl, poisonTpl, applyEffectTemplate, runChain, runReactions, REACTIONS, ATOMS, GATE_BONUS, ATOM_CARD_POOL, chainShape, shapeText, SHAPE_I18N, chainSlotCount, autoFillChain, grantChainAtom, atomOfferFor, ATOM_PRODUCERS, chainMove, chainUnslot, chainSlot, chainDrop, ATOM_BOSS_POOL, killEnemy, getG: () => G, getCtx: () => ctx });';
+  const grab = '\n;Object.assign(api, { startGame, buildHotbar, resolveStat, resolveAttack, basicInstance, tickActor, rebuild, rollItem, PERKS, mkStats, ITEM_BASES, ENEMIES, ENEMY_AFFIXES, seedRun, grng, dailySeed, startWave, spawnEnemy, rollEnemyLoot, resolveAll, sourcesWith, BURN, POISON, chillTpl, burnTpl, poisonTpl, applyEffectTemplate, runChain, runReactions, REACTIONS, ATOMS, GATE_BONUS, HEAT_COST, HEAT_CAP_MAX, heatCap, heatThrottle, heatFrac, heatOverload, heatBurnFrac, heatHealMult, ventHeat, ATOM_CARD_POOL, chainShape, shapeText, SHAPE_I18N, chainSlotCount, autoFillChain, grantChainAtom, atomOfferFor, ATOM_PRODUCERS, chainMove, chainUnslot, chainSlot, chainDrop, ATOM_BOSS_POOL, killEnemy, getG: () => G, getCtx: () => ctx });';
   eval(code + grab);
   return api;
 }
