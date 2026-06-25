@@ -56,7 +56,7 @@
 
         .sbpanel { display: none; position: fixed; left: 12px; bottom: 12px; z-index: 15; width: 236px; padding: 11px 12px; border-radius: 12px; background: rgba(14,18,28,.92); border: 1px solid #2c3346; box-shadow: 0 8px 30px rgba(0,0,0,.5); font: 13px ui-sans-serif, system-ui; }
         .sbpanel.on { display: block; }
-        .sbpanel .sbttl { font-weight: 800; letter-spacing: .08em; color: #ff8a2b; font-size: 12px; margin-bottom: 8px; }
+        .sbpanel .sbttl { font-weight: 800; letter-spacing: .08em; color: #ff8a2b; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; }
         .sbpanel .sbrow { display: flex; gap: 7px; align-items: center; margin-bottom: 7px; }
         .sbpanel select, .sbpanel button { background: #1a1f2c; color: #e7ecf5; border: 1px solid #2c3346; border-radius: 7px; padding: 5px 9px; font: inherit; cursor: pointer; flex: 1; }
         .sbpanel label { display: inline-flex; align-items: center; gap: 5px; color: #aab2c4; font-size: 12px; flex: 1; }
@@ -530,6 +530,54 @@
             bottom: 168px
         }
         /* the pack sits just above the ability cluster */
+        body.mobile .btn .k {
+            display: none
+        }
+        /* no keyboard on touch — drop the shortcut hints */
+        .btnicon {
+            display: none;
+            line-height: 0
+        }
+
+            .btnicon svg {
+                display: block;
+                width: 20px;
+                height: 20px;
+                stroke: currentColor;
+                fill: none;
+                stroke-width: 1.8;
+                stroke-linecap: round;
+                stroke-linejoin: round
+            }
+        /* mobile: the bottom-bar buttons collapse to compact icon-only squares (text stays on desktop) */
+        body.mobile .iconbtn .btnlbl {
+            display: none
+        }
+
+        body.mobile .iconbtn .btnicon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        body.mobile #buttons .iconbtn {
+            width: 50px;
+            height: 50px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        @media (orientation: landscape) {
+            /* landscape: no vertical room to stack these above the cluster without floating into play — use the free horizontal room and centre them on the bottom edge */
+            body.mobile #buttons {
+                right: auto;
+                bottom: 14px;
+                left: 50%;
+                transform: translateX(-50%)
+            }
+        }
         body.mobile #topleft {
             width: 38vw;
             max-width: 165px
@@ -1440,12 +1488,20 @@
             position: absolute;
             inset: 0;
             display: none;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
+            overflow-y: auto;
             background: rgba(5,7,12,.72);
             backdrop-filter: blur(3px);
             z-index: 20;
             padding: 20px
+        }
+        /* centre the panel when it fits, but let it scroll (never clip) when the viewport is short — e.g. landscape phones */
+        .overlay > .modal,
+        .overlay > .luwrap {
+            margin-top: auto;
+            margin-bottom: auto
         }
 
         #start {
@@ -1858,9 +1914,7 @@
 
         body.mobile .cards {
             grid-template-columns: repeat(2, minmax(0,1fr));
-            gap: 12px;
-            max-height: 72vh;
-            overflow-y: auto
+            gap: 12px
         }
 
         body.mobile .card {
@@ -2036,6 +2090,39 @@
             .lh-head h2 {
                 margin: 0
             }
+
+        /* Watcher's Pack body: one column by default — portrait keeps its stacked order (gear, then stats) */
+        .lh-cols {
+            display: block
+        }
+
+        @media (orientation: landscape) {
+            /* mobile landscape: split into two columns so the pack fits without a long scroll — stats (+ boons) on the left, gear on the right */
+            body.mobile .modal.lh {
+                width: min(860px, 94vw)
+            }
+
+            body.mobile #inventory .lh-cols {
+                display: grid;
+                grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+                gap: 20px;
+                align-items: start
+            }
+
+            body.mobile #inventory .lh-info {
+                grid-column: 1;
+                grid-row: 1
+            }
+
+            body.mobile #inventory .lh-gear {
+                grid-column: 2;
+                grid-row: 1
+            }
+
+            body.mobile #inventory .lh-col > .lh-sec:first-child {
+                margin-top: 4px
+            }
+        }
 
         .lh-lvl {
             color: var(--muted);
@@ -2386,7 +2473,7 @@
             text-align: center;
             width: 100%;
             max-width: 520px;
-            margin: 0 auto;
+            margin: auto;
             background: none;
             border: none;
             box-shadow: none;
@@ -2886,59 +2973,59 @@
         <div class="hud" id="expwarn"><span id="expdots"></span> <span data-i18n="exposedPre">Exposed</span> <b id="expn"></b> <span data-i18n="exposedPost">— return to the firelight</span></div>
 
         <div class="sbpanel" id="sbpanel">
-            <div class="sbttl">⚗ CHAIN SANDBOX</div>
-            <div class="sbrow"><button id="sbpausebtn" onclick="sbPause()">⏸ Pause</button></div>
+            <div class="sbttl">⚗ <span data-i18n="chainSandbox">Chain Sandbox</span></div>
+            <div class="sbrow"><button id="sbpausebtn" onclick="sbPause()">⏸ <span data-i18n="sb_pause">Pause</span></button></div>
             <div class="sbrow">
                 <select id="sbclass" onchange="sbSwapClass(this.value)">
-                    <option value="ranger">Ranger</option><option value="mage">Mage</option><option value="knight">Knight</option>
+                    <option value="ranger" data-i18n="cls_ranger">Ranger</option><option value="mage" data-i18n="cls_mage">Mage</option><option value="knight" data-i18n="cls_knight">Knight</option>
                 </select>
             </div>
             <div class="sbrow">
                 <select id="sbtype" onchange="G._sbType=this.value">
-                    <option value="grunt">Grunt</option><option value="swift">Swift</option><option value="brute">Brute</option>
-                    <option value="spitter">Spitter</option><option value="bomber">Bomber</option><option value="boss">Boss</option>
+                    <option value="grunt" data-i18n="etype_grunt">Grunt</option><option value="swift" data-i18n="etype_swift">Swift</option><option value="brute" data-i18n="etype_brute">Brute</option>
+                    <option value="spitter" data-i18n="etype_spitter">Spitter</option><option value="bomber" data-i18n="etype_bomber">Bomber</option><option value="boss" data-i18n="etype_boss">Boss</option>
                 </select>
-                <button onclick="sbSpawn(document.getElementById('sbtype').value)">+ Spawn</button>
+                <button onclick="sbSpawn(document.getElementById('sbtype').value)">+ <span data-i18n="sb_spawn">Spawn</span></button>
             </div>
             <div class="sbrow">
-                <button id="sbplacebtn" onclick="sbPlaceMode()">◉ Place</button>
-                <label><input type="checkbox" id="sbauto" onchange="G._sbAuto=this.checked"> Auto-spawn</label>
+                <button id="sbplacebtn" onclick="sbPlaceMode()">◉ <span data-i18n="sb_place">Place</span></button>
+                <label><input type="checkbox" id="sbauto" onchange="G._sbAuto=this.checked"> <span data-i18n="sb_autospawn">Auto-spawn</span></label>
             </div>
             <div class="sbrow">
-                <button onclick="sbClear()">Clear</button>
-                <button onclick="sbReset()">Reset</button>
+                <button onclick="sbClear()" data-i18n="sb_clear">Clear</button>
+                <button onclick="sbReset()" data-i18n="sb_reset">Reset</button>
             </div>
             <div class="sbrow">
-                <button onclick="openComposer()">Compose ⌨C</button>
-                <button onclick="sbLevelUp()">Level Up</button>
+                <button onclick="openComposer()"><span data-i18n="compose">Compose</span> ⌨C</button>
+                <button onclick="sbLevelUp()" data-i18n="sb_levelup">Level Up</button>
             </div>
             <div class="sbrow">
-                <button onclick="sbToggle('sbstats')">Stats ▾</button>
-                <button onclick="sbToggle('sbenv')">Environment ▾</button>
+                <button onclick="sbToggle('sbstats')"><span data-i18n="stats">Stats</span> ▾</button>
+                <button onclick="sbToggle('sbenv')"><span data-i18n="sb_env">Environment</span> ▾</button>
             </div>
             <div class="sbrow">
-                <button onclick="sbToggle('sbbehav')">Enemy behaviour ▾</button>
+                <button onclick="sbToggle('sbbehav')"><span data-i18n="sb_behaviour">Enemy behaviour</span> ▾</button>
             </div>
             <div class="sbsub" id="sbstats"></div>
             <div class="sbsub" id="sbenv">
-                <div class="sbsubttl">Time</div>
-                <div class="sbrow"><button data-env="day" onclick="sbEnv('day')">Day</button><button data-env="night" onclick="sbEnv('night')">Night</button><button data-env="auto" onclick="sbEnv('auto')">Auto</button></div>
-                <div class="sbsubttl">Rain</div>
-                <div class="sbrow"><button data-rain="off" onclick="sbRain('off')">Off</button><button data-rain="on" onclick="sbRain('on')">On</button><button data-rain="auto" onclick="sbRain('auto')">Auto</button></div>
+                <div class="sbsubttl" data-i18n="sb_time">Time</div>
+                <div class="sbrow"><button data-env="day" onclick="sbEnv('day')" data-i18n="sb_day">Day</button><button data-env="night" onclick="sbEnv('night')" data-i18n="sb_night">Night</button><button data-env="auto" onclick="sbEnv('auto')" data-i18n="sb_auto">Auto</button></div>
+                <div class="sbsubttl" data-i18n="sb_rain">Rain</div>
+                <div class="sbrow"><button data-rain="off" onclick="sbRain('off')" data-i18n="sb_off">Off</button><button data-rain="on" onclick="sbRain('on')" data-i18n="sb_on">On</button><button data-rain="auto" onclick="sbRain('auto')" data-i18n="sb_auto">Auto</button></div>
             </div>
             <div class="sbsub" id="sbbehav">
-                <div class="sbsubttl">Enemy behaviour</div>
+                <div class="sbsubttl" data-i18n="sb_behaviour">Enemy behaviour</div>
                 <div class="sbrow">
-                    <label><input type="checkbox" id="sbmove" checked onchange="G._sbNoMove=!this.checked"> Movement</label>
-                    <label><input type="checkbox" id="sbatk" checked onchange="G._sbNoAtk=!this.checked"> Attack</label>
+                    <label><input type="checkbox" id="sbmove" checked onchange="G._sbNoMove=!this.checked"> <span data-i18n="sb_movement">Movement</span></label>
+                    <label><input type="checkbox" id="sbatk" checked onchange="G._sbNoAtk=!this.checked"> <span data-i18n="sb_attack">Attack</span></label>
                 </div>
                 <div class="sbrow">
-                    <label><input type="checkbox" id="sbdmg" checked onchange="G._sbNoDmg=!this.checked"> Take damage</label>
+                    <label><input type="checkbox" id="sbdmg" checked onchange="G._sbNoDmg=!this.checked"> <span data-i18n="sb_takedamage">Take damage</span></label>
                 </div>
             </div>
-            <div class="sbhint">Move toward a foe — let go and your watcher strikes, firing the chain. ◉ Place pauses to drop foes by click.</div>
+            <div class="sbhint" data-i18n="sb_hint">Move toward a foe — let go and your watcher strikes, firing the chain. ◉ Place pauses to drop foes by click.</div>
         </div>
-        <div class="sbplacebanner" id="sbplacebanner">◉ Click the arena to place foes · click <b>◉ Place</b> again to finish</div>
+        <div class="sbplacebanner" id="sbplacebanner" data-i18n-html="sb_placebanner">◉ Click the arena to place foes · click <b>◉ Place</b> again to finish</div>
 
         <div class="hud" id="loottoast"></div>
 
@@ -2946,14 +3033,13 @@
             <div class="ititle" id="ititle"></div>
             <div class="isub" id="isub"></div>
             <button class="big" id="beginwave" onclick="startWave()" data-i18n="beginWave">Begin wave</button>
-            <div style="margin-top:10px"><button class="btn" id="composebtn" onclick="openComposer()"><span data-i18n="composeChain">Compose chain</span><span class="k">C</span></button></div>
         </div>
 
         <div id="bottombar">
             <div class="hud" id="hotbar"></div>
             <div id="buttons">
-                <button class="btn" id="composebtn2" onclick="openComposer()"><span data-i18n="composeChain">Compose chain</span><span class="k">C</span></button>
-                <button class="btn" id="invbtn"><span data-i18n="pack">Watcher's Pack</span><span class="k">I</span><span class="badge" id="invbadge">!</span></button>
+                <button class="btn iconbtn" id="composebtn2" onclick="openComposer()" data-i18n-aria="composeChain" aria-label="Compose chain"><span class="btnicon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.5 13.5a3.5 3.5 0 0 0 5 0l2-2a3.5 3.5 0 0 0-5-5l-1 1"/><path d="M13.5 10.5a3.5 3.5 0 0 0-5 0l-2 2a3.5 3.5 0 0 0 5 5l1-1"/></svg></span><span class="btnlbl" data-i18n="composeChain">Compose chain</span><span class="k">C</span><span class="badge" id="composebadge">!</span></button>
+                <button class="btn iconbtn" id="invbtn" data-i18n-aria="pack" aria-label="Watcher's Pack"><span class="btnicon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="12" rx="2"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9 13h6"/></svg></span><span class="btnlbl" data-i18n="pack">Watcher's Pack</span><span class="k">I</span><span class="badge" id="invbadge">!</span></button>
             </div>
         </div>
 
@@ -2982,15 +3068,21 @@
         <div class="overlay" id="inventory">
             <div class="modal lh">
                 <div class="lh-head"><h2 data-i18n="pack">Watcher's Pack</h2><span class="lh-lvl" id="invlvl"></span></div>
-                <div class="lh-sec" data-i18n="equipment">Equipment</div>
-                <div class="eqgrid" id="eqgrid"></div>
-                <div class="lh-sec" data-i18n="satchel">Satchel</div>
-                <div class="lootgrid" id="lootgrid"></div>
-                <div class="itemdetail empty-d" id="itemdetail" data-i18n="selectGear">Select a piece of gear to inspect it.</div>
-                <div class="lh-sec" data-i18n="stats">Stats</div>
-                <div class="statsbox" id="statsbox"></div>
-                <div class="lh-sec lh-toggle collapsed" id="boonshead" onclick="toggleBoons()"><span data-i18n="boons">Boons &amp; Effects</span> <span class="caret">▸</span></div>
-                <div class="boonsbox collapsed" id="boonsbox"></div>
+                <div class="lh-cols">
+                    <div class="lh-col lh-gear">
+                        <div class="lh-sec" data-i18n="equipment">Equipment</div>
+                        <div class="eqgrid" id="eqgrid"></div>
+                        <div class="lh-sec" data-i18n="satchel">Satchel</div>
+                        <div class="lootgrid" id="lootgrid"></div>
+                        <div class="itemdetail empty-d" id="itemdetail" data-i18n="selectGear">Select a piece of gear to inspect it.</div>
+                    </div>
+                    <div class="lh-col lh-info">
+                        <div class="lh-sec" data-i18n="stats">Stats</div>
+                        <div class="statsbox" id="statsbox"></div>
+                        <div class="lh-sec lh-toggle collapsed" id="boonshead" onclick="toggleBoons()"><span data-i18n="boons">Boons &amp; Effects</span> <span class="caret">▸</span></div>
+                        <div class="boonsbox collapsed" id="boonsbox"></div>
+                    </div>
+                </div>
                 <div style="text-align:right;margin-top:16px"><button class="btn" onclick="closePanels()"><span data-i18n="close">Close</span><span class="k">I / Esc</span></button></div>
             </div>
         </div>
@@ -3003,6 +3095,7 @@
                 <div class="chainrow" id="chainrow"></div>
                 <div class="cmpshape" id="cmpshape"></div>
                 <div class="cmpshape" id="cmpheat"></div>
+                <div class="cmpshape" id="cmpoutput"></div>
                 <div class="lh-sec" data-i18n="bench">Bench — owned atoms</div>
                 <div class="cbench" id="cbench"></div>
                 <div class="catomdetail" id="catomdetail"></div>
@@ -3050,7 +3143,7 @@
                     </div>
                     <div class="pickdots" id="pickdots"></div>
                     <button class="btn primary" id="pickbegin" onclick="beginPick()" data-i18n="begin">Begin</button>
-                    <button class="btn" id="picksandbox" onclick="startSandbox()" style="margin-top:8px">⚗ Chain Sandbox</button>
+                    <button class="btn" id="picksandbox" onclick="startSandbox()" style="margin-top:8px">⚗ <span data-i18n="chainSandbox">Chain Sandbox</span></button>
                     <div class="paneback"><button class="btn" onclick="showStartPane('menu')" data-i18n="back">← Back</button></div>
                 </div>
 
@@ -3151,7 +3244,7 @@
             <div class="lb-tabs" id="lb-tabs">
                 <button class="lb-tab on" data-scope="local" onclick="lbTab('local')" data-i18n="lbLocal">Your runs</button>
                 <button class="lb-tab" data-scope="global" onclick="lbTab('global')" data-i18n="lbGlobal" style="display:none">Global</button>
-                <button class="lb-tab" data-scope="daily" onclick="lbTab('daily')" style="display:none">Daily</button>
+                <button class="lb-tab" data-scope="daily" onclick="lbTab('daily')" data-i18n="lbDaily" style="display:none">Daily</button>
             </div>
             <div class="lb-list" id="lb-list"></div>
             <div class="lb-note" id="lb-note" style="display:none" data-i18n="lbFallback">Showing your runs — global board unavailable.</div>
@@ -3349,9 +3442,38 @@
                 nm_ember_touch: "Ember Touch", nm_venom_coating: "Venom Coating", nm_hurricane: "Hurricane",
                 nm_piercing_shots: "Piercing Shots", nm_arcane_cascade: "Arcane Cascade", nm_concussive_blows: "Concussive Blows",
                 nm_hunter_s_focus: "Hunter's Focus", nm_emberheart: "Emberheart", nm_bulwark: "Bulwark",
+                // leaderboard — daily tab
+                lbDaily: "Daily",
+                // chain sandbox — button + menu
+                chainSandbox: "Chain Sandbox",
+                sb_pause: "Pause", sb_resume: "Resume", sb_spawn: "Spawn", sb_place: "Place", sb_autospawn: "Auto-spawn",
+                sb_clear: "Clear", sb_reset: "Reset", sb_levelup: "Level Up",
+                sb_env: "Environment", sb_behaviour: "Enemy behaviour", sb_time: "Time",
+                sb_day: "Day", sb_night: "Night", sb_auto: "Auto", sb_rain: "Rain", sb_off: "Off", sb_on: "On",
+                sb_movement: "Movement", sb_attack: "Attack", sb_takedamage: "Take damage",
+                sb_hint: "Move toward a foe — let go and your watcher strikes, firing the chain. \u25c9 Place pauses to drop foes by click.",
+                sb_placebanner: "\u25c9 Click the arena to place foes \u00b7 click <b>\u25c9 Place</b> again to finish",
+                sb_basestats: "Hero base stats \u00b7 resolved at right",
+                etype_grunt: "Grunt", etype_swift: "Swift", etype_brute: "Brute", etype_spitter: "Spitter", etype_bomber: "Bomber", etype_boss: "Boss",
+                // composer screen
+                slotEmpty: "empty", benchEmpty: "No atoms in reserve. Feed the fire for slots; bosses and level-ups grant atoms.",
+                chainAtomPrefix: "Chain atom \u2014", rarAtom: "Atom",
+                heatLabel: "HEAT", heatOver: "running hot boosts you \u00d7{thr}", heatBurn: " \u00b7 burning {burn}%/s", heatChoke: " \u00b7 heals only {heal}%",
+                heatThrottleBurn: "throttled \u00d7{thr} \u00b7 burning {burn}%/s{choke} \u2014 too hot for your level",
+                heatThrottle: "throttled \u00d7{thr} \u2014 easing toward overheat", heatCool: "running cool \u2014 full power, no burn",
+                // atom role tags
+                arole_prod: "Producer", arole_amp: "Amplifier", arole_gate: "Gate", arole_util: "Utility",
+                // atom names (keyed for tn(); descriptions live in DESC)
+                nm_ember: "Ember", nm_venom: "Venom", nm_frost_nail: "Frost Nail", nm_searing_strike: "Searing Strike", nm_arc: "Arc",
+                nm_overcharge: "Overcharge", nm_focus: "Focus", nm_fork: "Fork", nm_pierce: "Pierce", nm_momentum: "Momentum",
+                nm_spread: "Spread", nm_overdrive: "Overdrive", nm_on_crit: "On Crit", nm_execute: "Execute", nm_kindling: "Kindling",
+                nm_every_third: "Every Third", nm_exploit: "Exploit", nm_stun: "Stun", nm_leech: "Leech", nm_mark: "Mark",
                 // how-to body (rich text)
                 howtoBody: "<b>Desktop</b> — hold the mouse to move; release to attack the nearest foe. <b>Q W E R</b> cast toward the cursor (or click a slot).<br><b>Mobile</b> — left-side joystick to move. Tap an ability to cast where you face; or drag to aim and release (release back on the button to cancel).<br>Slain foes drop <b>remains</b> — they stream into the fire and feed it; each fire level grows the blaze and grants a boon. <b>I</b> opens your satchel · <b>M</b> mutes sound.<br>Foes attack in waves; between them, time stops and the fire mends you. By night, stray from the firelight and the dark takes hold."
-            },
+            ,
+                outputLabel: "OUTPUT",
+                outputHint: "per-swing damage · ×attack damage",
+                outputGated: " · gates assumed to fire",},
             // Turkish — author-vetted. Untranslated long-tail keys (perk/stat names) fall back to English.
             tr: {
                 languageTitle: "Dil", level: "Seviye", waveLabel: "Dalga", dayLabel: "Gün", phaseDay: "Gündüz", phaseNight: "Gece",
@@ -3408,8 +3530,91 @@
                 type_weapon: "Silah", type_helm: "Başlık", type_armor: "Zırh", type_boots: "Çizme", type_amulet: "Tılsım", type_ring: "Yüzük", type_shield: "Kalkan",
                 setOf: "set", noBoons: "Henüz lütuf yok — dalgaları temizleyip seviye atla ve birini seç.",
                 equip: "Kuşan", salvage: "Söküm", unequip: "Çıkar", noSlot: "Sınıfında {type} yuvası yok — yalnızca söküm", setWorn: "{n}/4 takılı",
+                // leaderboard — daily tab
+                lbDaily: "Günlük",
+                // chain sandbox — button + menu
+                chainSandbox: "Zincir Laboratuvarı",
+                sb_pause: "Duraklat", sb_resume: "Devam", sb_spawn: "Oluştur", sb_place: "Yerleştir", sb_autospawn: "Otomatik oluştur",
+                sb_clear: "Temizle", sb_reset: "Sıfırla", sb_levelup: "Seviye Atla",
+                sb_env: "Ortam", sb_behaviour: "Düşman davranışı", sb_time: "Zaman",
+                sb_day: "Gündüz", sb_night: "Gece", sb_auto: "Otomatik", sb_rain: "Yağmur", sb_off: "Kapalı", sb_on: "Açık",
+                sb_movement: "Hareket", sb_attack: "Saldırı", sb_takedamage: "Hasar al",
+                sb_hint: "Bir düşmana doğru ilerle — bırak, gözcün vurur ve zinciri ateşler. \u25c9 Yerleştir, tıklayarak düşman bırakmak için oyunu duraklatır.",
+                sb_placebanner: "\u25c9 Düşman yerleştirmek için arenaya tıkla \u00b7 bitirmek için tekrar <b>\u25c9 Yerleştir</b>'e tıkla",
+                sb_basestats: "Kahraman temel nitelikleri \u00b7 sağda çözümlenmiş",
+                etype_grunt: "Piyade", etype_swift: "Hızlı", etype_brute: "Kaba Kuvvet", etype_spitter: "Tükürükçü", etype_bomber: "Bombacı", etype_boss: "Patron",
+                // composer screen
+                slotEmpty: "boş", benchEmpty: "Yedekte atom yok. Yuva için ateşi besle; patronlar ve seviye atlamaları atom verir.",
+                chainAtomPrefix: "Zincir atomu \u2014", rarAtom: "Atom",
+                heatLabel: "ISI", heatOver: "aşırı ısı seni güçlendiriyor \u00d7{thr}", heatBurn: " \u00b7 yanıyor %{burn}/sn", heatChoke: " \u00b7 yalnızca %{heal} iyileşir",
+                heatThrottleBurn: "kısıtlandı \u00d7{thr} \u00b7 yanıyor %{burn}/sn{choke} \u2014 seviyen için fazla sıcak",
+                heatThrottle: "kısıtlandı \u00d7{thr} \u2014 aşırı ısınmaya yaklaşıyor", heatCool: "serin çalışıyor \u2014 tam güç, yanma yok",
+                // atom role tags
+                arole_prod: "Üretici", arole_amp: "Yükseltici", arole_gate: "Kapı", arole_util: "Yardımcı",
+                // atom names
+                nm_ember: "Köz", nm_venom: "Zehir", nm_frost_nail: "Buz Çivisi", nm_searing_strike: "Kavurucu Darbe", nm_arc: "Ark",
+                nm_overcharge: "Aşırı Yük", nm_focus: "Odak", nm_fork: "Çatallanma", nm_pierce: "Delme", nm_momentum: "İvme",
+                nm_spread: "Yayılma", nm_overdrive: "Aşırı Sürüş", nm_on_crit: "Kritikte", nm_execute: "İnfaz", nm_kindling: "Tutuşturma",
+                nm_every_third: "Her Üçüncü", nm_exploit: "İstismar", nm_stun: "Sersemletme", nm_leech: "Can Emme", nm_mark: "İşaret",
                 howtoBody: "<b>Masaüstü</b> — hareket için fareyi basılı tut; bırakınca en yakın düşmana saldırır. <b>Q W E R</b> imlece doğru kullanılır (ya da bir yuvaya tıkla).<br><b>Mobil</b> — hareket için soldaki çubuk. Bir yeteneğe dokun, baktığın yöne kullanılsın; ya da nişan almak için sürükleyip bırak (iptal için düğmeye geri bırak).<br>Öldürülen düşmanlar <b>kalıntı</b> bırakır — ateşe akar ve onu besler; her ateş seviyesi alevi büyütür ve bir lütuf verir. <b>I</b> çantanı açar · <b>M</b> sesi kapatır.<br>Düşmanlar dalgalar hâlinde saldırır; aralarında zaman durur ve ateş seni iyileştirir. Geceleyin ateş ışığından uzaklaşma, yoksa karanlık seni ele geçirir."
-            },
+            ,
+                compose: "Düzenle",
+                composeChain: "Zincir düzenle",
+                chain: "Zincir",
+                bench: "Yedek — sahip olunan atomlar",
+                composeHint: "Sıra güçtür. Her atom yüke sırayla etki eder — yükselticiler yalnızca kendinden sonrakini güçlendirir, bitiriciler öncekini harcar.",
+                inspectHint: "Ne yaptığını görmek için herhangi bir atoma dokun — zincirde ya da yedekte.",
+                slotIt: "Yuvala →",
+                chainFull: "Zincir dolu",
+                stat_attackDamage: "Hasar",
+                stat_attackSpeed: "Saldırı Hızı",
+                stat_critChance: "Kritik",
+                stat_armor: "Zırh",
+                stat_maxHealth: "Can",
+                stat_healthRegen: "Yenilenme",
+                stat_moveSpeed: "Hareket Hızı",
+                stat_attackRange: "Menzil",
+                stat_lifesteal: "Can Çalma",
+                stat_counter: "Karşılık",
+                stat_goldFind: "Hasat",
+                stat_cdr: "Bekleme",
+                stat_armorPen: "Zırh Delme",
+                stat_cleave: "Yarma",
+                stat_chain: "Ek Ok",
+                stat_critMultiplier: "Kritik Hasar",
+                stat_evasion: "Kaçınma",
+                nm_common: "Sıradan",
+                nm_rare: "Nadir",
+                nm_epic: "Destansı",
+                nm_campfire: "Kamp Ateşi",
+                nm_sharpened_edge: "Bilenmiş Ağız",
+                nm_rapid_loosing: "Hızlı Atış",
+                nm_deadeye: "Keskin Nişancı",
+                nm_executioner: "Cellat",
+                nm_frenzy: "Cinnet",
+                nm_vitality: "Dinçlik",
+                nm_quickstep: "Çevik Adım",
+                nm_hunter_s_reach: "Avcının Erişimi",
+                nm_leeching_shots: "Emici Atışlar",
+                nm_avarice: "Açgözlülük",
+                nm_ironhide: "Demir Postu",
+                nm_sunder: "Parçalama",
+                nm_battle_rhythm: "Savaş Ritmi",
+                nm_cleaving_blows: "Yaran Darbeler",
+                nm_thornmail: "Dikenli Zırh",
+                nm_frostbite: "Donma",
+                nm_ember_touch: "Köz Dokunuşu",
+                nm_venom_coating: "Zehir Kaplaması",
+                nm_hurricane: "Kasırga",
+                nm_piercing_shots: "Delici Atışlar",
+                nm_arcane_cascade: "Arkana Çağlayanı",
+                nm_concussive_blows: "Sersemletici Darbeler",
+                nm_hunter_s_focus: "Avcının Odağı",
+                nm_emberheart: "Köz Yürek",
+                nm_bulwark: "Siper",
+                outputLabel: "ÇIKTI",
+                outputHint: "vuruş başına hasar · ×saldırı gücü",
+                outputGated: " · kapılar geçilmiş varsayılır",},
             // Simplified Chinese — first-pass UI chrome (recommend a native review before release).
             // Untranslated keys (perk/item/ability copy, tutorial body) fall back to English automatically.
             zh: {
@@ -3490,7 +3695,84 @@
                 nm_hunter_s_focus: "猎手专注", nm_emberheart: "余烬之心", nm_bulwark: "壁垒",
                 // how-to body (rich text)
                 howtoBody: "<b>桌面端</b> — 按住鼠标移动；松开攻击最近的敌人。<b>Q W E R</b> 朝光标方向施放（或点击技能槽）。<br><b>移动端</b> — 左侧摇杆移动。点击技能朝面向方向施放；或拖动瞄准后松开（松回按钮可取消）。<br>被击杀的敌人掉落<b>残骸</b> — 它们汇入火焰为其添柴；每提升一级火焰都会让火势更旺并赐予一项增益。<b>I</b> 打开行囊 · <b>M</b> 静音。<br>敌人成波进攻；波次之间时间静止，火焰为你疗伤。入夜后远离火光，黑暗便会侵蚀你。"
-            },
+            ,
+                compose: "编排",
+                composeChain: "编排链",
+                chain: "链",
+                bench: "备选 — 拥有的原子",
+                composeHint: "顺序即力量。每个原子依次作用于充能——增幅器只增强其后的部分，终结器消耗之前积累的部分。",
+                inspectHint: "点击任意原子——链上或备选——查看其效果。",
+                slotIt: "装入 →",
+                chainFull: "链已满",
+                lbDaily: "每日",
+                chainSandbox: "链沙盒",
+                sb_pause: "暂停",
+                sb_resume: "继续",
+                sb_spawn: "生成",
+                sb_place: "放置",
+                sb_autospawn: "自动生成",
+                sb_clear: "清除",
+                sb_reset: "重置",
+                sb_levelup: "升级",
+                sb_env: "环境",
+                sb_behaviour: "敌人行为",
+                sb_time: "时间",
+                sb_day: "白天",
+                sb_night: "夜晚",
+                sb_auto: "自动",
+                sb_rain: "降雨",
+                sb_off: "关",
+                sb_on: "开",
+                sb_movement: "移动",
+                sb_attack: "攻击",
+                sb_takedamage: "受到伤害",
+                sb_hint: "朝敌人移动——松手后守望者出击，触发链。◉ 放置会暂停游戏，便于点击布置敌人。",
+                sb_placebanner: "◉ 点击竞技场放置敌人 · 再次点击 <b>◉ 放置</b> 完成",
+                sb_basestats: "英雄基础属性 · 右侧为结算值",
+                etype_grunt: "杂兵",
+                etype_swift: "迅捷",
+                etype_brute: "蛮兵",
+                etype_spitter: "吐酸者",
+                etype_bomber: "爆破者",
+                etype_boss: "首领",
+                slotEmpty: "空",
+                benchEmpty: "储备中没有原子。喂养火焰以获得槽位；首领与升级会赐予原子。",
+                chainAtomPrefix: "链原子 —",
+                rarAtom: "原子",
+                heatLabel: "热度",
+                heatOver: "高热为你增益 ×{thr}",
+                heatBurn: " · 燃烧 {burn}%/秒",
+                heatChoke: " · 仅治疗 {heal}%",
+                heatThrottleBurn: "受限 ×{thr} · 燃烧 {burn}%/秒{choke} — 对你的等级而言过热",
+                heatThrottle: "受限 ×{thr} — 正接近过热",
+                heatCool: "低温运行 — 全力，无燃烧",
+                arole_prod: "产出",
+                arole_amp: "增幅",
+                arole_gate: "门限",
+                arole_util: "辅助",
+                nm_ember: "余烬",
+                nm_venom: "剧毒",
+                nm_frost_nail: "霜钉",
+                nm_searing_strike: "灼烧打击",
+                nm_arc: "电弧",
+                nm_overcharge: "过载",
+                nm_focus: "聚焦",
+                nm_fork: "分叉",
+                nm_pierce: "穿透",
+                nm_momentum: "势能",
+                nm_spread: "扩散",
+                nm_overdrive: "超载",
+                nm_on_crit: "暴击时",
+                nm_execute: "处决",
+                nm_kindling: "引火",
+                nm_every_third: "每第三次",
+                nm_exploit: "弱点利用",
+                nm_stun: "眩晕",
+                nm_leech: "汲取",
+                nm_mark: "标记",
+                outputLabel: "输出",
+                outputHint: "每次出手伤害 · ×攻击力",
+                outputGated: " · 假定门限通过",},
             es: {
                 languageTitle: "Idioma", level: "Nivel", waveLabel: "Oleada", dayLabel: "Día", phaseDay: "Día", phaseNight: "Noche",
                 exposedPre: "Expuesto", exposedPost: "— vuelve a la luz del fuego",
@@ -3556,7 +3838,84 @@
                 noAd: "No hay anuncios disponibles ahora", embersGain: "+30 ⬥ brasas", adNotDone: "Anuncio no completado",
                 alreadySupporter: "Ya tienes el Pack de Apoyo ✦", supporterUnavailable: "Pack de Apoyo no disponible en esta versión",
                 howtoBody: "<b>Escritorio</b> — mantén el ratón para moverte; suéltalo para atacar al enemigo más cercano. <b>Q W E R</b> lanzan hacia el cursor (o pulsa una ranura).<br><b>Móvil</b> — joystick a la izquierda para moverte. Toca una habilidad para lanzarla hacia donde miras; o arrastra para apuntar y suelta (suelta sobre el botón para cancelar).<br>Los enemigos abatidos sueltan <b>restos</b> — fluyen al fuego y lo alimentan; cada nivel de fuego agranda la llama y otorga una bendición. <b>I</b> abre tu morral · <b>M</b> silencia.<br>Los enemigos atacan en oleadas; entre ellas el tiempo se detiene y el fuego te cura. De noche, alejarte de la luz hace que la oscuridad se apodere de ti."
-            },
+            ,
+                compose: "Componer",
+                composeChain: "Componer cadena",
+                chain: "Cadena",
+                bench: "Banca — átomos propios",
+                composeHint: "El orden es poder. Cada átomo actúa sobre la carga por turno: los amplificadores potencian solo lo que viene después; los finalizadores gastan lo anterior.",
+                inspectHint: "Toca cualquier átomo —encadenado o en banca— para ver qué hace.",
+                slotIt: "Colocar →",
+                chainFull: "Cadena llena",
+                lbDaily: "Diario",
+                chainSandbox: "Laboratorio de cadenas",
+                sb_pause: "Pausar",
+                sb_resume: "Reanudar",
+                sb_spawn: "Generar",
+                sb_place: "Colocar",
+                sb_autospawn: "Autogenerar",
+                sb_clear: "Limpiar",
+                sb_reset: "Reiniciar",
+                sb_levelup: "Subir nivel",
+                sb_env: "Entorno",
+                sb_behaviour: "Comportamiento enemigo",
+                sb_time: "Tiempo",
+                sb_day: "Día",
+                sb_night: "Noche",
+                sb_auto: "Auto",
+                sb_rain: "Lluvia",
+                sb_off: "No",
+                sb_on: "Sí",
+                sb_movement: "Movimiento",
+                sb_attack: "Ataque",
+                sb_takedamage: "Recibir daño",
+                sb_hint: "Avanza hacia un enemigo: suelta y tu vigía golpea, disparando la cadena. ◉ Colocar pausa el juego para soltar enemigos con un clic.",
+                sb_placebanner: "◉ Haz clic en la arena para colocar enemigos · vuelve a pulsar <b>◉ Colocar</b> para terminar",
+                sb_basestats: "Estadísticas base del héroe · resueltas a la derecha",
+                etype_grunt: "Soldado",
+                etype_swift: "Veloz",
+                etype_brute: "Bruto",
+                etype_spitter: "Escupidor",
+                etype_bomber: "Bombardero",
+                etype_boss: "Jefe",
+                slotEmpty: "vacío",
+                benchEmpty: "No hay átomos en reserva. Alimenta el fuego para ganar ranuras; los jefes y las subidas de nivel otorgan átomos.",
+                chainAtomPrefix: "Átomo de cadena —",
+                rarAtom: "Átomo",
+                heatLabel: "CALOR",
+                heatOver: "el calor extremo te potencia ×{thr}",
+                heatBurn: " · ardiendo {burn}%/s",
+                heatChoke: " · solo cura {heal}%",
+                heatThrottleBurn: "limitado ×{thr} · ardiendo {burn}%/s{choke} — demasiado caliente para tu nivel",
+                heatThrottle: "limitado ×{thr} — acercándose al sobrecalentamiento",
+                heatCool: "en frío — potencia plena, sin quemaduras",
+                arole_prod: "Productor",
+                arole_amp: "Amplificador",
+                arole_gate: "Compuerta",
+                arole_util: "Utilidad",
+                nm_ember: "Ascua",
+                nm_venom: "Veneno",
+                nm_frost_nail: "Clavo Gélido",
+                nm_searing_strike: "Golpe Abrasador",
+                nm_arc: "Arco",
+                nm_overcharge: "Sobrecarga",
+                nm_focus: "Enfoque",
+                nm_fork: "Bifurcación",
+                nm_pierce: "Perforación",
+                nm_momentum: "Ímpetu",
+                nm_spread: "Propagación",
+                nm_overdrive: "Sobremarcha",
+                nm_on_crit: "Al Crítico",
+                nm_execute: "Ejecutar",
+                nm_kindling: "Yesca",
+                nm_every_third: "Cada Tercero",
+                nm_exploit: "Explotar",
+                nm_stun: "Aturdir",
+                nm_leech: "Sanguijuela",
+                nm_mark: "Marca",
+                outputLabel: "SALIDA",
+                outputHint: "daño por golpe · ×daño de ataque",
+                outputGated: " · se asume que las compuertas se activan",},
             fr: {
                 languageTitle: "Langue", level: "Niveau", waveLabel: "Vague", dayLabel: "Jour", phaseDay: "Jour", phaseNight: "Nuit",
                 exposedPre: "Exposé", exposedPost: "— retourne à la lueur du feu",
@@ -3622,7 +3981,84 @@
                 noAd: "Aucune pub disponible pour l'instant", embersGain: "+30 ⬥ braises", adNotDone: "Pub non terminée",
                 alreadySupporter: "Tu as déjà le Pack de soutien ✦", supporterUnavailable: "Pack de soutien indisponible dans cette version",
                 howtoBody: "<b>Bureau</b> — maintiens la souris pour te déplacer ; relâche pour attaquer l'ennemi le plus proche. <b>Q W E R</b> lancent vers le curseur (ou clique une case).<br><b>Mobile</b> — joystick à gauche pour te déplacer. Touche une capacité pour lancer dans la direction où tu fais face ; ou glisse pour viser et relâche (relâche sur le bouton pour annuler).<br>Les ennemis tués lâchent des <b>restes</b> — ils affluent vers le feu et le nourrissent ; chaque niveau de feu agrandit le brasier et accorde une faveur. <b>I</b> ouvre ta besace · <b>M</b> coupe le son.<br>Les ennemis attaquent par vagues ; entre elles, le temps s'arrête et le feu te soigne. La nuit, t'éloigner de la lueur laisse les ténèbres s'emparer de toi."
-            },
+            ,
+                compose: "Composer",
+                composeChain: "Composer une chaîne",
+                chain: "Chaîne",
+                bench: "Réserve — atomes possédés",
+                composeHint: "L'ordre fait la force. Chaque atome agit sur la charge à son tour : les amplificateurs ne renforcent que ce qui suit, les finisseurs dépensent ce qui précède.",
+                inspectHint: "Touchez un atome — enchaîné ou en réserve — pour voir son effet.",
+                slotIt: "Placer →",
+                chainFull: "Chaîne pleine",
+                lbDaily: "Quotidien",
+                chainSandbox: "Labo de chaînes",
+                sb_pause: "Pause",
+                sb_resume: "Reprendre",
+                sb_spawn: "Générer",
+                sb_place: "Placer",
+                sb_autospawn: "Auto-génération",
+                sb_clear: "Effacer",
+                sb_reset: "Réinit.",
+                sb_levelup: "Niveau +",
+                sb_env: "Environnement",
+                sb_behaviour: "Comportement ennemi",
+                sb_time: "Temps",
+                sb_day: "Jour",
+                sb_night: "Nuit",
+                sb_auto: "Auto",
+                sb_rain: "Pluie",
+                sb_off: "Non",
+                sb_on: "Oui",
+                sb_movement: "Mouvement",
+                sb_attack: "Attaque",
+                sb_takedamage: "Subir des dégâts",
+                sb_hint: "Avancez vers un ennemi : relâchez et votre veilleur frappe, déclenchant la chaîne. ◉ Placer met le jeu en pause pour déposer des ennemis au clic.",
+                sb_placebanner: "◉ Cliquez dans l'arène pour placer des ennemis · cliquez à nouveau sur <b>◉ Placer</b> pour terminer",
+                sb_basestats: "Stats de base du héros · résolues à droite",
+                etype_grunt: "Grognard",
+                etype_swift: "Rapide",
+                etype_brute: "Brute",
+                etype_spitter: "Cracheur",
+                etype_bomber: "Bombardier",
+                etype_boss: "Boss",
+                slotEmpty: "vide",
+                benchEmpty: "Aucun atome en réserve. Alimentez le feu pour des emplacements ; les boss et les montées de niveau octroient des atomes.",
+                chainAtomPrefix: "Atome de chaîne —",
+                rarAtom: "Atome",
+                heatLabel: "CHALEUR",
+                heatOver: "la surchauffe vous renforce ×{thr}",
+                heatBurn: " · brûle {burn}%/s",
+                heatChoke: " · ne soigne que {heal}%",
+                heatThrottleBurn: "bridé ×{thr} · brûle {burn}%/s{choke} — trop chaud pour votre niveau",
+                heatThrottle: "bridé ×{thr} — proche de la surchauffe",
+                heatCool: "à froid — pleine puissance, aucune brûlure",
+                arole_prod: "Producteur",
+                arole_amp: "Amplificateur",
+                arole_gate: "Porte",
+                arole_util: "Utilitaire",
+                nm_ember: "Braise",
+                nm_venom: "Venin",
+                nm_frost_nail: "Clou Glacé",
+                nm_searing_strike: "Frappe Ardente",
+                nm_arc: "Arc",
+                nm_overcharge: "Surcharge",
+                nm_focus: "Focalisation",
+                nm_fork: "Fourche",
+                nm_pierce: "Perforation",
+                nm_momentum: "Élan",
+                nm_spread: "Propagation",
+                nm_overdrive: "Surrégime",
+                nm_on_crit: "Sur Critique",
+                nm_execute: "Exécution",
+                nm_kindling: "Amadou",
+                nm_every_third: "Un sur Trois",
+                nm_exploit: "Exploiter",
+                nm_stun: "Étourdir",
+                nm_leech: "Sangsue",
+                nm_mark: "Marque",
+                outputLabel: "SORTIE",
+                outputHint: "dégâts par frappe · ×dégâts d'attaque",
+                outputGated: " · portes supposées franchies",},
             ru: {
                 languageTitle: "Язык", level: "Уровень", waveLabel: "Волна", dayLabel: "День", phaseDay: "День", phaseNight: "Ночь",
                 exposedPre: "Уязвим", exposedPost: "— вернитесь к свету костра",
@@ -3688,7 +4124,84 @@
                 noAd: "Сейчас нет доступной рекламы", embersGain: "+30 ⬥ углей", adNotDone: "Реклама не досмотрена",
                 alreadySupporter: "У вас уже есть Набор поддержки ✦", supporterUnavailable: "Набор поддержки недоступен в этой версии",
                 howtoBody: "<b>ПК</b> — удерживайте мышь для движения; отпустите, чтобы атаковать ближайшего врага. <b>Q W E R</b> — умения к курсору (или нажмите ячейку).<br><b>Моб.</b> — джойстик слева для движения. Нажмите умение, чтобы применить по направлению взгляда; или тяните для прицеливания и отпустите (отпустите на кнопке для отмены).<br>Убитые враги роняют <b>останки</b> — они стекаются в огонь и питают его; каждый уровень огня усиливает пламя и даёт благо. <b>I</b> открывает котомку · <b>M</b> отключает звук.<br>Враги атакуют волнами; между ними время замирает, и огонь лечит вас. Ночью, отойдя от света, вы отдаётесь тьме."
-            },
+            ,
+                compose: "Сборка",
+                composeChain: "Собрать цепь",
+                chain: "Цепь",
+                bench: "Запас — ваши атомы",
+                composeHint: "Порядок — это сила. Каждый атом действует на заряд по очереди: усилители усиливают только то, что идёт после них, а финишеры тратят накопленное.",
+                inspectHint: "Коснитесь любого атома — в цепи или в запасе — чтобы увидеть его действие.",
+                slotIt: "Вставить →",
+                chainFull: "Цепь заполнена",
+                lbDaily: "Ежедневный",
+                chainSandbox: "Лаборатория цепей",
+                sb_pause: "Пауза",
+                sb_resume: "Продолжить",
+                sb_spawn: "Создать",
+                sb_place: "Разместить",
+                sb_autospawn: "Авто-спавн",
+                sb_clear: "Очистить",
+                sb_reset: "Сброс",
+                sb_levelup: "Уровень +",
+                sb_env: "Окружение",
+                sb_behaviour: "Поведение врага",
+                sb_time: "Время",
+                sb_day: "День",
+                sb_night: "Ночь",
+                sb_auto: "Авто",
+                sb_rain: "Дождь",
+                sb_off: "Выкл",
+                sb_on: "Вкл",
+                sb_movement: "Движение",
+                sb_attack: "Атака",
+                sb_takedamage: "Получать урон",
+                sb_hint: "Двигайтесь к врагу — отпустите, и ваш страж ударит, запустив цепь. ◉ Размещение ставит игру на паузу, чтобы расставлять врагов кликом.",
+                sb_placebanner: "◉ Кликайте по арене, чтобы расставить врагов · нажмите <b>◉ Разместить</b> снова, чтобы закончить",
+                sb_basestats: "Базовые характеристики героя · итог справа",
+                etype_grunt: "Пехотинец",
+                etype_swift: "Шустрый",
+                etype_brute: "Громила",
+                etype_spitter: "Плевун",
+                etype_bomber: "Бомбардир",
+                etype_boss: "Босс",
+                slotEmpty: "пусто",
+                benchEmpty: "Нет атомов в запасе. Кормите огонь ради слотов; боссы и повышения уровня дают атомы.",
+                chainAtomPrefix: "Атом цепи —",
+                rarAtom: "Атом",
+                heatLabel: "ЖАР",
+                heatOver: "перегрев усиливает вас ×{thr}",
+                heatBurn: " · горит {burn}%/с",
+                heatChoke: " · лечит лишь {heal}%",
+                heatThrottleBurn: "ограничено ×{thr} · горит {burn}%/с{choke} — слишком жарко для вашего уровня",
+                heatThrottle: "ограничено ×{thr} — близко к перегреву",
+                heatCool: "работает холодным — полная мощь, без ожога",
+                arole_prod: "Источник",
+                arole_amp: "Усилитель",
+                arole_gate: "Врата",
+                arole_util: "Утилита",
+                nm_ember: "Уголёк",
+                nm_venom: "Яд",
+                nm_frost_nail: "Ледяной Гвоздь",
+                nm_searing_strike: "Палящий Удар",
+                nm_arc: "Разряд",
+                nm_overcharge: "Перегрузка",
+                nm_focus: "Фокус",
+                nm_fork: "Развилка",
+                nm_pierce: "Пробой",
+                nm_momentum: "Импульс",
+                nm_spread: "Распространение",
+                nm_overdrive: "Форсаж",
+                nm_on_crit: "При Крите",
+                nm_execute: "Казнь",
+                nm_kindling: "Растопка",
+                nm_every_third: "Каждый Третий",
+                nm_exploit: "Эксплойт",
+                nm_stun: "Оглушение",
+                nm_leech: "Пиявка",
+                nm_mark: "Метка",
+                outputLabel: "ВЫХОД",
+                outputHint: "урон за удар · ×урон атаки",
+                outputGated: " · врата считаются пройденными",},
             ja: {
                 languageTitle: "言語", level: "レベル", waveLabel: "ウェーブ", dayLabel: "日", phaseDay: "昼", phaseNight: "夜",
                 exposedPre: "露出", exposedPost: "— 火明かりへ戻れ",
@@ -3754,7 +4267,84 @@
                 noAd: "現在利用できる広告はありません", embersGain: "+30 ⬥ 残火", adNotDone: "広告を最後まで視聴していません",
                 alreadySupporter: "すでにサポーターパックを所持しています ✦", supporterUnavailable: "このビルドではサポーターパックは利用できません",
                 howtoBody: "<b>PC</b> — マウス長押しで移動、離すと最寄りの敵を攻撃。<b>Q W E R</b> はカーソル方向へ発動（スロットのクリックも可）。<br><b>モバイル</b> — 左のスティックで移動。技をタップで正面へ発動、またはドラッグで照準し離す（ボタンに戻して離すと中断）。<br>倒した敵は<b>亡骸</b>を落とす——焚き火へ流れ込み火を養う。火のレベルが上がるたび炎が大きくなり恩恵を授かる。<b>I</b> で雑のう · <b>M</b> で消音。<br>敵はウェーブで襲来。合間は時が止まり火が回復させる。夜、火明かりから離れると闇に呑まれる。"
-            },
+            ,
+                compose: "編成",
+                composeChain: "チェーン編成",
+                chain: "チェーン",
+                bench: "ベンチ — 所持アトム",
+                composeHint: "順序こそ力。各アトムはチャージに順に作用する——増幅は後続のみを強化し、フィニッシャーはそれまでの蓄積を消費する。",
+                inspectHint: "チェーン上でもベンチでも、アトムをタップすると効果が見られる。",
+                slotIt: "セット →",
+                chainFull: "チェーン満杯",
+                lbDaily: "デイリー",
+                chainSandbox: "チェーン実験場",
+                sb_pause: "一時停止",
+                sb_resume: "再開",
+                sb_spawn: "出現",
+                sb_place: "配置",
+                sb_autospawn: "自動出現",
+                sb_clear: "クリア",
+                sb_reset: "リセット",
+                sb_levelup: "レベルアップ",
+                sb_env: "環境",
+                sb_behaviour: "敵の挙動",
+                sb_time: "時間",
+                sb_day: "昼",
+                sb_night: "夜",
+                sb_auto: "自動",
+                sb_rain: "雨",
+                sb_off: "オフ",
+                sb_on: "オン",
+                sb_movement: "移動",
+                sb_attack: "攻撃",
+                sb_takedamage: "ダメージを受ける",
+                sb_hint: "敵に向かって動き——離すと見張りが攻撃し、チェーンが発動する。◉ 配置はゲームを止めてクリックで敵を置ける。",
+                sb_placebanner: "◉ アリーナをクリックして敵を配置 · もう一度 <b>◉ 配置</b> を押すと終了",
+                sb_basestats: "ヒーロー基礎ステータス · 右側が算出値",
+                etype_grunt: "雑兵",
+                etype_swift: "俊足",
+                etype_brute: "剛力",
+                etype_spitter: "吐く者",
+                etype_bomber: "爆弾兵",
+                etype_boss: "ボス",
+                slotEmpty: "空き",
+                benchEmpty: "予備のアトムなし。火を育ててスロットを得る。ボスやレベルアップがアトムを与える。",
+                chainAtomPrefix: "チェーンアトム —",
+                rarAtom: "アトム",
+                heatLabel: "ヒート",
+                heatOver: "高熱が強化 ×{thr}",
+                heatBurn: " · 燃焼 {burn}%/秒",
+                heatChoke: " · 回復は {heal}% のみ",
+                heatThrottleBurn: "抑制 ×{thr} · 燃焼 {burn}%/秒{choke} — レベルに対して熱すぎる",
+                heatThrottle: "抑制 ×{thr} — 過熱に近づいている",
+                heatCool: "低温稼働 — 全力、燃焼なし",
+                arole_prod: "生成",
+                arole_amp: "増幅",
+                arole_gate: "ゲート",
+                arole_util: "補助",
+                nm_ember: "残り火",
+                nm_venom: "毒",
+                nm_frost_nail: "氷の釘",
+                nm_searing_strike: "灼熱の一撃",
+                nm_arc: "電弧",
+                nm_overcharge: "過充電",
+                nm_focus: "集中",
+                nm_fork: "分岐",
+                nm_pierce: "貫通",
+                nm_momentum: "勢い",
+                nm_spread: "拡散",
+                nm_overdrive: "オーバードライブ",
+                nm_on_crit: "クリティカル時",
+                nm_execute: "処刑",
+                nm_kindling: "焚き付け",
+                nm_every_third: "三回ごと",
+                nm_exploit: "弱点突き",
+                nm_stun: "スタン",
+                nm_leech: "吸収",
+                nm_mark: "マーク",
+                outputLabel: "出力",
+                outputHint: "一撃あたりのダメージ · ×攻撃力",
+                outputGated: " · ゲートは通過と仮定",},
             ar: {
                 languageTitle: "اللغة", level: "المستوى", waveLabel: "موجة", dayLabel: "يوم", phaseDay: "نهار", phaseNight: "ليل",
                 exposedPre: "مكشوف", exposedPost: "— عُد إلى ضوء النار",
@@ -3820,7 +4410,84 @@
                 noAd: "لا يوجد إعلان متاح الآن", embersGain: "+30 ⬥ جمر", adNotDone: "لم يكتمل الإعلان",
                 alreadySupporter: "أنت تملك حزمة الداعم بالفعل ✦", supporterUnavailable: "حزمة الداعم غير متاحة في هذا الإصدار",
                 howtoBody: "<b>الحاسوب</b> — اضغط الفأرة للتحرك؛ أفلتها لمهاجمة أقرب عدو. <b>Q W E R</b> تُطلق نحو المؤشر (أو انقر خانة).<br><b>الجوال</b> — عصا التحكم على اليسار للتحرك. انقر مهارة لإطلاقها نحو اتجاهك؛ أو اسحب للتصويب ثم أفلت (أفلت على الزر للإلغاء).<br>يُسقط الأعداء القتلى <b>بقايا</b> — تتدفق إلى النار وتغذّيها؛ كل مستوى للنار يكبّر اللهب ويمنح منحة. <b>I</b> يفتح جرابك · <b>M</b> يكتم الصوت.<br>يهاجم الأعداء على موجات؛ بينها يتوقف الزمن وتشفيك النار. ليلاً، الابتعاد عن ضوء النار يجعل الظلام يستحوذ عليك."
-            }
+            ,
+                compose: "تركيب",
+                composeChain: "تركيب سلسلة",
+                chain: "سلسلة",
+                bench: "الاحتياط — الذرّات المملوكة",
+                composeHint: "الترتيب قوة. كل ذرّة تؤثّر على الشحنة بدورها — المضخّمات تعزّز ما يأتي بعدها فقط، والمنهيات تستهلك ما سبق.",
+                inspectHint: "انقر أي ذرّة — في السلسلة أو الاحتياط — لمعرفة ما تفعله.",
+                slotIt: "ضعها →",
+                chainFull: "السلسلة ممتلئة",
+                lbDaily: "يومي",
+                chainSandbox: "مختبر السلاسل",
+                sb_pause: "إيقاف مؤقت",
+                sb_resume: "متابعة",
+                sb_spawn: "استدعاء",
+                sb_place: "وضع",
+                sb_autospawn: "استدعاء تلقائي",
+                sb_clear: "مسح",
+                sb_reset: "إعادة ضبط",
+                sb_levelup: "رفع المستوى",
+                sb_env: "البيئة",
+                sb_behaviour: "سلوك العدو",
+                sb_time: "الوقت",
+                sb_day: "نهار",
+                sb_night: "ليل",
+                sb_auto: "تلقائي",
+                sb_rain: "مطر",
+                sb_off: "إيقاف",
+                sb_on: "تشغيل",
+                sb_movement: "الحركة",
+                sb_attack: "الهجوم",
+                sb_takedamage: "تلقّي الضرر",
+                sb_hint: "تحرّك نحو عدو — أفلت فيضرب حارسك مطلقًا السلسلة. ◉ الوضع يوقف اللعبة لإسقاط الأعداء بالنقر.",
+                sb_placebanner: "◉ انقر الساحة لوضع الأعداء · انقر <b>◉ وضع</b> مرة أخرى للإنهاء",
+                sb_basestats: "إحصاءات البطل الأساسية · المحسوبة على اليمين",
+                etype_grunt: "جندي",
+                etype_swift: "سريع",
+                etype_brute: "وحش",
+                etype_spitter: "نافث",
+                etype_bomber: "مفجّر",
+                etype_boss: "زعيم",
+                slotEmpty: "فارغ",
+                benchEmpty: "لا ذرّات في الاحتياط. أطعم النار للحصول على خانات؛ الزعماء وارتقاء المستوى يمنحان الذرّات.",
+                chainAtomPrefix: "ذرّة سلسلة —",
+                rarAtom: "ذرّة",
+                heatLabel: "الحرارة",
+                heatOver: "الحرارة العالية تعزّزك ×{thr}",
+                heatBurn: " · يحترق {burn}%/ث",
+                heatChoke: " · يشفي {heal}% فقط",
+                heatThrottleBurn: "مكبوح ×{thr} · يحترق {burn}%/ث{choke} — حارّ جدًا لمستواك",
+                heatThrottle: "مكبوح ×{thr} — يقترب من فرط الحرارة",
+                heatCool: "يعمل باردًا — قوة كاملة، بلا احتراق",
+                arole_prod: "منتج",
+                arole_amp: "مضخّم",
+                arole_gate: "بوابة",
+                arole_util: "مساعد",
+                nm_ember: "جمرة",
+                nm_venom: "سُمّ",
+                nm_frost_nail: "مسمار صقيع",
+                nm_searing_strike: "ضربة كاوية",
+                nm_arc: "قوس كهربائي",
+                nm_overcharge: "شحن زائد",
+                nm_focus: "تركيز",
+                nm_fork: "تشعّب",
+                nm_pierce: "اختراق",
+                nm_momentum: "زخم",
+                nm_spread: "انتشار",
+                nm_overdrive: "دفع مفرط",
+                nm_on_crit: "عند الحرج",
+                nm_execute: "إعدام",
+                nm_kindling: "إشعال",
+                nm_every_third: "كل ثالثة",
+                nm_exploit: "استغلال",
+                nm_stun: "إذهال",
+                nm_leech: "امتصاص",
+                nm_mark: "علامة",
+                outputLabel: "الناتج",
+                outputHint: "الضرر لكل ضربة · ×ضرر الهجوم",
+                outputGated: " · يُفترض اجتياز البوابات",}
         };
         function detectLang() {                                  // map the browser/system locale onto a supported language
             try {
@@ -3844,6 +4511,29 @@
         /* Localized descriptions for perks / signatures / class passives, keyed by their English name.
            Values mirror the English `ds` (a fn(arg) or a string); desc() falls back to the English ds. */
         const DESC = {
+            tr: {
+                // atom descriptions (perk descriptions still fall back to English ds)
+                "Ember": "Hedefi tutuşturur (yakar, saldırıyla ölçeklenir).",
+                "Venom": "Hedefi zehirler (üst üste biner, saldırıyla ölçeklenir).",
+                "Frost Nail": "Hedefi dondurur — yavaşlatır.",
+                "Searing Strike": "Ek bir ateş vuruşu.",
+                "Arc": "Yıldırım yakındaki düşmanlara sıçrar.",
+                "Overcharge": "Aşağı akıştaki her şey %50 daha sert vurur.",
+                "Focus": "Çift güç, ama yalnızca tek hedef.",
+                "Fork": "Aşağı akıştaki üreticiler 2 ek düşmana vurur.",
+                "Pierce": "Vuruş delip geçer, bir hatta 3 düşmana kadar isabet eder.",
+                "Momentum": "Zincirinin baskın rolünü paylaşan her atom için +%10 güç — bir şekle bağlanmayı ödüllendirir.",
+                "Spread": "Yanmanı yakındaki düşmanlara kopyalar.",
+                "Overdrive": "Isıyı tersine çevirir: artık sıcak çalışmak zinciri kısıtlamak yerine GÜÇLENDİRİR. Kırmızıda sürmek için kur.",
+                "On Crit": "Kritikte zincirin geri kalanını güçlendirir — aksi halde durur.",
+                "Execute": "Canı %30'un altındaki bir düşmana karşı zincirin geri kalanını sert güçlendirir — aksi halde durur.",
+                "Kindling": "Düşman yanıyorsa zincirin geri kalanını güçlendirir — aksi halde durur.",
+                "Every Third": "Her üçüncü saldırıda zincirin geri kalanını sert güçlendirir — aksi halde durur.",
+                "Exploit": "Düşmanda 2+ durum varsa zincirin geri kalanını güçlendirir — aksi halde durur.",
+                "Stun": "Hedefi kısa süre sersemletir.",
+                "Leech": "Her zincirde seni biraz iyileştirir.",
+                "Mark": "Aşağı akıştaki üreticiler +%25 verir."
+            },
             zh: {
                 "Sharpened Edge": v => `攻击伤害提高 ${pct(v)}。`,
                 "Rapid Loosing": v => `攻击速度提高 ${pct(v)}。`,
@@ -3870,7 +4560,27 @@
                 "Hunter's Focus": "夜间暴击 +15% · 黎明回复 10% 最大生命",
                 "Emberheart": "夜间攻击伤害 +30%",
                 "Bulwark": "护甲 +14 · 击杀时回复 1% 最大生命"
-            },
+            ,
+                Ember: "点燃目标（燃烧，随攻击力提升）。",
+                Venom: "毒化目标（可叠加，随攻击力提升）。",
+                "Frost Nail": "冰冻目标——使其减速。",
+                "Searing Strike": "额外的一次火焰打击。",
+                Arc: "闪电跳跃至附近的敌人。",
+                Overcharge: "其后的一切造成 50% 额外伤害。",
+                Focus: "双倍威力，但仅限单体。",
+                Fork: "其后的产出原子额外命中 2 个敌人。",
+                Pierce: "打击贯穿，沿直线最多命中 3 个敌人。",
+                Momentum: "链中每有一个原子与主导角色相同，威力 +10%——奖励专注于一种形态。",
+                Spread: "将你的燃烧复制到附近的敌人。",
+                Overdrive: "反转热度：现在高热会增强链而非压制它。构筑以驰骋于红区。",
+                "On Crit": "暴击时增强链的其余部分——否则中止。",
+                Execute: "对生命低于 30% 的敌人，大幅增强链的其余部分——否则中止。",
+                Kindling: "若敌人正在燃烧，增强链的其余部分——否则中止。",
+                "Every Third": "每第三次攻击大幅增强链的其余部分——否则中止。",
+                Exploit: "若敌人身上有 2 个以上状态，增强链的其余部分——否则中止。",
+                Stun: "短暂眩晕目标。",
+                Leech: "每次链都为你恢复少量生命。",
+                Mark: "其后的产出原子造成 +25%。",},
             es: {
                 "Sharpened Edge": v => `+${pct(v)} de daño de ataque.`,
                 "Rapid Loosing": v => `+${pct(v)} de velocidad de ataque.`,
@@ -3897,7 +4607,27 @@
                 "Hunter's Focus": "+15% crítico de noche · cura 10% de vida al amanecer",
                 "Emberheart": "+30% de daño de ataque de noche",
                 "Bulwark": "+14 de armadura · cura 1% de vida máx. al matar"
-            },
+            ,
+                Ember: "Prende al objetivo (quema, escala con el ataque).",
+                Venom: "Envenena al objetivo (se acumula, escala con el ataque).",
+                "Frost Nail": "Hiela al objetivo: lo ralentiza.",
+                "Searing Strike": "Un golpe de fuego adicional.",
+                Arc: "El rayo salta a enemigos cercanos.",
+                Overcharge: "Todo lo posterior golpea un 50% más fuerte.",
+                Focus: "Doble potencia, pero solo un objetivo.",
+                Fork: "Los productores posteriores golpean a 2 enemigos más.",
+                Pierce: "El golpe atraviesa, alcanzando hasta 3 enemigos en línea.",
+                Momentum: "+10% de potencia por cada átomo que comparte el rol dominante de tu cadena: premia comprometerse con una forma.",
+                Spread: "Copia tu quemadura a enemigos cercanos.",
+                Overdrive: "Invierte el Calor: ahora ir caliente POTENCIA la cadena en lugar de limitarla. Constrúyela para cabalgar el rojo.",
+                "On Crit": "En un crítico, potencia el resto de la cadena; si no, se detiene.",
+                Execute: "Contra un enemigo por debajo del 30% de vida, potencia mucho el resto de la cadena; si no, se detiene.",
+                Kindling: "Si el enemigo arde, potencia el resto de la cadena; si no, se detiene.",
+                "Every Third": "Cada tercer ataque, potencia mucho el resto de la cadena; si no, se detiene.",
+                Exploit: "Si el enemigo tiene 2+ estados, potencia el resto de la cadena; si no, se detiene.",
+                Stun: "Aturde brevemente al objetivo.",
+                Leech: "Te cura un poco con cada cadena.",
+                Mark: "Los productores posteriores infligen +25%.",},
             fr: {
                 "Sharpened Edge": v => `+${pct(v)} de dégâts d'attaque.`,
                 "Rapid Loosing": v => `+${pct(v)} de vitesse d'attaque.`,
@@ -3924,7 +4654,27 @@
                 "Hunter's Focus": "+15% de critique la nuit · soigne 10% de vie à l'aube",
                 "Emberheart": "+30% de dégâts d'attaque la nuit",
                 "Bulwark": "+14 d'armure · soigne 1% de vie max à chaque mise à mort"
-            },
+            ,
+                Ember: "Embrase la cible (brûle, évolue avec l'attaque).",
+                Venom: "Empoisonne la cible (cumulable, évolue avec l'attaque).",
+                "Frost Nail": "Gèle la cible — la ralentit.",
+                "Searing Strike": "Une frappe de feu supplémentaire.",
+                Arc: "La foudre bondit vers les ennemis proches.",
+                Overcharge: "Tout ce qui suit frappe 50% plus fort.",
+                Focus: "Double puissance, mais cible unique.",
+                Fork: "Les producteurs en aval touchent 2 ennemis de plus.",
+                Pierce: "La frappe transperce, touchant jusqu'à 3 ennemis en ligne.",
+                Momentum: "+10% de puissance par atome partageant le rôle dominant de la chaîne — récompense l'engagement dans une forme.",
+                Spread: "Copie votre brûlure aux ennemis proches.",
+                Overdrive: "Inverse la Chaleur : courir chaud RENFORCE désormais la chaîne au lieu de la brider. Construisez pour chevaucher le rouge.",
+                "On Crit": "Sur un critique, renforce le reste de la chaîne — sinon elle s'arrête.",
+                Execute: "Contre un ennemi sous 30% de vie, renforce fortement le reste de la chaîne — sinon elle s'arrête.",
+                Kindling: "Si l'ennemi brûle, renforce le reste de la chaîne — sinon elle s'arrête.",
+                "Every Third": "Toutes les trois attaques, renforce fortement le reste de la chaîne — sinon elle s'arrête.",
+                Exploit: "Si l'ennemi a 2+ états, renforce le reste de la chaîne — sinon elle s'arrête.",
+                Stun: "Étourdit brièvement la cible.",
+                Leech: "Vous soigne un peu à chaque chaîne.",
+                Mark: "Les producteurs en aval infligent +25%.",},
             ru: {
                 "Sharpened Edge": v => `+${pct(v)} к урону атаки.`,
                 "Rapid Loosing": v => `+${pct(v)} к скорости атаки.`,
@@ -3951,7 +4701,27 @@
                 "Hunter's Focus": "+15% крита ночью · исцеление 10% макс. ОЗ на рассвете",
                 "Emberheart": "+30% к урону атаки ночью",
                 "Bulwark": "+14 к броне · исцеление 1% макс. ОЗ за убийство"
-            },
+            ,
+                Ember: "Поджигает цель (горение, зависит от атаки).",
+                Venom: "Отравляет цель (накапливается, зависит от атаки).",
+                "Frost Nail": "Замораживает цель — замедляет её.",
+                "Searing Strike": "Дополнительный огненный удар.",
+                Arc: "Молния перескакивает на ближних врагов.",
+                Overcharge: "Всё ниже по цепи бьёт на 50% сильнее.",
+                Focus: "Двойная мощь, но только одна цель.",
+                Fork: "Источники ниже по цепи бьют ещё по 2 врагам.",
+                Pierce: "Удар пробивает насквозь, поражая до 3 врагов в линии.",
+                Momentum: "+10% мощи за каждый атом, разделяющий доминирующую роль цепи — награда за приверженность форме.",
+                Spread: "Копирует ваше горение на ближних врагов.",
+                Overdrive: "Переворачивает Жар: теперь работа вгорячую УСИЛИВАЕТ цепь, а не глушит её. Стройтесь, чтобы ехать на красном.",
+                "On Crit": "При крите усиливает остаток цепи — иначе она останавливается.",
+                Execute: "Против врага ниже 30% здоровья сильно усиливает остаток цепи — иначе она останавливается.",
+                Kindling: "Если враг горит, усиливает остаток цепи — иначе она останавливается.",
+                "Every Third": "Каждая третья атака сильно усиливает остаток цепи — иначе она останавливается.",
+                Exploit: "Если у врага 2+ эффекта, усиливает остаток цепи — иначе она останавливается.",
+                Stun: "Кратко оглушает цель.",
+                Leech: "Немного лечит вас при каждой цепи.",
+                Mark: "Источники ниже по цепи наносят +25%.",},
             ja: {
                 "Sharpened Edge": v => `攻撃ダメージ +${pct(v)}。`,
                 "Rapid Loosing": v => `攻撃速度 +${pct(v)}。`,
@@ -3978,7 +4748,27 @@
                 "Hunter's Focus": "夜間クリティカル +15% · 夜明けに最大体力10%回復",
                 "Emberheart": "夜間の攻撃ダメージ +30%",
                 "Bulwark": "防御 +14 · 撃破時に最大体力1%回復"
-            },
+            ,
+                Ember: "対象を燃やす（炎上、攻撃力に比例）。",
+                Venom: "対象を毒する（重複、攻撃力に比例）。",
+                "Frost Nail": "対象を凍らせ——減速させる。",
+                "Searing Strike": "追加の炎の一撃。",
+                Arc: "稲妻が近くの敵へ跳ねる。",
+                Overcharge: "以降のすべてが50%強く命中する。",
+                Focus: "威力2倍、ただし単体のみ。",
+                Fork: "以降の生成アトムが敵2体に追加で命中する。",
+                Pierce: "攻撃が貫通し、直線上で最大3体に命中する。",
+                Momentum: "チェーンの支配的なロールを共有するアトム1つにつき威力+10%——形に専念するほど報われる。",
+                Spread: "あなたの燃焼を近くの敵へ複製する。",
+                Overdrive: "ヒートを反転：高温稼働がチェーンを抑制せず強化するようになる。赤を乗りこなす構築を。",
+                "On Crit": "クリティカル時、チェーンの残りを強化——さもなくば停止する。",
+                Execute: "体力30%未満の敵に対し、チェーンの残りを大きく強化——さもなくば停止する。",
+                Kindling: "敵が燃えていれば、チェーンの残りを強化——さもなくば停止する。",
+                "Every Third": "3回ごとの攻撃でチェーンの残りを大きく強化——さもなくば停止する。",
+                Exploit: "敵に状態異常が2つ以上あれば、チェーンの残りを強化——さもなくば停止する。",
+                Stun: "対象を短時間スタンさせる。",
+                Leech: "チェーンごとに少し回復する。",
+                Mark: "以降の生成アトムが+25%与える。",},
             ar: {
                 "Sharpened Edge": v => `ضرر الهجوم +${pct(v)}.`,
                 "Rapid Loosing": v => `سرعة الهجوم +${pct(v)}.`,
@@ -4005,7 +4795,27 @@
                 "Hunter's Focus": "حرج +15% ليلاً · شفاء 10% من الصحة القصوى عند الفجر",
                 "Emberheart": "ضرر الهجوم +30% ليلاً",
                 "Bulwark": "الدرع +14 · شفاء 1% من الصحة القصوى عند القتل"
-            }
+            ,
+                Ember: "يُشعل الهدف (يحرق، يتناسب مع الهجوم).",
+                Venom: "يُسمّم الهدف (يتراكم، يتناسب مع الهجوم).",
+                "Frost Nail": "يُجمّد الهدف — يبطئه.",
+                "Searing Strike": "ضربة نارية إضافية.",
+                Arc: "البرق يقفز إلى الأعداء القريبين.",
+                Overcharge: "كل ما يلي يضرب أقوى بنسبة 50%.",
+                Focus: "ضعف القوة، لكن لهدف واحد فقط.",
+                Fork: "المنتجات اللاحقة تصيب عدوّين إضافيين.",
+                Pierce: "الضربة تخترق، فتصيب حتى 3 أعداء في خط.",
+                Momentum: "+10% قوة لكل ذرّة تشارك الدور المهيمن للسلسلة — تكافئ الالتزام بشكل واحد.",
+                Spread: "ينسخ حرقك إلى الأعداء القريبين.",
+                Overdrive: "يعكس الحرارة: التشغيل الساخن الآن يعزّز السلسلة بدل كبحها. ابنِ لتركب المنطقة الحمراء.",
+                "On Crit": "عند الإصابة الحرجة، يعزّز بقية السلسلة — وإلا تتوقف.",
+                Execute: "ضد عدو دون 30% من الصحة، يعزّز بقية السلسلة بقوة — وإلا تتوقف.",
+                Kindling: "إذا كان العدو يحترق، يعزّز بقية السلسلة — وإلا تتوقف.",
+                "Every Third": "كل هجمة ثالثة، يعزّز بقية السلسلة بقوة — وإلا تتوقف.",
+                Exploit: "إذا كان لدى العدو حالتان أو أكثر، يعزّز بقية السلسلة — وإلا تتوقف.",
+                Stun: "يُذهل الهدف لفترة وجيزة.",
+                Leech: "يشفيك قليلًا مع كل سلسلة.",
+                Mark: "المنتجات اللاحقة تُلحق +25%.",}
         };
         function desc(name, ds, arg) { const d = (DESC[LANG] || {})[name]; if (d != null) return typeof d === "function" ? d(arg) : d; return typeof ds === "function" ? ds(arg) : ds; }
         function setLang(l) { LANG = STRINGS[l] ? l : "en"; try { Store.set("ew.lang", LANG); } catch (e) { } applyDir(); applyI18n(); }
@@ -4834,6 +5644,43 @@
         function heatThrottle(h) { const f = heatFrac(h); return heatOverload(h) ? 1 + (HEAT_CEIL - 1) * f : 1 - (1 - HEAT_FLOOR) * f; }
         function heatBurnFrac(h) { const f = heatFrac(h); return f > HEAT_BURN_AT ? HEAT_BURN_PCT * (f - HEAT_BURN_AT) / (1 - HEAT_BURN_AT) : 0; }   // max-HP fraction drained per second while the chain is running hot
         function ventHeat(h, dt) { if (h._heatActive > 0) h._heatActive = Math.max(0, h._heatActive - dt); }   // decays the "engine running" window; load-based heat needs no venting, but burn only applies while the chain is active
+        /* Composer preview — total damage the watcher deals per swing WITH this chain, in units of
+           attack damage (so a bare basic strike reads ×1.00 and the chain's contribution sits on top).
+           Side-effect-free: mirrors runChain's left-to-right power/mark walk using the SAME constants
+           (ATOM_V, GATE_BONUS) and the SAME starting power (heatThrottle, which already folds in overdrive),
+           so reordering atoms changes this number exactly as it changes live damage. It's a TOTAL (summed
+           across the foes a producer hits), so per-target charge division cancels out and the figure is
+           target-count independent — Fork/Pierce change reach, not total. Gates are assumed to fire (the
+           build's potential); ambient reactions are surfaced qualitatively by the shape line above. */
+        function chainOutput(h) {
+            const ids = (h && h.chain || []).filter(id => ATOMS[id]);
+            if (!ids.length) return null;
+            const rc = {}; for (const id of ids) { const r = ATOMS[id].role; rc[r] = (rc[r] || 0) + 1; }
+            const dom = Math.max(1, ...Object.values(rc));
+            let power = heatThrottle(h), mark = 1, out = 0, prod = false, dot = false, gated = false;
+            for (const id of ids) {
+                const pm = power * mark;
+                switch (id) {
+                    case "ember":   out += ATOM_V.EMBER   * pm; prod = true; dot = true; break;
+                    case "venom":   out += ATOM_V.VENOM   * pm; prod = true; dot = true; break;
+                    case "searing": out += ATOM_V.SEARING * pm; prod = true; break;
+                    case "arc":     out += ATOM_V.ARC     * pm; prod = true; break;     // total across the foes the bolt leaps to
+                    case "frostNail": prod = true; break;                              // slow — no damage
+                    case "spread":  if (dot) out += ATOM_V.EMBER * pm; break;          // copies the burn to nearby foes
+                    case "overcharge": power *= ATOM_V.OC; break;
+                    case "focus":   power *= ATOM_V.FOCUS; break;
+                    case "momentum": power *= 1 + 0.1 * Math.min(dom - 1, ATOM_V.MOMMAX); break;
+                    case "mark":    mark *= ATOM_V.MARK; break;
+                    case "onCrit": case "execute": case "kindling": case "everyThird": case "exploit":
+                        power += GATE_BONUS[id] || 0; gated = true; break;
+                    // fork / pierce: change reach, not total · overdrive: folded into heatThrottle · stun / leech: no damage
+                }
+            }
+            // full per-swing output in AD units: basic strike (1×) PLUS the chain's added damage,
+            // or — when no producer fires — the amp-boosted basic the chain folds into instead.
+            const total = prod ? 1 + out : power * mark;
+            return { mult: total, gated };
+        }
         function runChain(h, primary, basic) {                // ONE left-to-right pass per basic attack (single-pass: no re-entry)
             if (!h.chain || !h.chain.length || !primary || primary.dead) return;
             h._chainAtk = (h._chainAtk || 0) + 1;
@@ -6441,7 +7288,7 @@
                 const d = Math.hypot(h.x - it.x, h.y - it.y); it.bob += dt * 3; if (d < h.r + 16) {
                     if (it.atom) {                                  // composer atom pickup — into the owned pool + auto-slot, with a collect popup
                         it.dead = true;
-                        if (!(h.atoms || (h.atoms = [])).includes(it.atom)) { h.atoms.push(it.atom); autoFillChain(h); }
+                        if (!(h.atoms || (h.atoms = [])).includes(it.atom)) { h.atoms.push(it.atom); h._newAtom = true; }   // bench it; the player slots it in the composer (badge nudges them)
                         spawnParticles(it.x, it.y, (ATOMS[it.atom] && COMPOSER_ROLE_COL[ATOMS[it.atom].role]) || "#54dcd0", 16, { speed: 140, life: 0.55, size: 2.5, grav: -20 });
                         atomToast(it.atom); if (SFX.pickup) SFX.pickup();
                         continue;
@@ -7004,7 +7851,7 @@
                 const r = (G.hero.abilityRanks[ab.id] || 0); if (r >= ab.upgrades.length) continue;
                 const up = ab.upgrades[r];
                 pool.push({
-                    nm: `⮝ ${ab.label} · ${ab.name}`, ds: `${up.nm} — ${up.ds}`, up: true,
+                    nm: `▲ ${ab.label} · ${ab.name}`, ds: `${up.nm} — ${up.ds}`, up: true,
                     apply: h => { h.abilityRanks[ab.id] = (h.abilityRanks[ab.id] || 0) + 1; }
                 });
             }
@@ -7014,8 +7861,8 @@
             if (_atomOffer) {
                 const atom = ATOMS[_atomOffer];
                 choices[Math.floor(grng() * choices.length)] = {
-                    nm: `✦ ${atom.nm}`, ds: `Chain atom — ${atom.ds}`, key: "atom_" + _atomOffer, rar: "Atom", atom: true,
-                    apply: h => { if (!(h.atoms || (h.atoms = [])).includes(_atomOffer)) h.atoms.push(_atomOffer); autoFillChain(h); }
+                    nm: `✦ ${tn(atom.nm)}`, ds: `${t("chainAtomPrefix")} ${desc(atom.nm, atom.ds)}`, key: "atom_" + _atomOffer, rar: t("rarAtom"), atom: true,
+                    apply: h => { if (!(h.atoms || (h.atoms = [])).includes(_atomOffer)) { h.atoms.push(_atomOffer); h._newAtom = true; } }   // bench it; composer badge nudges the player to place it
                 };
             }
             if (!G._tut0) choices.push({                                       // 4th option: invest this level in the FIRE instead of the watcher
@@ -7025,7 +7872,6 @@
                     const fromR = G.lightR; G.fireLevel++;
                     G.lightR = Math.min(460, 250 + (G.fireLevel - 1) * 8);    // radius now rides fireLevel, not level
                     h.fireSlots = Math.min(CHAIN_SLOT_CAP - CHAIN_BASE_SLOTS, Math.floor((G.fireLevel - 1) / 2));   // +1 chain slot per 2 fire levels (cap 12 total)
-                    autoFillChain(h);
                     G.rings.push({ from: fromR, to: G.lightR, life: 0.9, max: 0.9 });
                     rebuild(h);                                               // fireSource() max-health passive scales with fireLevel
                     SFX.fire(); spawnParticles(0, 0, "#ffb347", 22, { speed: 160, life: 0.8, size: 3, grav: -30 });
@@ -7986,12 +8832,12 @@
                 const pulse = 1 + 0.06 * Math.sin(performance.now() / 90);
                 g.save(); g.textAlign = "center";
                 const fsz = (20 + Math.min(G.combo, 40) * 0.4) * pulse; g.font = "900 " + fsz.toFixed(1) + "px ui-sans-serif,system-ui";
-                g.lineWidth = 4; g.strokeStyle = "rgba(0,0,0,.7)"; g.strokeText(G.combo + "×", W / 2, 66);
-                g.fillStyle = col; g.fillText(G.combo + "×", W / 2, 66);
-                g.font = "600 11px ui-sans-serif,system-ui"; g.fillStyle = "rgba(255,255,255,.6)"; g.fillText(t("combo"), W / 2, 80);
+                g.lineWidth = 4; g.strokeStyle = "rgba(0,0,0,.7)"; g.strokeText(G.combo + "×", W / 2, 108);
+                g.fillStyle = col; g.fillText(G.combo + "×", W / 2, 108);
+                g.font = "600 11px ui-sans-serif,system-ui"; g.fillStyle = "rgba(255,255,255,.6)"; g.fillText(t("combo"), W / 2, 122);
                 const bw = 70, frac = Math.max(0, G.comboT / COMBO_WINDOW);   // depleting timer bar
-                g.fillStyle = "rgba(255,255,255,.15)"; g.fillRect(W / 2 - bw / 2, 86, bw, 3);
-                g.fillStyle = col; g.fillRect(W / 2 - bw / 2, 86, bw * frac, 3);
+                g.fillStyle = "rgba(255,255,255,.15)"; g.fillRect(W / 2 - bw / 2, 128, bw, 3);
+                g.fillStyle = col; g.fillRect(W / 2 - bw / 2, 128, bw * frac, 3);
                 g.restore();
             }
             if (G.flash > 0) { g.fillStyle = `rgba(${G.flashCol},${Math.min(0.6, G.flash)})`; g.fillRect(0, 0, W, H); }
@@ -8123,6 +8969,7 @@
             document.getElementById("clock").style.opacity = G.waveState === "active" ? 1 : 0.5;
             // action badges — gear upgrade waiting
             document.getElementById("invbadge").classList.toggle("on", hasGearUpgrade());
+            document.getElementById("composebadge").classList.toggle("on", !!(G.hero && G.hero._newAtom));   // a freshly acquired, unreviewed atom is sitting in the bench
             // intermission countdown
             if (G.waveState === "intermission") {
                 document.getElementById("isub").textContent = t("nextWaveIn", { s: Math.max(0, Math.ceil(G.interTimer)) });
@@ -8182,7 +9029,7 @@
         }
         function atomToast(id) {                                    // composer atom collect popup — mirrors the gear toast, in atom teal
             const el = document.getElementById("loottoast"); if (!el || !ATOMS[id]) return;
-            el.innerHTML = `${t("pickedUp")} <b style="color:#54dcd0">\u2726 ${ATOMS[id].nm}</b> <span style="opacity:.7">\u00b7 ${ATOMS[id].role}</span>`;
+            el.innerHTML = `${t("pickedUp")} <b style="color:#54dcd0">\u2726 ${tn(ATOMS[id].nm)}</b> <span style="opacity:.7">\u00b7 ${tf("arole_" + ATOMS[id].role, ATOMS[id].role)}</span>`;
             el.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("on"), 1800);
         }
         function msgToast(text) {
@@ -8259,6 +9106,7 @@
             if (!MOBILE) { if (e.target === cv) { mouseDown = true; updT(e); e.preventDefault(); } return; }
             let consumed = false;
             for (const t of e.changedTouches) {
+                if (t.target && t.target.closest && t.target.closest("#buttons, #pausebtn")) continue;   // taps on HUD buttons belong to those buttons — let the click through
                 const x = t.clientX, y = t.clientY, si = slotHit(x, y);
                 if (si >= 0) {
                     const ab = ABILITIES[si];
@@ -8400,14 +9248,26 @@
             if (heatEl) {
                 const f = heatFrac(h), pct = Math.round(f * 100), thr = heatThrottle(h), over = heatOverload(h), burn = heatBurnFrac(h);
                 const col = over ? "#ffcf4a" : f > 0.66 ? "#ff5a3c" : f > 0.45 ? "#ff9a4a" : "#7fd6a0";
-                const choke = burn > 0 ? ` · heals only ${Math.round(heatHealMult(h) * 100)}%` : "";
+                const choke = burn > 0 ? t("heatChoke", { heal: Math.round(heatHealMult(h) * 100) }) : "";
                 let note;
-                if (over) note = `running hot boosts you ×${thr.toFixed(2)}` + (burn > 0 ? ` · burning ${(burn * 100).toFixed(1)}%/s${choke}` : "");
-                else if (burn > 0) note = `throttled ×${thr.toFixed(2)} · burning ${(burn * 100).toFixed(1)}%/s${choke} — too hot for your level`;
-                else if (f > 0.45) note = `throttled ×${thr.toFixed(2)} — easing toward overheat`;
-                else note = "running cool — full power, no burn";
-                heatEl.innerHTML = `<span class="shname" style="color:${col}">HEAT ${pct}%</span><span class="shds">${note}</span>`;
+                const thrS = thr.toFixed(2), burnS = (burn * 100).toFixed(1);
+                if (over) note = t("heatOver", { thr: thrS }) + (burn > 0 ? t("heatBurn", { burn: burnS }) + choke : "");
+                else if (burn > 0) note = t("heatThrottleBurn", { thr: thrS, burn: burnS, choke });
+                else if (f > 0.45) note = t("heatThrottle", { thr: thrS });
+                else note = t("heatCool");
+                heatEl.innerHTML = `<span class="shname" style="color:${col}">${t("heatLabel")} ${pct}%</span><span class="shds">${note}</span>`;
                 heatEl.style.borderLeftColor = col;
+            }
+            const outEl = document.getElementById("cmpoutput");
+            if (outEl) {
+                const o = chainOutput(h);
+                if (!o) { outEl.style.display = "none"; }
+                else {
+                    outEl.style.display = "";
+                    const hint = t("outputHint") + (o.gated ? t("outputGated") : "");
+                    outEl.innerHTML = `<span class="shname" style="color:#8ad0ff">${t("outputLabel")} ×${o.mult.toFixed(2)}</span><span class="shds">${hint}</span>`;
+                    outEl.style.borderLeftColor = "#8ad0ff";
+                }
             }
             const row = document.getElementById("chainrow"); row.innerHTML = "";
             for (let i = 0; i < cap; i++) {
@@ -8415,20 +9275,20 @@
                 if (id) {
                     const a = ATOMS[id]; slot.className = "cslot" + (composerSel === id ? " sel" : ""); slot.style.setProperty("--rc", COMPOSER_ROLE_COL[a.role] || "");
                     slot.innerHTML = `<div class="cidx">${i + 1}</div>`
-                        + `<div class="cinsp" onpointerdown="composerDragStart(event,${i})"><div class="cnm">${a.nm}</div><div class="crole">${a.role}</div></div>`
+                        + `<div class="cinsp" onpointerdown="composerDragStart(event,${i})"><div class="cnm">${tn(a.nm)}</div><div class="crole">${tf("arole_" + a.role, a.role)}</div></div>`
                         + `<div class="cbtns"><button class="cmv" ${i === 0 ? "disabled" : ""} onclick="composerMove(${i},-1)">◀</button>`
                         + `<button class="crm" onclick="composerUnslot(${i})" title="bench this atom">✕</button>`
                         + `<button class="cmv" ${i === h.chain.length - 1 ? "disabled" : ""} onclick="composerMove(${i},1)">▶</button></div>`;
-                } else { slot.className = "cslot empty"; slot.innerHTML = `<div class="cidx">${i + 1}</div><div class="cempty">empty</div>`; }
+                } else { slot.className = "cslot empty"; slot.innerHTML = `<div class="cidx">${i + 1}</div><div class="cempty">${t("slotEmpty")}</div>`; }
                 row.appendChild(slot);
             }
             const bench = document.getElementById("cbench"); bench.innerHTML = "";
             const owned = (h.atoms || []).filter(id => !h.chain.includes(id));
-            if (!owned.length) { bench.innerHTML = `<div class="cbnone">No atoms in reserve. Feed the fire for slots; bosses and level-ups grant atoms.</div>`; }
+            if (!owned.length) { bench.innerHTML = `<div class="cbnone">${t("benchEmpty")}</div>`; }
             else for (const id of owned) {
                 const a = ATOMS[id], chip = document.createElement("button");
                 chip.className = "catom" + (composerSel === id ? " sel" : ""); chip.style.setProperty("--rc", COMPOSER_ROLE_COL[a.role] || "");
-                chip.innerHTML = `<span class="cnm">${a.nm}</span><span class="crole">${a.role}</span>`;
+                chip.innerHTML = `<span class="cnm">${tn(a.nm)}</span><span class="crole">${tf("arole_" + a.role, a.role)}</span>`;
                 chip.onclick = () => composerInspect(id);
                 bench.appendChild(chip);
             }
@@ -8436,7 +9296,7 @@
             if (a) {
                 det.style.setProperty("--rc", COMPOSER_ROLE_COL[a.role] || "");
                 const onBench = (h.atoms || []).includes(composerSel) && !h.chain.includes(composerSel), full = h.chain.length >= cap;
-                det.innerHTML = `<div class="dhead"><span class="dnm">${a.nm}</span><span class="drole">${a.role}</span></div><div class="dds">${a.ds}</div>`
+                det.innerHTML = `<div class="dhead"><span class="dnm">${tn(a.nm)}</span><span class="drole">${tf("arole_" + a.role, a.role)}</span></div><div class="dds">${desc(a.nm, a.ds)}</div>`
                     + (onBench ? `<button class="cslotit" ${full ? "disabled" : ""} onclick="composerSlot('${composerSel}')">${full ? t("chainFull") : t("slotIt")}</button>` : "");
             } else {
                 det.style.removeProperty("--rc");
@@ -8499,7 +9359,7 @@
             else if (slots[drop.at]) slots[drop.at].classList.add("cdrop-before");
             else if (slots[drop.at - 1]) slots[drop.at - 1].classList.add("cdrop-after");
         }
-        function openComposer() { if (!running || !G || !G.hero || G.hero.dead) return; composerSel = null; G.paused = true; show("composer"); renderComposer(); }
+        function openComposer() { if (!running || !G || !G.hero || G.hero.dead) return; composerSel = null; G.hero._newAtom = false; const cb = document.getElementById("composebadge"); if (cb) cb.classList.remove("on"); G.paused = true; show("composer"); renderComposer(); }
         function closeComposer() { closePanels(); }
         document.getElementById("composer").addEventListener("click", e => { if (e.target.id === "composer") closeComposer(); });
         function togglePause() { if (pauseOpen()) { resumeGame(); return; } if (running && G && !G.hero.dead && !G.paused) { G.paused = true; show("pause"); } }
@@ -8603,15 +9463,15 @@
             if (!G || !G.sandbox) return;
             G.paused = !G.paused;
             const b = document.getElementById("sbpausebtn");
-            if (b) { b.textContent = G.paused ? "▶ Resume" : "⏸ Pause"; b.classList.toggle("act", G.paused); }
+            if (b) { b.textContent = G.paused ? ("▶ " + t("sb_resume")) : ("⏸ " + t("sb_pause")); b.classList.toggle("act", G.paused); }
         }
         function sbLevelUp() { if (!G || !G.hero || G.dying) return; G.xp += G.xpNext; levelUp(); }   // real level-up flow: hero level + boon pick + Feed-the-Fire
         function sbToggle(id) { const el = document.getElementById(id); el.classList.toggle("on"); if (id === "sbstats" && el.classList.contains("on")) renderSbStats(); }
         const SB_STATS = ["maxHealth", "attackDamage", "attackSpeed", "attackRange", "critChance", "critMultiplier", "moveSpeed", "armor"];
         function renderSbStats() {
             const el = document.getElementById("sbstats"); if (!G || !G.hero) return;
-            el.innerHTML = '<div class="sbsubttl">Hero base stats &nbsp;·&nbsp; resolved at right</div>' + SB_STATS.map(s =>
-                `<div class="statrow"><label>${s}</label><input type="number" step="any" value="${G.hero.baseStats[s] != null ? G.hero.baseStats[s] : 0}" oninput="sbSetStat('${s}',this.value)"><span class="rv" id="rv_${s}">${(+resolveStat(G.hero, s, ctx)).toFixed(2)}</span></div>`
+            el.innerHTML = `<div class="sbsubttl">${t("sb_basestats")}</div>` + SB_STATS.map(s =>
+                `<div class="statrow"><label>${tf("stat_" + s, s)}</label><input type="number" step="any" value="${G.hero.baseStats[s] != null ? G.hero.baseStats[s] : 0}" oninput="sbSetStat('${s}',this.value)"><span class="rv" id="rv_${s}">${(+resolveStat(G.hero, s, ctx)).toFixed(2)}</span></div>`
             ).join("");
         }
         function sbSetStat(s, v) {
