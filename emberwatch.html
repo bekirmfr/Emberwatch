@@ -5889,7 +5889,38 @@
             { id: "venomous", nm: "Venomous", col: "#86e07a", minWave: 3, weight: 6, build: () => ({ tags: ["poison"], modifiers: [], triggers: [{ on: "onHitDealt", source: "Venomous", effect: { kind: "applyEffect", to: "other", template: POISON } }] }) },
             { id: "searing", nm: "Searing", col: "#ff8a3a", minWave: 3, weight: 6, build: () => ({ tags: ["fire"], modifiers: [], triggers: [{ on: "onHitDealt", source: "Searing", effect: { kind: "applyEffect", to: "other", template: BURN } }] }) },
             { id: "numbing", nm: "Numbing", col: "#9fd6ff", minWave: 4, weight: 5, build: () => ({ tags: ["frost"], modifiers: [], triggers: [{ on: "onHitDealt", source: "Numbing", effect: { kind: "applyEffect", to: "other", template: chillTpl(0.30) } }] }) },
+            // --- BEHAVIORAL affix (proof-of-concept): changes what the enemy DOES, not just its stats. ---
+            // Splitter: on death the body fragments into 2 fast bits AT the corpse (hook lives in killEnemy).
+            // Counterplay: nuking a packed cluster spawns adds INSIDE it — punishes mindless ball-and-AoE,
+            // rewards target priority. Carries less HP itself so producing 2 fragments stays a fair trade.
+            { id: "splitter", nm: "Splitter", col: "#ff4fd8", minWave: 6, weight: 7, build: () => ({ modifiers: [{ stat: "maxHealth", op: "more", value: -0.25, source: "Splitter" }], triggers: [] }) },
+            // Stoker: the SECOND AXIS — ignores the watcher entirely and sprints for the hearth to snuff it (behavior in the enemy loop).
+            // Counterplay: you cannot AoE the swarm AND defend the fire at once — it forces a triage decision, not more clearing.
+            // Faster than a chaser so it actually reaches the centre; frail so a deliberate dive can punish it.
+            { id: "stoker", nm: "Stoker", col: "#3fe0ff", minWave: 4, weight: 7, build: () => ({ modifiers: [{ stat: "moveSpeed", op: "more", value: 0.35, source: "Stoker" }, { stat: "maxHealth", op: "more", value: -0.15, source: "Stoker" }], triggers: [] }) },
+            // Flanker: the THIRD axis — leads the watcher, cutting AHEAD along your path instead of trailing (behavior in the enemy loop).
+            // Counterplay: it breaks the smooth orbit — you can't run one clean circle, you have to change direction / juke.
+            // Flat+more speed lifts even slow bases enough to actually intercept; slows (chill) still reduce it.
+            { id: "flanker", nm: "Flanker", col: "#ff9020", minWave: 5, weight: 7, build: () => ({ modifiers: [], triggers: [] }) },
         ];
+        /* ⚠ EVAL ONLY — set false (or delete) before any real balancing or ship.
+           Forces a behavioral affix onto a large share of enemies so its FEEL is observable;
+           the organic distribution (each affix's minWave/weight) takes over when off.
+           Uses the cosmetic RNG, so it never affects daily determinism. Test ONE at a time. */
+        const SPLITTER_EVAL = false;
+        const SPLITTER_EVAL_RATE = 0.5;
+        const STOKER_EVAL = false;           // organic distribution now — affixes roll through the normal weighted pool
+        const STOKER_EVAL_RATE = 0.35;
+        const FLANKER_EVAL = true;           // ← testing the orbit-punisher now
+        const FLANKER_EVAL_RATE = 0.35;
+        /* fire-threat tuning (the second axis): a Stoker ignores the watcher and runs for the hearth at (0,0). */
+        const FIRE_HIT_R = 70;               // how close a Stoker must get to start draining
+        const FIRE_DRAIN = 0.05;             // fire integrity lost per second per attacking Stoker (~20s to floor for one)
+        const FIRE_DRAIN_CAP = 0.12;         // total drain ceiling — a pile of Stokers can't snuff the hearth faster than ~8s
+        const LEECH_LIMIT = 0.30;            // embers a single Stoker can leech (~6s) before the stolen fire burns IT to ash
+        const FIRE_RECOVER = 0.06;           // integrity regained per second when the hearth is clear
+        const FIRE_LIGHT_FLOOR = 0.45;       // effective light never drops below this fraction (proof has no hard fire-death yet)
+        function effLightR() { return G.lightR * (FIRE_LIGHT_FLOOR + (1 - FIRE_LIGHT_FLOOR) * (G.fireHP == null ? 1 : G.fireHP)); }
         function affixChance(wave) { return Math.min(0.42, 0.04 + (wave | 0) * 0.025); }   // ramps with wave, capped
         function pickEnemyAffix(wave, exclude) {                                            // weighted pick among eligible affixes
             const pool = ENEMY_AFFIXES.filter(a => wave >= a.minWave && (!exclude || a.id !== exclude));
@@ -6216,6 +6247,7 @@
                 embers: [], emberT: 0, fireflies: [], butterflies: [],
                 cam: { x: 0, y: 0 }, time: 0, phaseTime: PHASE_NIGHT / 12, isNight: true, dayNum: 1, ambient: 0.20,
                 gold: 0, level: 1, xp: 0, xpNext: 16, kills: 0, fireLevel: 1, lightR: 250, carry: 0, bankStep: 0, bankTimer: 0, fireFeed: 0,
+                fireHP: 1, fireUnderAttack: 0,   // fire integrity 0..1 — drained by Stokers, shrinks the night safe-zone; recovers when the hearth is clear
                 paused: false, nearFire: false, satchel: [],
                 exposed: 0, inLight: true, distFire: 0,
                 wave: 0, waveState: "intermission", interTimer: 5, spawnQueue: []
@@ -6339,17 +6371,21 @@
         function spawnEnemy(key, opts) {
             const a = ENEMIES[key]; if (!a) return;
             const d = diffMul(), h = G.hero;
-            const sidx = (G.spawnIndex = (G.spawnIndex || 0) + 1);   // stable per-run spawn ordinal (deterministic order)
+            const split = !!(opts && opts.split);                   // reactive (split-on-death) spawn: play-dependent — must NOT consume the seeded spawn/affix ordinal space, or dailies desync
+            const sidx = split ? -1 : (G.spawnIndex = (G.spawnIndex || 0) + 1);   // stable per-run spawn ordinal (deterministic order); -1 = reactive, off the seeded grid
             let ang, dist, atk0;
-            withSeed(subSeed("spawn", sidx), () => {                 // spawn position fixed by ordinal, not by play
+            if (split) {                                            // place at the corpse with a live (uncorrelated) scatter — crand, never grng/subSeed
+                ang = crand() * Math.PI * 2; dist = 12 + crand() * 12; atk0 = crand() * 0.4;
+            } else withSeed(subSeed("spawn", sidx), () => {         // spawn position fixed by ordinal, not by play
                 ang = grng() * Math.PI * 2;
                 dist = Math.max(G.lightR + 70, 440) + ri(0, 120);
                 atk0 = grng() * 0.6;
             });
+            const ox = split ? opts.at.x : h.x, oy = split ? opts.at.y : h.y;
             const e = {
                 id: "e" + (idSeq++), kind: "enemy", tag: a.tag, color: a.color, r: a.r,
                 spawnIdx: sidx, spawnWave: G.wave,                   // keys for deterministic loot
-                x: h.x + Math.cos(ang) * dist, y: h.y + Math.sin(ang) * dist, vx: 0, vy: 0,
+                x: ox + Math.cos(ang) * dist, y: oy + Math.sin(ang) * dist, vx: 0, vy: 0,
                 baseStats: mkStats({ ...a.stats, maxHealth: Math.round(a.stats.maxHealth * d), attackDamage: Math.round(a.stats.attackDamage * d), armor: Math.round((a.stats.armor || 0) * (1 + (d - 1) * 0.4)), critMultiplier: 1.5 }),
                 sources: [{ id: "arch", modifiers: [], triggers: [] }, NIGHT_SWARM], activeEffects: [],
                 atkTimer: atk0, castT: 1.2, xp: Math.max(1, Math.round(a.xp * d)), gold: a.gold, flash: 0, dead: false, hitScale: 1,
@@ -6361,13 +6397,24 @@
                 e.baseStats.attackDamage = 0; e._tut = opts.tut;
                 if (opts.tut === 1) e.xp = 24;                     // banked, this clears xpNext (16) → the scripted level-up
                 if (opts.tut === 2) e._tutDrop = true;             // drops the one guaranteed piece of gear
-            } else if (!a.boss) {                            // affixes: not on tutorial foes or bosses (bosses are their own fight)
-                withSeed(subSeed("affix", sidx), () => {     // deterministic per spawn ordinal (daily-safe)
+            } else if (!a.boss && !split) {                  // affixes: not on tutorial foes, bosses, or split fragments (no recursive splitter)
+                const forceId = (FLANKER_EVAL && G.wave >= 2 && crand() < FLANKER_EVAL_RATE) ? "flanker"
+                              : (STOKER_EVAL && G.wave >= 2 && crand() < STOKER_EVAL_RATE) ? "stoker"
+                              : (SPLITTER_EVAL && G.wave >= 2 && crand() < SPLITTER_EVAL_RATE) ? "splitter" : null;
+                if (forceId) {                               // EVAL ONLY: force a behavioral affix so the feel is observable (revert before ship)
+                    const sp = ENEMY_AFFIXES.find(x => x.id === forceId); if (sp) applyAffix(e, sp);
+                } else withSeed(subSeed("affix", sidx), () => {     // deterministic per spawn ordinal (daily-safe)
                     if (grng() < affixChance(G.wave)) {
                         const af = pickEnemyAffix(G.wave); if (af) applyAffix(e, af);
                         if (af && G.wave >= 10 && grng() < 0.22) { const af2 = pickEnemyAffix(G.wave, af.id); if (af2) applyAffix(e, af2); }   // rare double-affix late
                     }
                 });
+            }
+            if (split) {                                     // fragments: flagged so they can't split again (bounded — no cascade); smaller, frailer, worth less
+                e._split = true;
+                e.r = Math.max(7, Math.round(e.r * 0.78));
+                e.baseStats.maxHealth = Math.max(1, Math.round(e.baseStats.maxHealth * 0.5));
+                e.xp = Math.max(1, Math.round(e.xp * 0.5));
             }
             e.currentHealth = resolveStat(e, "maxHealth", ctx);
             if (a.boss) { e.castT = 3; G.boss = e; }
@@ -6964,6 +7011,9 @@
             if (h.lungeT > 0) { h.lungeT -= dt; const lf = Math.max(0, h.lungeT / 0.13); h.x += h.lungeVX * lf * dt; h.y += h.lungeVY * lf * dt; }  // eased forward commit on a swing
             if (h.invulnT > 0) h.invulnT = Math.max(0, h.invulnT - dt);    // revive shield
             if (h.dashSettleT > 0) h.dashSettleT = Math.max(0, h.dashSettleT - dt);   // dash-landing pingpong decay
+            // hero velocity (smoothed) — read by Flankers to lead the orbit instead of trailing it
+            { const idt = dt > 1e-4 ? dt : 1e-4, nvx = (h.x - (h._px == null ? h.x : h._px)) / idt, nvy = (h.y - (h._py == null ? h.y : h._py)) / idt;
+              h.vx = (h.vx || 0) * 0.6 + nvx * 0.4; h.vy = (h.vy || 0) * 0.6 + nvy * 0.4; h._px = h.x; h._py = h.y; }
             // hero facing — toward movement while walking, toward the nearest foe while idle (mobile auto-aim)
             if (hasMoveInput && ml > DEAD) h.faceAng = Math.atan2(my, mx);
             else if (MOBILE) { const ne = nearest(h.x, h.y, G.enemies, 99999); if (ne) h.faceAng = Math.atan2(ne.y - h.y, ne.x - h.x); }
@@ -7125,6 +7175,7 @@
             G.eshots = G.eshots.filter(s => s.life > 0);
 
             // enemies
+            let _stokerDrain = 0;   // total fire-drain demanded by Stokers at the hearth this frame (capped after the loop)
             for (const e of G.enemies) {
                 if (e.dead) continue;
                 if (e.stunImmune > 0) e.stunImmune -= dt;
@@ -7143,6 +7194,62 @@
                 const atkReach = e.r + h.r + 20;          // enemies can land a melee swing from a bit further than contact
                 // separation so they don't stack
                 for (const o of G.enemies) { if (o === e || o.dead) continue; const ox = e.x - o.x, oy = e.y - o.y, od = Math.hypot(ox, oy); const min = e.r + o.r; if (od > 0 && od < min) { const push = (min - od) * 0.5; e.x += ox / od * push; e.y += oy / od * push; } }
+
+                // STOKER — the second axis: ignore the watcher, run for the hearth at (0,0) and snuff it.
+                // It deals no damage to the hero; its whole pressure is on the fire, which you must leave the orbit to defend.
+                if (e.affixes && e.affixes.indexOf("stoker") !== -1) {
+                    const fd = Math.hypot(e.x, e.y) || 1;
+                    if (fd > FIRE_HIT_R) {                                  // still approaching the centre
+                        if (!noMove) { e.x += (-e.x / fd) * esp * dt; e.y += (-e.y / fd) * esp * dt; }
+                    } else if (!noAtk) {                                    // at the hearth — leech embers (summed + capped after the loop)
+                        e.leeched = (e.leeched || 0) + FIRE_DRAIN * dt;
+                        _stokerDrain += FIRE_DRAIN;
+                        if (crand() < 0.7) {                                // embers torn from the fire, streaming INTO the stoker
+                            const ea = Math.atan2(e.y, e.x);
+                            spawnParticles(0, 0, "#ffb24a", 2, { dir: ea, spread: 0.22, speed: 240, life: Math.min(0.45, fd / 240 + 0.08), size: 2.3, grav: -8 });
+                        }
+                        if (e.leeched >= LEECH_LIMIT) {                     // overfed — the stolen embers ignite and burn it to ash
+                            e.dead = true;                                  // self-destruct: no kill credit, no remains (the fire took it, not you)
+                            spawnParticles(e.x, e.y, "#ffb24a", 22, { speed: 230, life: 0.7, size: 2.6, grav: 50 });   // ember flare-up
+                            spawnParticles(e.x, e.y, "#9aa0ac", 16, { speed: 110, life: 0.95, size: 2.2, grav: 90 });  // grey ash drifting down
+                            G.fx.push({ cleave: true, x: e.x, y: e.y, r: e.r * 2.2, life: 0.3, max: 0.3 });
+                            if (typeof shake === "function") shake(2.5);
+                            continue;
+                        }
+                    }
+                    tickActor(e, dt);
+                    if (e.flash > 0) e.flash -= dt;
+                    if (e.hitScale > 1) e.hitScale += (1 - e.hitScale) * Math.min(1, dt * 12);
+                    if (noDmg) e.currentHealth = resolveStat(e, "maxHealth", ctx);
+                    if (e.currentHealth <= 0) killEnemy(e);
+                    continue;                                               // skip the hero-targeting AI entirely
+                }
+
+                // FLANKER — the third axis: aim at where the watcher is GOING, not where it is, to cut across the orbit.
+                // It still attacks the hero on contact; only its steering target is the lead point.
+                if (e.affixes && e.affixes.indexOf("flanker") !== -1) {
+                    const lead = 0.55;                                       // seconds of prediction — how far ahead it aims
+                    const lx = h.x + (h.vx || 0) * lead, ly = h.y + (h.vy || 0) * lead;
+                    const ldx = lx - e.x, ldy = ly - e.y, ld = Math.hypot(ldx, ldy) || 1;
+                    const hd = Math.hypot(h.x - e.x, h.y - e.y);            // true distance to hero, for the swing
+                    e.atkTimer -= dt;
+                    if (e.windT > 0) {
+                        e.windT -= dt;
+                        if (e.windT <= 0) {
+                            if (hd <= atkReach + 6) { resolveAttack(e, h, basicInstance(e, ctx, ["melee"]), ctx); spawnParticles(e.x + Math.cos(e.windAim) * e.r, e.y + Math.sin(e.windAim) * e.r, "#ff6a4a", 6, { speed: 120, life: 0.22, size: 2 }); }
+                            e.atkTimer = 1.1;
+                        }
+                    } else {
+                        if (hd > reach && !noMove) { e.x += (ldx / ld) * esp * dt; e.y += (ldy / ld) * esp * dt; }   // chase the LEAD point at the enemy's OWN speed
+                        if (!noAtk && hd <= atkReach && e.atkTimer <= 0) { e.windT = e.windup; e.windAim = Math.atan2(h.y - e.y, h.x - e.x); }
+                    }
+                    tickActor(e, dt);
+                    if (e.flash > 0) e.flash -= dt;
+                    if (e.hitScale > 1) e.hitScale += (1 - e.hitScale) * Math.min(1, dt * 12);
+                    if (noDmg) e.currentHealth = resolveStat(e, "maxHealth", ctx);
+                    if (e.currentHealth <= 0) killEnemy(e);
+                    continue;
+                }
 
                 if (e.ranged) {
                     // spitter: hold at range, then a brief charge tell, then loose a bolt at the locked spot
@@ -7211,7 +7318,9 @@
                 if (noDmg) e.currentHealth = resolveStat(e, "maxHealth", ctx);   // immortal target: wipe this frame's damage so it reads full
                 if (e.currentHealth <= 0) killEnemy(e);
             }
-
+            // hearth integrity: capped drain while Stokers attack, recover when the hearth is clear
+            if (_stokerDrain > 0) { G.fireUnderAttack = 0.4; G.fireHP = Math.max(0, G.fireHP - Math.min(_stokerDrain, FIRE_DRAIN_CAP) * dt); }
+            else { if (G.fireUnderAttack > 0) G.fireUnderAttack = Math.max(0, G.fireUnderAttack - dt); G.fireHP = Math.min(1, G.fireHP + FIRE_RECOVER * dt); }
             // shadow exposure — must run BEFORE tickActor so the regen drain bites now
             if (G.sandbox) sandboxUpkeep(h, dt); else manageExposure(h, dt);
 
@@ -7429,7 +7538,7 @@
             // The radius and its debuff only exist at night, during an active wave.
             // By day the sun lights everything; between waves you're safe.
             const radiusActive = G.isNight && G.waveState === "active";
-            const inLight = !radiusActive || dist <= G.lightR;
+            const inLight = !radiusActive || dist <= effLightR();   // a snuffed hearth shrinks the safe-zone
             G.inLight = inLight;
 
             if (inLight) {
@@ -7461,6 +7570,12 @@
         function killEnemy(e) {
             if (G.sandbox && G._sbNoDmg) { e.currentHealth = resolveStat(e, "maxHealth", ctx); return; }   // sandbox: foes are immortal targets
             if (e.dead) return; e.dead = true; G.kills++;
+            // BEHAVIORAL affix — Splitter: the body fragments into 2 fast bits at the corpse. Fragments are
+            // flagged _split (in spawnEnemy) so they can't split again — bounded, no cascade. Reactive spawn:
+            // uses the live RNG and stays off the seeded ordinal grid, so daily challenges remain deterministic.
+            if (e.affixes && e.affixes.indexOf("splitter") !== -1 && !e._split && !e.boss) {
+                for (let i = 0; i < 2; i++) spawnEnemy("swift", { split: true, at: { x: e.x, y: e.y } });
+            }
             // ---- kill streak / combo ----
             G.combo++; G.comboT = COMBO_WINDOW;
             const step = Math.min(G.combo - 1, 24);                      // ramps kill-sound pitch + intensity
@@ -8097,7 +8212,7 @@
             const shk = G.shake > 0 ? G.shake : 0, shX = shk ? (Math.random() * 2 - 1) * shk : 0, shY = shk ? (Math.random() * 2 - 1) * shk : 0;
             const kx = G.kick ? G.kick.x : 0, ky = G.kick ? G.kick.y : 0;
             const sx = x => x - G.cam.x + shX + kx, sy = y => y - G.cam.y + shY + ky;
-            const fsx = sx(0), fsy = sy(0), lr = G.lightR;
+            const fsx = sx(0), fsy = sy(0), lr = effLightR();   // rendered pool shrinks as the hearth is snuffed
             const night = 1 - a;               // 0 by day, 1 by night
 
             // full-screen ground: dark at night, lit by day (this is "everything lights up")
@@ -8874,6 +8989,15 @@
             const lv = G.fireLevel;
             const baseR = 12 + lv * 1.0;   // physical flame size — grows half as fast per level (was 11+lv*2.0)
             const feed = Math.min(1, (G.fireFeed || 0) / 1.6);          // 0..1 feeding flare — drives extra glow + taller flames
+            if (G.fireUnderAttack > 0) {                                 // ALARM: hearth is being snuffed — pulsing red ring + integrity arc
+                const pulse = 0.5 + 0.5 * Math.sin(t * 9);
+                g.save();
+                g.strokeStyle = `rgba(255,70,60,${0.55 + 0.4 * pulse})`; g.lineWidth = 3; g.shadowBlur = 16; g.shadowColor = "#ff4030";
+                g.beginPath(); g.arc(x, y, 34 + 6 * pulse, 0, Math.PI * 2); g.stroke();
+                g.strokeStyle = "rgba(255,120,90,0.9)"; g.lineWidth = 4; g.shadowBlur = 0;   // integrity arc: how much fire is left
+                g.beginPath(); g.arc(x, y, 44, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0, G.fireHP), false); g.stroke();
+                g.restore();
+            }
             // glow
             g.save(); g.globalCompositeOperation = "lighter";
             for (let i = 0; i < 3; i++) {
